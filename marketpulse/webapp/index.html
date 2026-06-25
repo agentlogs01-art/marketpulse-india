@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MarketPulse India — Daily Pre-Market Briefing</title>
+<style>
+  :root {
+    /* Dawn paper palette — early morning before the trading floor opens,
+       not a SaaS gray. Signal colors borrow the red/green convention of
+       Indian market tickers, used sparingly, as signal, not branding. */
+    --dawn:      #FBF7EE;
+    --paper:     #FFFFFF;
+    --ink:       #1A1F1C;
+    --graphite:  #4B5550;
+    --line:      #DDD6C4;
+    --line-soft: #EAE4D4;
+    --green:     #1F7A4D;
+    --green-bg:  #E9F3EC;
+    --red:       #B23A2E;
+    --red-bg:    #FBEDEA;
+    --amber:     #C98A2C;
+    --amber-focus: #9C6A1C;
+    --amber-bg:  #FBF1E3;
+    --radius:    10px;
+  }
+
+  * { box-sizing: border-box; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--dawn);
+    color: var(--ink);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono {
+    font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-feature-settings: "tnum";
+  }
+
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+  }
+
+  .wrap.dashboard { max-width: 680px; }
+
+  /* ---------- Masthead ---------- */
+  .masthead {
+    padding: 34px 0 18px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 28px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .masthead .masthead-main { flex: 1; min-width: 0; }
+  .masthead .edition-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--graphite);
+    margin-bottom: 10px;
+    gap: 10px;
+  }
+  .masthead h1 {
+    font-family: "Source Serif 4", Georgia, "Times New Roman", serif;
+    font-size: 33px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+  }
+  .masthead .tagline {
+    font-size: 14.5px;
+    color: var(--graphite);
+    margin: 0;
+    max-width: 38ch;
+  }
+  .masthead .account-box {
+    flex: none;
+    text-align: right;
+    padding-top: 6px;
+  }
+  .masthead .account-box .who {
+    font-size: 12.5px;
+    color: var(--graphite);
+    margin-bottom: 6px;
+    max-width: 18ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .signout-link {
+    background: none;
+    border: none;
+    color: var(--ink);
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--line);
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+  }
+  .signout-link:hover { text-decoration-color: var(--ink); }
+
+  /* ---------- Countdown signature element ---------- */
+  .countdown {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 22px 18px;
+    margin-bottom: 22px;
+  }
+  .countdown .label {
+    font-size: 11px;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--graphite);
+    margin-bottom: 4px;
+  }
+  .countdown .next-checkpoint {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+  }
+  .countdown .clock {
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .countdown .clock .amber-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--amber);
+    margin-right: 9px;
+    position: relative;
+    top: -2px;
+    animation: pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
+  }
+  .countdown .next-label {
+    font-size: 13.5px;
+    color: var(--graphite);
+  }
+
+  .timeline {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    padding-top: 14px;
+  }
+  .timeline::before {
+    content: "";
+    position: absolute;
+    top: 18px;
+    left: 4px;
+    right: 4px;
+    height: 1px;
+    background: var(--line);
+  }
+  .timeline .point {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    flex: 1;
+    position: relative;
+  }
+  .timeline .point .mark {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--line);
+    border: 2px solid var(--dawn);
+    z-index: 1;
+  }
+  .timeline .point.done .mark { background: var(--graphite); }
+  .timeline .point.active .mark { background: var(--amber); box-shadow: 0 0 0 3px var(--amber-bg); }
+  .timeline .point .time { font-size: 11px; color: var(--graphite); }
+  .timeline .point .what { font-size: 10.5px; color: var(--graphite); opacity: 0.75; text-align: center; max-width: 64px; }
+  .timeline .point.active .time { color: var(--ink); font-weight: 600; }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 26px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-family: "Source Serif 4", Georgia, serif;
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0 0 16px;
+  }
+
+  /* ---------- Auth tabs (sign up / sign in) ---------- */
+  .auth-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--dawn);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 4px;
+    margin-bottom: 20px;
+  }
+  .auth-tabs button {
+    flex: 1;
+    padding: 9px 10px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--graphite);
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .auth-tabs button.active { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.06); }
+  .auth-tabs button:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
+
+  .identity-toggle {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    font-size: 13px;
+  }
+  .identity-toggle label { display: flex; align-items: center; gap: 6px; font-weight: 500; color: var(--graphite); margin: 0; }
+  .identity-toggle input[type="radio"] { accent-color: var(--amber); margin: 0; }
+
+  label {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--graphite);
+    margin-bottom: 6px;
+    letter-spacing: 0.01em;
+  }
+  input[type="email"], input[type="tel"], input[type="password"], input[type="text"] {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    font-size: 15px;
+    color: var(--ink);
+    margin-bottom: 16px;
+    font-family: inherit;
+    background: var(--dawn);
+  }
+  input:focus {
+    outline: 2px solid var(--amber-focus);
+    outline-offset: 1px;
+    border-color: var(--amber-focus);
+  }
+
+  .password-hint {
+    font-size: 11.5px;
+    color: var(--graphite);
+    margin: -10px 0 16px;
+  }
+
+  .channels {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-bottom: 18px;
+  }
+  .channel-option {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    padding: 12px 13px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    cursor: pointer;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .channel-option:hover { border-color: #c4bb9f; }
+  .channel-option.checked { border-color: var(--amber); background: var(--amber-bg); }
+  .channel-option:focus-within { outline: 2px solid var(--amber-focus); outline-offset: 1px; }
+  .channel-option input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--amber); margin: 0; }
+  .channel-option .meta { flex: 1; }
+  .channel-option .meta .name { font-size: 14.5px; font-weight: 600; }
+  .channel-option .meta .note { font-size: 12.5px; color: var(--graphite); }
+
+  #whatsapp-field, #signup-mobile-field, #signin-mobile-field { display: none; }
+  #whatsapp-field.visible, #signup-mobile-field.visible, #signin-mobile-field.visible { display: block; }
+
+  button.primary {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 7px;
+    background: var(--ink);
+    color: var(--dawn);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s;
+    font-family: inherit;
+  }
+  button.primary:hover { background: #2c342f; }
+  button.primary:disabled { background: #a9a89c; cursor: default; }
+  button.primary:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
+
+  button.ghost {
+    width: 100%;
+    padding: 11px;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 8px;
+    font-family: inherit;
+  }
+  button.ghost:hover { background: var(--line-soft); }
+  button.ghost:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
+
+  .status {
+    font-size: 13.5px;
+    border-radius: 7px;
+    padding: 11px 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .status.visible { display: block; }
+  .status.error { background: var(--red-bg); color: var(--red); }
+  .status.success { background: var(--green-bg); color: var(--green); }
+  .status.info { background: var(--amber-bg); color: #8a611f; }
+
+  .fine-print {
+    font-size: 12px;
+    color: var(--graphite);
+    margin-top: 16px;
+    line-height: 1.6;
+  }
+  .fine-print a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); cursor: pointer; }
+  .fine-print a:hover { text-decoration-color: var(--ink); }
+
+  .icon {
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 5px;
+    font-size: 12px;
+    flex: none;
+  }
+  .icon.email { background: #E8F0FE; color: #1A56C4; }
+  .icon.whatsapp { background: var(--green-bg); color: var(--green); }
+  .icon.telegram { background: #E6F3FB; color: #1A85C9; }
+
+  .hidden { display: none !important; }
+
+  .deep-link-box {
+    border: 1px dashed var(--line);
+    border-radius: 7px;
+    padding: 14px;
+    font-size: 13.5px;
+    word-break: break-all;
+    margin-bottom: 12px;
+    background: var(--dawn);
+  }
+  .deep-link-box a { color: var(--ink); font-weight: 600; }
+
+  footer.colophon {
+    text-align: center;
+    font-size: 11px;
+    color: var(--graphite);
+    opacity: 0.7;
+    margin-top: 36px;
+    letter-spacing: 0.03em;
+  }
+
+  /* ---------- Dashboard ---------- */
+  .dashboard-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .dashboard-toolbar .run-date {
+    font-size: 12.5px;
+    color: var(--graphite);
+  }
+  .briefing-frame {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 4px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .briefing-frame iframe {
+    width: 100%;
+    min-height: 640px;
+    border: none;
+    display: block;
+  }
+  .dashboard-empty {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--graphite);
+    font-size: 14.5px;
+  }
+  .dashboard-settings summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    padding: 4px 0;
+  }
+  .dashboard-settings[open] summary { margin-bottom: 14px; }
+
+  @media (max-width: 420px) {
+    .masthead { flex-direction: column; }
+    .masthead .account-box { text-align: left; padding-top: 0; }
+    .masthead h1 { font-size: 27px; }
+    .timeline .what { display: none; }
+    .countdown .clock { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="page-wrap">
+
+  <!-- ============== MASTHEAD ============== -->
+  <div class="masthead">
+    <div class="masthead-main">
+      <div class="edition-line">
+        <span>MarketPulse India</span>
+        <span id="edition-date" class="mono">—</span>
+      </div>
+      <h1 id="masthead-title">Tomorrow's open, before it opens.</h1>
+      <p class="tagline" id="masthead-tagline">A plain-English briefing for first-time investors, written before NSE rings the bell at 9:15&nbsp;AM&nbsp;IST.</p>
+    </div>
+    <div class="account-box hidden" id="account-box">
+      <div class="who" id="account-who">—</div>
+      <button class="signout-link" id="signout-btn">Sign out</button>
+    </div>
+  </div>
+
+  <!-- ============== LIVE COUNTDOWN (signature element) ============== -->
+  <div class="countdown" aria-live="off">
+    <div class="label">Today's briefing cycle</div>
+    <div class="next-checkpoint">
+      <span class="clock mono" id="countdown-clock"><span class="amber-dot" aria-hidden="true"></span>—:—:—</span>
+      <span class="next-label" id="countdown-next-label">until next checkpoint</span>
+    </div>
+    <div class="timeline" id="timeline" role="list" aria-label="Daily briefing checkpoints, India Standard Time">
+      <div class="point" data-hhmm="06:00" role="listitem">
+        <span class="mark"></span>
+        <span class="time mono">06:00</span>
+        <span class="what">Pre&#8209;render</span>
+      </div>
+      <div class="point" data-hhmm="06:45" role="listitem">
+        <span class="mark"></span>
+        <span class="time mono">06:45</span>
+        <span class="what">GIFT Nifty snapshot</span>
+      </div>
+      <div class="point" data-hhmm="06:50" role="listitem">
+        <span class="mark"></span>
+        <span class="time mono">06:50</span>
+        <span class="what">Assembled</span>
+      </div>
+      <div class="point" data-hhmm="07:00" role="listitem">
+        <span class="mark"></span>
+        <span class="time mono">07:00</span>
+        <span class="what">Sent to you</span>
+      </div>
+      <div class="point" data-hhmm="09:15" role="listitem">
+        <span class="mark"></span>
+        <span class="time mono">09:15</span>
+        <span class="what">NSE opens</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============== AUTH VIEW (landing page: sign up / sign in) ============== -->
+  <div id="view-auth" class="card">
+    <div class="auth-tabs" role="tablist">
+      <button type="button" id="tab-signup" class="active" role="tab" aria-selected="true">Sign up</button>
+      <button type="button" id="tab-signin" role="tab" aria-selected="false">Sign in</button>
+    </div>
+
+    <!-- ---- Sign up ---- -->
+    <div id="panel-signup">
+      <div id="signup-status" class="status" role="status"></div>
+
+      <form id="signup-form">
+        <div class="identity-toggle">
+          <label><input type="radio" name="signup-identity" value="email" checked> Email</label>
+          <label><input type="radio" name="signup-identity" value="mobile"> Mobile number</label>
+        </div>
+
+        <div id="signup-email-field">
+          <label for="signup-email">Email address</label>
+          <input type="email" id="signup-email" placeholder="you@example.com">
+        </div>
+        <div id="signup-mobile-field">
+          <label for="signup-mobile">Mobile number (with country code)</label>
+          <input type="tel" id="signup-mobile" placeholder="+919876543210">
+        </div>
+
+        <label for="signup-password">Create a password</label>
+        <input type="password" id="signup-password" placeholder="At least 8 characters" autocomplete="new-password">
+        <p class="password-hint">You'll use this to sign in and view your briefing on the website.</p>
+
+        <label>How should we reach you?</label>
+        <div class="channels">
+          <label class="channel-option checked" data-channel="email">
+            <input type="checkbox" value="email" checked>
+            <span class="icon email">&#9993;</span>
+            <span class="meta"><span class="name">Email</span><br><span class="note">The full briefing, every weekday morning</span></span>
+          </label>
+          <label class="channel-option" data-channel="whatsapp">
+            <input type="checkbox" value="whatsapp">
+            <span class="icon whatsapp">&#9679;</span>
+            <span class="meta"><span class="name">WhatsApp</span><br><span class="note">A condensed text version</span></span>
+          </label>
+          <label class="channel-option" data-channel="telegram">
+            <input type="checkbox" value="telegram">
+            <span class="icon telegram">&#9992;</span>
+            <span class="meta"><span class="name">Telegram</span><br><span class="note">A condensed, formatted version</span></span>
+          </label>
+        </div>
+
+        <div id="whatsapp-field">
+          <label for="whatsapp_number">WhatsApp number (with country code)</label>
+          <input type="tel" id="whatsapp_number" placeholder="+919876543210">
+        </div>
+
+        <button type="submit" class="primary" id="signup-submit">Create account</button>
+      </form>
+
+      <p class="fine-print">
+        Email is required to verify your subscription if you sign up with one, even if you choose
+        WhatsApp or Telegram for daily delivery. Educational content only — not investment advice.
+        <a id="manage-link-toggle">Manage an existing subscription</a>
+      </p>
+    </div>
+
+    <!-- ---- Sign in ---- -->
+    <div id="panel-signin" class="hidden">
+      <div id="signin-status" class="status" role="status"></div>
+
+      <form id="signin-form">
+        <label for="signin-id">Email or mobile number</label>
+        <input type="text" id="signin-id" placeholder="you@example.com or +919876543210" autocomplete="username">
+
+        <label for="signin-password">Password</label>
+        <input type="password" id="signin-password" placeholder="Your password" autocomplete="current-password">
+
+        <button type="submit" class="primary" id="signin-submit">Sign in</button>
+      </form>
+
+      <p class="fine-print">
+        Forgot your password? Sign up again with the same email to receive a fresh verification link,
+        or unsubscribe below and start over.
+        <a id="manage-link-toggle-2">Manage an existing subscription</a>
+      </p>
+    </div>
+  </div>
+
+  <!-- ============== EMAIL VERIFICATION RESULT VIEW ============== -->
+  <div id="view-verify" class="card hidden">
+    <h2>Confirming your email&hellip;</h2>
+    <div id="verify-status" class="status" role="status"></div>
+    <div id="verify-telegram-prompt" class="hidden">
+      <p style="font-size:14.5px; margin-bottom:14px; color:var(--graphite);">
+        Want today's briefing on Telegram too? Sign in, then connect it from your dashboard.
+      </p>
+      <button class="ghost" id="verify-go-to-signin">Go to sign in</button>
+    </div>
+  </div>
+
+  <!-- ============== TELEGRAM DEEP LINK RESULT VIEW ============== -->
+  <div id="view-telegram-link" class="card hidden">
+    <h2>One more step</h2>
+    <p style="font-size:14.5px; margin-bottom:14px; color:var(--graphite);">
+      Open the link below, then press <strong>Start</strong> in Telegram. Nothing else to type.
+    </p>
+    <div class="deep-link-box">
+      <a id="telegram-deep-link" href="#" target="_blank" rel="noopener">Open Telegram to finish connecting &#8594;</a>
+    </div>
+    <button class="ghost" id="telegram-link-done-btn">Back to dashboard</button>
+  </div>
+
+  <!-- ============== MANAGE SUBSCRIPTION VIEW ============== -->
+  <div id="view-manage" class="card hidden">
+    <h2>Manage your subscription</h2>
+    <div id="manage-status" class="status" role="status"></div>
+    <label for="manage-email">Email address</label>
+    <input type="email" id="manage-email" placeholder="you@example.com">
+    <button class="ghost" id="manage-unsubscribe-btn">Unsubscribe this email</button>
+    <p class="fine-print">
+      Unsubscribing stops delivery on every channel linked to this email.
+      <a id="back-to-auth">&#8592; Back</a>
+    </p>
+  </div>
+
+  <!-- ============== DASHBOARD VIEW (after sign-in) ============== -->
+  <div id="view-dashboard" class="hidden">
+    <div class="card">
+      <div class="dashboard-toolbar">
+        <h2 style="margin:0;">Today's briefing</h2>
+        <span class="run-date mono" id="briefing-run-date"></span>
+      </div>
+      <div id="dashboard-status" class="status" role="status"></div>
+
+      <div id="briefing-available" class="hidden">
+        <div class="briefing-frame">
+          <iframe id="briefing-iframe" title="MarketPulse India daily briefing" sandbox="allow-same-origin"></iframe>
+        </div>
+      </div>
+      <div id="briefing-unavailable" class="dashboard-empty hidden">
+        No briefing has been published yet. Your first one arrives by 07:00&nbsp;AM&nbsp;IST on the next trading day.
+      </div>
+    </div>
+
+    <div class="card">
+      <details class="dashboard-settings">
+        <summary>Delivery settings</summary>
+        <div id="settings-status" class="status" role="status"></div>
+        <label>Channels</label>
+        <div class="channels" id="dashboard-channels">
+          <label class="channel-option" data-channel="email">
+            <input type="checkbox" value="email">
+            <span class="icon email">&#9993;</span>
+            <span class="meta"><span class="name">Email</span></span>
+          </label>
+          <label class="channel-option" data-channel="whatsapp">
+            <input type="checkbox" value="whatsapp">
+            <span class="icon whatsapp">&#9679;</span>
+            <span class="meta"><span class="name">WhatsApp</span></span>
+          </label>
+          <label class="channel-option" data-channel="telegram">
+            <input type="checkbox" value="telegram">
+            <span class="icon telegram">&#9992;</span>
+            <span class="meta"><span class="name">Telegram</span></span>
+          </label>
+        </div>
+        <button class="ghost" id="save-channels-btn">Save channels</button>
+        <button class="ghost" id="dashboard-telegram-link-btn">Connect Telegram</button>
+      </details>
+    </div>
+  </div>
+
+  <footer class="colophon">Educational content, not investment advice &middot; Indian Standard Time throughout</footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const API_BASE = window.location.origin + "/api";
+  const SESSION_STORAGE_KEY = "marketpulse_session_token";
+
+  const els = {
+    pageWrap: document.getElementById("page-wrap"),
+    accountBox: document.getElementById("account-box"),
+    accountWho: document.getElementById("account-who"),
+    signoutBtn: document.getElementById("signout-btn"),
+    mastheadTitle: document.getElementById("masthead-title"),
+    mastheadTagline: document.getElementById("masthead-tagline"),
+
+    authView: document.getElementById("view-auth"),
+    verifyView: document.getElementById("view-verify"),
+    telegramLinkView: document.getElementById("view-telegram-link"),
+    manageView: document.getElementById("view-manage"),
+    dashboardView: document.getElementById("view-dashboard"),
+
+    tabSignup: document.getElementById("tab-signup"),
+    tabSignin: document.getElementById("tab-signin"),
+    panelSignup: document.getElementById("panel-signup"),
+    panelSignin: document.getElementById("panel-signin"),
+
+    signupForm: document.getElementById("signup-form"),
+    signupStatus: document.getElementById("signup-status"),
+    signupSubmit: document.getElementById("signup-submit"),
+    signupEmail: document.getElementById("signup-email"),
+    signupMobile: document.getElementById("signup-mobile"),
+    signupEmailField: document.getElementById("signup-email-field"),
+    signupMobileField: document.getElementById("signup-mobile-field"),
+    signupPassword: document.getElementById("signup-password"),
+    whatsappField: document.getElementById("whatsapp-field"),
+    whatsappNumber: document.getElementById("whatsapp_number"),
+
+    signinForm: document.getElementById("signin-form"),
+    signinStatus: document.getElementById("signin-status"),
+    signinSubmit: document.getElementById("signin-submit"),
+    signinId: document.getElementById("signin-id"),
+    signinPassword: document.getElementById("signin-password"),
+
+    verifyStatus: document.getElementById("verify-status"),
+    verifyTelegramPrompt: document.getElementById("verify-telegram-prompt"),
+    verifyGoToSignin: document.getElementById("verify-go-to-signin"),
+
+    telegramDeepLink: document.getElementById("telegram-deep-link"),
+    telegramLinkDoneBtn: document.getElementById("telegram-link-done-btn"),
+
+    manageLinkToggle: document.getElementById("manage-link-toggle"),
+    manageLinkToggle2: document.getElementById("manage-link-toggle-2"),
+    manageEmail: document.getElementById("manage-email"),
+    manageStatus: document.getElementById("manage-status"),
+    manageUnsubscribeBtn: document.getElementById("manage-unsubscribe-btn"),
+    backToAuth: document.getElementById("back-to-auth"),
+
+    dashboardStatus: document.getElementById("dashboard-status"),
+    briefingRunDate: document.getElementById("briefing-run-date"),
+    briefingAvailable: document.getElementById("briefing-available"),
+    briefingUnavailable: document.getElementById("briefing-unavailable"),
+    briefingIframe: document.getElementById("briefing-iframe"),
+    dashboardChannels: document.getElementById("dashboard-channels"),
+    saveChannelsBtn: document.getElementById("save-channels-btn"),
+    settingsStatus: document.getElementById("settings-status"),
+    dashboardTelegramLinkBtn: document.getElementById("dashboard-telegram-link-btn"),
+
+    editionDate: document.getElementById("edition-date"),
+    countdownClock: document.getElementById("countdown-clock"),
+    countdownNextLabel: document.getElementById("countdown-next-label"),
+    timelinePoints: Array.from(document.querySelectorAll(".timeline .point")),
+  };
+
+  let sessionToken = localStorage.getItem(SESSION_STORAGE_KEY) || null;
+  let currentSubscriber = null;
+
+  function showView(view) {
+    [els.authView, els.verifyView, els.telegramLinkView, els.manageView, els.dashboardView].forEach((v) =>
+      v.classList.add("hidden")
+    );
+    view.classList.remove("hidden");
+  }
+
+  function setStatus(el, message, kind) {
+    el.textContent = message;
+    el.className = "status visible " + kind;
+  }
+
+  function clearStatus(el) {
+    el.className = "status";
+  }
+
+  async function apiRequest(method, path, body) {
+    const headers = { "Content-Type": "application/json" };
+    if (sessionToken) headers["Authorization"] = "Bearer " + sessionToken;
+    const resp = await fetch(API_BASE + path, {
+      method: method,
+      headers: headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+    const data = await resp.json().catch(() => ({}));
+    return { ok: resp.ok && data.ok !== false, status: resp.status, data: data };
+  }
+
+  function postJSON(path, body) { return apiRequest("POST", path, body); }
+  function getJSON(path) { return apiRequest("GET", path); }
+
+  function setSession(token) {
+    sessionToken = token;
+    if (token) {
+      localStorage.setItem(SESSION_STORAGE_KEY, token);
+    } else {
+      localStorage.removeItem(SESSION_STORAGE_KEY);
+    }
+  }
+
+  // ---- Auth tabs ----
+  els.tabSignup.addEventListener("click", function () { switchAuthTab("signup"); });
+  els.tabSignin.addEventListener("click", function () { switchAuthTab("signin"); });
+
+  function switchAuthTab(which) {
+    const signupActive = which === "signup";
+    els.tabSignup.classList.toggle("active", signupActive);
+    els.tabSignin.classList.toggle("active", !signupActive);
+    els.tabSignup.setAttribute("aria-selected", String(signupActive));
+    els.tabSignin.setAttribute("aria-selected", String(!signupActive));
+    els.panelSignup.classList.toggle("hidden", !signupActive);
+    els.panelSignin.classList.toggle("hidden", signupActive);
+  }
+
+  // ---- Signup identity toggle (email vs mobile) ----
+  document.querySelectorAll('input[name="signup-identity"]').forEach((radio) => {
+    radio.addEventListener("change", function () {
+      const useMobile = document.querySelector('input[name="signup-identity"]:checked').value === "mobile";
+      els.signupEmailField.classList.toggle("hidden", useMobile);
+      els.signupMobileField.classList.toggle("visible", useMobile);
+    });
+  });
+
+  // ---- Channel checkbox UI (shared handler for both signup and dashboard channel lists) ----
+  function wireChannelOptions(container, onWhatsappToggle) {
+    container.querySelectorAll(".channel-option").forEach((option) => {
+      option.addEventListener("click", function (e) {
+        if (e.target.tagName !== "INPUT") {
+          const checkbox = option.querySelector("input");
+          checkbox.checked = !checkbox.checked;
+        }
+        option.classList.toggle("checked", option.querySelector("input").checked);
+        if (onWhatsappToggle) onWhatsappToggle();
+      });
+    });
+  }
+
+  wireChannelOptions(els.signupForm, function () {
+    const anyWhatsapp = document.querySelector('#signup-form .channel-option[data-channel="whatsapp"] input').checked;
+    els.whatsappField.classList.toggle("visible", anyWhatsapp);
+  });
+  wireChannelOptions(els.dashboardChannels);
+
+  // ---- Signup ----
+  els.signupForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    clearStatus(els.signupStatus);
+
+    const useMobile = document.querySelector('input[name="signup-identity"]:checked').value === "mobile";
+    const channels = Array.from(els.signupForm.querySelectorAll(".channel-option input:checked")).map((c) => c.value);
+    if (channels.length === 0) {
+      setStatus(els.signupStatus, "Choose at least one delivery channel.", "error");
+      return;
+    }
+
+    const payload = {
+      password: els.signupPassword.value,
+      email: useMobile ? undefined : els.signupEmail.value.trim(),
+      mobile_number: useMobile ? els.signupMobile.value.trim() : undefined,
+      channels: channels,
+      whatsapp_number: channels.includes("whatsapp") ? els.whatsappNumber.value.trim() : undefined,
+    };
+
+    els.signupSubmit.disabled = true;
+    els.signupSubmit.textContent = "Creating account…";
+
+    const { ok, data } = await postJSON("/signup", payload);
+
+    els.signupSubmit.disabled = false;
+    els.signupSubmit.textContent = "Create account";
+
+    if (ok) {
+      if (data.status === "active") {
+        setStatus(els.signupStatus, "Account created! Sign in below to view your briefing.", "success");
+      } else {
+        setStatus(
+          els.signupStatus,
+          "Check your inbox — we've sent a confirmation link. Once verified, sign in below.",
+          "success"
+        );
+      }
+      els.signupForm.reset();
+      switchAuthTab("signin");
+    } else {
+      setStatus(els.signupStatus, data.error || data.reason || "Something went wrong. Please try again.", "error");
+    }
+  });
+
+  // ---- Sign in ----
+  els.signinForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    clearStatus(els.signinStatus);
+
+    els.signinSubmit.disabled = true;
+    els.signinSubmit.textContent = "Signing in…";
+
+    const { ok, data } = await postJSON("/login", {
+      login_id: els.signinId.value.trim(),
+      password: els.signinPassword.value,
+    });
+
+    els.signinSubmit.disabled = false;
+    els.signinSubmit.textContent = "Sign in";
+
+    if (ok) {
+      setSession(data.session_token);
+      currentSubscriber = data.subscriber;
+      els.signinForm.reset();
+      enterDashboard();
+    } else {
+      setStatus(els.signinStatus, data.error || "Incorrect email/mobile number or password.", "error");
+    }
+  });
+
+  // ---- Sign out ----
+  els.signoutBtn.addEventListener("click", async function () {
+    await postJSON("/logout", {});
+    setSession(null);
+    currentSubscriber = null;
+    showLandingState();
+  });
+
+  // ---- Email verification (runs automatically if ?token= is present) ----
+  async function runVerification() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    if (!token) return false;
+
+    showView(els.verifyView);
+    const { ok, data } = await postJSON("/verify", { token: token });
+
+    if (ok && data.ok) {
+      setStatus(els.verifyStatus, "Email confirmed! Sign in to view your briefing.", "success");
+      els.verifyTelegramPrompt.classList.remove("hidden");
+    } else {
+      setStatus(els.verifyStatus, data.reason || "This verification link is invalid or expired.", "error");
+    }
+    return true;
+  }
+
+  els.verifyGoToSignin.addEventListener("click", function () {
+    showView(els.authView);
+    switchAuthTab("signin");
+  });
+
+  // ---- Telegram linking (from the dashboard, signed in) ----
+  async function startTelegramLink() {
+    const { ok, data } = await postJSON("/telegram/link", {});
+    if (ok && data.deep_link) {
+      els.telegramDeepLink.href = data.deep_link;
+      showView(els.telegramLinkView);
+    } else {
+      setStatus(els.settingsStatus, data.reason || "Could not start Telegram linking.", "error");
+    }
+  }
+  els.dashboardTelegramLinkBtn.addEventListener("click", startTelegramLink);
+  els.telegramLinkDoneBtn.addEventListener("click", function () {
+    showView(els.dashboardView);
+    refreshChannelCheckboxes();
+  });
+
+  // ---- Manage / unsubscribe (works without a session, by email) ----
+  function openManageView(e) {
+    if (e) e.preventDefault();
+    showView(els.manageView);
+  }
+  els.manageLinkToggle.addEventListener("click", openManageView);
+  els.manageLinkToggle2.addEventListener("click", openManageView);
+  els.backToAuth.addEventListener("click", function (e) {
+    e.preventDefault();
+    showLandingState();
+  });
+
+  els.manageUnsubscribeBtn.addEventListener("click", async function () {
+    clearStatus(els.manageStatus);
+    const email = els.manageEmail.value.trim();
+    if (!email) {
+      setStatus(els.manageStatus, "Enter the email address you subscribed with.", "error");
+      return;
+    }
+    els.manageUnsubscribeBtn.disabled = true;
+    const { ok, data } = await postJSON("/unsubscribe", { email: email });
+    els.manageUnsubscribeBtn.disabled = false;
+
+    if (ok) {
+      setStatus(els.manageStatus, "You've been unsubscribed from all channels.", "success");
+    } else {
+      setStatus(els.manageStatus, data.error || "Something went wrong.", "error");
+    }
+  });
+
+  // ---- Dashboard: load + display today's briefing ----
+  async function loadBriefing() {
+    clearStatus(els.dashboardStatus);
+    els.briefingAvailable.classList.add("hidden");
+    els.briefingUnavailable.classList.add("hidden");
+
+    const { ok, data } = await getJSON("/briefing/latest");
+
+    if (!ok) {
+      setStatus(els.dashboardStatus, data.error || "Could not load your briefing right now.", "error");
+      return;
+    }
+
+    if (!data.available) {
+      els.briefingUnavailable.classList.remove("hidden");
+      return;
+    }
+
+    els.briefingRunDate.textContent = data.run_date || "";
+    els.briefingIframe.srcdoc = data.html || "<p>No content available.</p>";
+    els.briefingAvailable.classList.remove("hidden");
+
+    if (data.suppressed) {
+      setStatus(
+        els.dashboardStatus,
+        "Today's briefing was withheld by an automated compliance check; showing the most recent available edition.",
+        "info"
+      );
+    }
+  }
+
+  function refreshChannelCheckboxes() {
+    if (!currentSubscriber) return;
+    const active = new Set(currentSubscriber.channels || []);
+    els.dashboardChannels.querySelectorAll(".channel-option").forEach((option) => {
+      const value = option.querySelector("input").value;
+      const checked = active.has(value);
+      option.querySelector("input").checked = checked;
+      option.classList.toggle("checked", checked);
+    });
+  }
+
+  els.saveChannelsBtn.addEventListener("click", async function () {
+    clearStatus(els.settingsStatus);
+    const channels = Array.from(els.dashboardChannels.querySelectorAll(".channel-option input:checked")).map(
+      (c) => c.value
+    );
+    if (channels.length === 0) {
+      setStatus(els.settingsStatus, "Choose at least one delivery channel.", "error");
+      return;
+    }
+    const { ok, data } = await postJSON("/channels", { channels: channels });
+    if (ok) {
+      currentSubscriber.channels = data.channels;
+      setStatus(els.settingsStatus, "Saved.", "success");
+    } else {
+      setStatus(els.settingsStatus, data.error || "Could not save channels.", "error");
+    }
+  });
+
+  // ---- View state transitions ----
+  function showLandingState() {
+    els.accountBox.classList.add("hidden");
+    els.mastheadTitle.textContent = "Tomorrow's open, before it opens.";
+    els.mastheadTagline.innerHTML =
+      "A plain-English briefing for first-time investors, written before NSE rings the bell at 9:15&nbsp;AM&nbsp;IST.";
+    els.pageWrap.classList.remove("dashboard");
+    showView(els.authView);
+    switchAuthTab("signin");
+  }
+
+  function enterDashboard() {
+    els.accountBox.classList.remove("hidden");
+    els.accountWho.textContent = currentSubscriber.email || currentSubscriber.mobile_number || "Signed in";
+    els.mastheadTitle.textContent = "Today's open, decoded.";
+    els.mastheadTagline.textContent = "Your briefing, ready whenever you are.";
+    els.pageWrap.classList.add("dashboard");
+    showView(els.dashboardView);
+    refreshChannelCheckboxes();
+    loadBriefing();
+  }
+
+  async function restoreSessionIfPresent() {
+    if (!sessionToken) return false;
+    const { ok, data } = await getJSON("/me");
+    if (ok && data.subscriber) {
+      currentSubscriber = data.subscriber;
+      enterDashboard();
+      return true;
+    }
+    setSession(null);
+    return false;
+  }
+
+  // ---- Live IST countdown (signature element) ----
+  // India Standard Time is UTC+5:30 with no DST; computed via offset
+  // rather than relying on the visitor's local locale/timezone settings.
+  const IST_OFFSET_MINUTES = 5 * 60 + 30;
+  const CHECKPOINTS = [
+    { hhmm: "06:00", minutes: 6 * 60 },
+    { hhmm: "06:45", minutes: 6 * 60 + 45 },
+    { hhmm: "06:50", minutes: 6 * 60 + 50 },
+    { hhmm: "07:00", minutes: 7 * 60 },
+    { hhmm: "09:15", minutes: 9 * 60 + 15 },
+  ];
+
+  function nowISTMinutes() {
+    const now = new Date();
+    const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes() + now.getUTCSeconds() / 60;
+    return (utcMinutes + IST_OFFSET_MINUTES) % (24 * 60);
+  }
+
+  function formatHMS(totalSeconds) {
+    const h = Math.floor(totalSeconds / 3600);
+    const m = Math.floor((totalSeconds % 3600) / 60);
+    const s = Math.floor(totalSeconds % 60);
+    const pad = (n) => String(n).padStart(2, "0");
+    return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  }
+
+  const CHECKPOINT_NAMES = {
+    "06:00": "pre-render begins",
+    "06:45": "GIFT Nifty snapshot",
+    "06:50": "today's briefing assembled",
+    "07:00": "delivery to your inbox",
+    "09:15": "NSE opens",
+  };
+
+  function updateCountdown() {
+    const nowMin = nowISTMinutes();
+    const nowSec = nowMin * 60;
+
+    const istHours = Math.floor(nowMin / 60);
+    const istMins = Math.floor(nowMin % 60);
+    const dateFmt = new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", timeZone: "Asia/Kolkata" });
+    try {
+      els.editionDate.textContent = dateFmt.format(new Date()) + " · IST";
+    } catch (e) {
+      els.editionDate.textContent = String(istHours).padStart(2, "0") + ":" + String(istMins).padStart(2, "0") + " IST";
+    }
+
+    let next = null;
+    for (const cp of CHECKPOINTS) {
+      if (cp.minutes * 60 > nowSec) { next = cp; break; }
+    }
+    if (!next) next = CHECKPOINTS[0]; // wrapped past 09:15 -> count to tomorrow's 06:00
+
+    let secondsUntil;
+    if (next === CHECKPOINTS[0] && nowSec >= CHECKPOINTS[CHECKPOINTS.length - 1].minutes * 60) {
+      secondsUntil = (24 * 60 * 60) - nowSec + next.minutes * 60;
+    } else {
+      secondsUntil = next.minutes * 60 - nowSec;
+    }
+
+    els.countdownClock.innerHTML = '<span class="amber-dot" aria-hidden="true"></span>' + formatHMS(Math.max(0, secondsUntil));
+    els.countdownNextLabel.textContent = "until " + (CHECKPOINT_NAMES[next.hhmm] || "next checkpoint");
+
+    els.timelinePoints.forEach((point) => {
+      const hhmm = point.getAttribute("data-hhmm");
+      const cpMinutes = CHECKPOINTS.find((c) => c.hhmm === hhmm).minutes;
+      point.classList.remove("done", "active");
+      if (hhmm === next.hhmm) {
+        point.classList.add("active");
+      } else if (cpMinutes * 60 < nowSec) {
+        point.classList.add("done");
+      }
+    });
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+  // ---- Entry point ----
+  (async function init() {
+    const cameFromVerification = await runVerification();
+    if (cameFromVerification) return;
+
+    const restored = await restoreSessionIfPresent();
+    if (!restored) showLandingState();
+  })();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+requests>=2.31.0
+feedparser>=6.0.10
+
+# api/ web app server (signup, verification, Telegram webhook). Not
+# needed by the core pipeline/tests -- only by `python -m
+# marketpulse.api.app` or a `gunicorn marketpulse.api.app:app` deploy.
+flask>=3.0.0
+gunicorn>=21.2.0
+werkzeug>=3.0.0   # ships with Flask; pinned explicitly for password hashing (persistence/subscriber_repo.py)
