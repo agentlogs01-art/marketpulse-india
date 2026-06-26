@@ -49,16 +49,36 @@ def wait_until(checkpoint: str) -> None:
 
 
 def resolve_prev_close(cli_value: Optional[float]) -> Optional[float]:
+    # 1. Manual override always takes absolute priority
     if cli_value is not None:
         return cli_value
+        
+    # 2. Standard Production Path: Query Supabase
     try:
         from marketpulse.persistence.market_close_repo import get_latest_close
 
         latest = get_latest_close()
-        if latest:
+        if latest and latest.get("nifty_close"):
             return float(latest["nifty_close"])
     except Exception as exc:
         print(f"Could not reach Supabase for prev-close lookup: {exc}", file=sys.stderr)
+        
+    # 3. Emergency Self-Healing Fallback: Fetch directly from Stooq if database is blank/offline
+    print("[!] Supabase baseline empty or unreachable. Attempting emergency API lookup...", file=sys.stderr)
+    try:
+        import requests
+        stooq_url = "https://stooq.com/q/l/?s=^nsei&f=sd2t2ohlcv&h&e=csv"
+        resp = requests.get(stooq_url, timeout=10)
+        resp.raise_for_status()
+        
+        # CSV Order: Symbol,Date,Time,Open,High,Low,Close,Volume
+        line = resp.text.strip().splitlines()[-1]
+        fallback_close = float(line.split(",")[6])
+        print(f"[✓] Emergency baseline recovered via Stooq: {fallback_close}", file=sys.stderr)
+        return fallback_close
+    except Exception as err:
+        print(f"[-] Critical: Emergency baseline aggregator fetch failed: {err}", file=sys.stderr)
+        
     return None
 
 
@@ -131,8 +151,8 @@ def main(argv: Optional[list] = None) -> int:
     prev_close = resolve_prev_close(args.prev_close)
     if prev_close is None:
         print(
-            "No previous Nifty close available (no --prev-close flag and "
-            "Supabase market_closes has no rows). Aborting rather than guessing.",
+            "No previous Nifty close available (no --prev-close flag, "
+            "Supabase empty, and emergency fallback failed). Aborting.",
             file=sys.stderr,
         )
         return 3
