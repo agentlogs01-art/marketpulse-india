@@ -63,21 +63,46 @@ def resolve_prev_close(cli_value: Optional[float]) -> Optional[float]:
     except Exception as exc:
         print(f"Could not reach Supabase for prev-close lookup: {exc}", file=sys.stderr)
         
-    # 3. Emergency Self-Healing Fallback: Fetch directly from Stooq if database is blank/offline
-    print("[!] Supabase baseline empty or unreachable. Attempting emergency API lookup...", file=sys.stderr)
+    # 3. Emergency Self-Healing Fallback: Fetch directly from Google Finance Export
+    print("[!] Supabase baseline empty or unreachable. Attempting emergency Google API lookup...", file=sys.stderr)
     try:
         import requests
-        stooq_url = "https://stooq.com/q/l/?s=^nsei&f=sd2t2ohlcv&h&e=csv"
+        # Google Finance historical text tracker for INDEXNSE:NIFTY_50
+        google_url = "https://www.google.com/finance/quote/NIFTY_50:INDEXNSE"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        }
+        resp = requests.get(google_url, headers=headers, timeout=10)
+        resp.raise_for_status()
+        
+        # Parse the last price directly out of Google Finance's HTML meta data tags
+        search_str = '"INDEXNSE:NIFTY_50",['
+        if search_str in resp.text:
+            idx = resp.text.index(search_str) + len(search_str)
+            sub_text = resp.text[idx:idx+20] # Grab trailing segment containing price
+            price_val = sub_text.split(",")[0].replace('"', '').strip()
+            fallback_close = float(price_val)
+            print(f"[✓] Emergency baseline recovered via Google Finance: {fallback_close}", file=sys.stderr)
+            return fallback_close
+            
+    except Exception as err:
+        print(f"[-] Google fallback failed: {err}. Trying backup tracker...", file=sys.stderr)
+
+    # 4. Ultimate Fallback: Cleaned Stooq Request Format
+    try:
+        import requests
+        # Stooq requires the ticker without standard prefix encoding for down-level files
+        stooq_url = "https://stooq.com/q/d/l/?s=^nsei&f=sdwoplc&g=d"
         resp = requests.get(stooq_url, timeout=10)
         resp.raise_for_status()
         
-        # CSV Order: Symbol,Date,Time,Open,High,Low,Close,Volume
+        # Layout: Date,Open,High,Low,Close,Volume
         line = resp.text.strip().splitlines()[-1]
-        fallback_close = float(line.split(",")[6])
+        fallback_close = float(line.split(",")[4]) # Index 4 is Close
         print(f"[✓] Emergency baseline recovered via Stooq: {fallback_close}", file=sys.stderr)
         return fallback_close
     except Exception as err:
-        print(f"[-] Critical: Emergency baseline aggregator fetch failed: {err}", file=sys.stderr)
+        print(f"[-] Critical: All emergency baseline fallback networks failed: {err}", file=sys.stderr)
         
     return None
 
