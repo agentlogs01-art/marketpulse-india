@@ -17,8 +17,8 @@ on:
 
 jobs:
   run-briefing:
-    # Using contains() or direct equality. Ensured spacing matches exactly what GitHub sets.
-    if: github.event.schedule == '30 0 * * 1-5' || github.event_name == 'workflow_dispatch'
+    # Only runs on the morning cron OR if manually triggered WITHOUT the 'record' override
+    if: github.event.schedule == '30 0 * * 1-5' || (github.event_name == 'workflow_dispatch' && github.event.inputs.prev_close != 'record')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -55,7 +55,7 @@ jobs:
           fi
 
   record-close:
-    # Enforcing strict string validation or adding manual dispatch fallback if you want to test it manually
+    # Runs on the afternoon cron OR if manually triggered WITH the 'record' override
     if: github.event.schedule == '15 10 * * 1-5' || (github.event_name == 'workflow_dispatch' && github.event.inputs.prev_close == 'record')
     runs-on: ubuntu-latest
     timeout-minutes: 10
