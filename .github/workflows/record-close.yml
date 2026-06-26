@@ -1,0 +1,27 @@
+name: MarketPulse India Record Close (Afternoon)
+
+on:
+  schedule:
+    # 10:15 UTC = 15:45 IST
+    - cron: "15 10 * * 1-5"
+  workflow_dispatch: # Allows manual trigger instantly with one click, no keyword needed!
+
+jobs:
+  record-close:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Record today's official Nifty 50 close
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python -m marketpulse.scheduler.record_daily_close
