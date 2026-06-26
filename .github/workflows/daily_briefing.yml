@@ -1,0 +1,74 @@
+name: MarketPulse India Daily Briefing
+
+on:
+  schedule:
+    # 00:30 UTC = 06:00 IST (pre-render checkpoint). The script itself
+    # sleeps internally until 06:45 / 06:50 / 07:00 IST.
+    - cron: "30 0 * * 1-5"  # weekdays only (NSE trading days, holidays handled separately)
+    # 10:15 UTC = 15:45 IST, shortly after NSE close (15:30 IST). Persists
+    # today's official Nifty 50 close to Supabase so tomorrow's morning
+    # run has a baseline without an extra live call in the critical path.
+    - cron: "15 10 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      prev_close:
+        description: "Manual override: previous day's official Nifty 50 close (leave blank to read from Supabase)"
+        required: false
+
+jobs:
+  run-briefing:
+    if: github.event.schedule == '30 0 * * 1-5' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run daily briefing pipeline
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_FROM_ADDRESS: ${{ secrets.EMAIL_FROM_ADDRESS }}
+          SUBSCRIBER_LIST: ${{ secrets.SUBSCRIBER_LIST }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TWILIO_ACCOUNT_SID: ${{ secrets.TWILIO_ACCOUNT_SID }}
+          TWILIO_AUTH_TOKEN: ${{ secrets.TWILIO_AUTH_TOKEN }}
+          TWILIO_WHATSAPP_FROM: ${{ secrets.TWILIO_WHATSAPP_FROM }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_BOT_USERNAME: ${{ secrets.TELEGRAM_BOT_USERNAME }}
+        run: |
+          if [ -n "${{ github.event.inputs.prev_close }}" ]; then
+            python -m marketpulse.scheduler.run_daily_briefing --prev-close "${{ github.event.inputs.prev_close }}"
+          else
+            python -m marketpulse.scheduler.run_daily_briefing
+          fi
+
+  record-close:
+    if: github.event.schedule == '15 10 * * 1-5'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Record today's official Nifty 50 close
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: python -m marketpulse.scheduler.record_daily_close
