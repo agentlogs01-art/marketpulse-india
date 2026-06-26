@@ -43,8 +43,13 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_BOT_USERNAME: ${{ secrets.TELEGRAM_BOT_USERNAME }}
         run: |
-          if [ -n "${{ github.event.inputs.prev_close }}" ]; then
-            python -m marketpulse.scheduler.run_daily_briefing --prev-close "${{ github.event.inputs.prev_close }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            if [ -n "${{ github.event.inputs.prev_close }}" ]; then
+              python -m marketpulse.scheduler.run_daily_briefing --prev-close "${{ github.event.inputs.prev_close }}" --skip-wait
+            else
+              python -m marketpulse.scheduler.run_daily_briefing --skip-wait
+            fi
           else
+            # Standard automated morning cron schedule path (retains internal time checkpoints)
             python -m marketpulse.scheduler.run_daily_briefing
           fi
