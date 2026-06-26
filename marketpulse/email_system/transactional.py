@@ -29,7 +29,7 @@ def _send_plain_text(to_email, subject, body):
     # For the Web API, Brevo requires your master API Key (usually starts with xkeysib-)
     # Store this in your Railway Variables as BREVO_API_KEY
     api_key = os.environ.get("BREVO_API_KEY") or os.environ.get("SMTP_PASSWORD")
-    from_addr = os.environ.get("EMAIL_FROM_ADDRESS", "noreply@marketpulseindia.app")
+    from_addr = os.environ.get("EMAIL_FROM_ADDRESS", "agentlogs01@gmail.com")
 
     if not api_key:
         print("[-] Brevo API Key missing. Skipping email signup dispatch.")
