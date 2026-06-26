@@ -16,7 +16,7 @@ MVP volume) -- no new infra cost.
 from __future__ import annotations
 
 import os
-import socket
+import request
 import smtplib
 from email.mime.text import MIMEText
 
@@ -25,42 +25,45 @@ class TransactionalEmailError(Exception):
     pass
 
 
-
-
 def _send_plain_text(to_email, subject, body):
-    smtp_host = os.environ.get("SMTP_HOST")
-    # Default to 2525 if port 587 is blocked by cloud provider firewalls
-    smtp_port = int(os.environ.get("SMTP_PORT", "2525")) 
-    smtp_user = os.environ.get("SMTP_USER")
-    smtp_password = os.environ.get("SMTP_PASSWORD")
+    # For the Web API, Brevo requires your master API Key (usually starts with xkeysib-)
+    # Store this in your Railway Variables as BREVO_API_KEY
+    api_key = os.environ.get("BREVO_API_KEY") or os.environ.get("SMTP_PASSWORD")
+    from_addr = os.environ.get("EMAIL_FROM_ADDRESS", "noreply@marketpulseindia.app")
 
-    if not all([smtp_host, smtp_user, smtp_password]):
-        print("[-] SMTP Configuration missing. Skipping email signup dispatch.")
+    if not api_key:
+        print("[-] Brevo API Key missing. Skipping email signup dispatch.")
         return False
+
+    url = "https://api.brevo.com/v3/smtp/email"
+    
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "api-key": api_key
+    }
+    
+    payload = {
+        "sender": {"email": from_addr, "name": "MarketPulse India"},
+        "to": [{"email": to_email}],
+        "subject": subject,
+        "textContent": body
+    }
 
     try:
-        # CRITICAL FIX: Explicitly set a 5-second timeout so it cannot freeze Gunicorn
-        print(f"[~] Attempting outbound SMTP handshake to {smtp_host}:{smtp_port}...")
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=5.0) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            
-            # ... Your existing logic to compile message headers & body ...
-            # e.g., server.sendmail(from_addr, [to_email], msg.as_string())
-            
-            print(f"[✓] Verification email safely transmitted to {to_email}")
-            return True
-
-    except (socket.timeout, TimeoutError):
-        print(f"[!] Outbound connection timed out to {smtp_host}:{smtp_port}. Network block suspected.")
-        return False
-    except smtplib.SMTPException as smtp_err:
-        print(f"[-] SMTP Protocol Handshake error: {smtp_err}")
-        return False
-    except Exception as general_err:
-        print(f"[-] Unexpected failure during mail execution: {general_err}")
-        return False
+        print(f"[~] Attempting outbound HTTP API email dispatch to {to_email}...")
+        response = requests.post(url, json=payload, headers=headers, timeout=5.0)
         
+        if response.status_code in [200, 201, 202]:
+            print(f"[✓] Transactional API call successful! Message ID: {response.json().get('messageId')}")
+            return True
+        else:
+            print(f"[-] Brevo API rejected payload ({response.status_code}): {response.text}")
+            return False
+
+    except requests.exceptions.RequestException as exc:
+        print(f"[-] HTTP API connection failed: {exc}")
+        return False        
 def send_verification_email(to_email: str, verify_url: str) -> None:
     subject = "Confirm your MarketPulse India subscription"
     body = (
