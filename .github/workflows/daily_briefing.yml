@@ -12,13 +12,16 @@ on:
   workflow_dispatch:
     inputs:
       prev_close:
-        description: "Manual override: previous day's official Nifty 50 close (leave blank to read from Supabase)"
+        description: "Manual override: previous day's official Nifty 50 close (Type 'record' to run record-close job)"
         required: false
+        type: string  # Strongly type this to guarantee string evaluation matches
 
 jobs:
   run-briefing:
-    # Only runs on the morning cron OR if manually triggered WITHOUT the 'record' override
-    if: github.event.schedule == '30 0 * * 1-5' || (github.event_name == 'workflow_dispatch' && github.event.inputs.prev_close != 'record')
+    # Safely checks if it's the morning cron OR a manual run that IS NOT a recording command
+    if: |
+      github.event.schedule == '30 0 * * 1-5' || 
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.prev_close != 'record')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -48,15 +51,18 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_BOT_USERNAME: ${{ secrets.TELEGRAM_BOT_USERNAME }}
         run: |
-          if [ -n "${{ github.event.inputs.prev_close }}" ]; then
+          # Only pass the CLI flag if it is numeric (not empty and not our 'record' string keyword)
+          if [ -n "${{ github.event.inputs.prev_close }}" ] && [ "${{ github.event.inputs.prev_close }}" != "record" ]; then
             python -m marketpulse.scheduler.run_daily_briefing --prev-close "${{ github.event.inputs.prev_close }}"
           else
             python -m marketpulse.scheduler.run_daily_briefing
           fi
 
   record-close:
-    # Runs on the afternoon cron OR if manually triggered WITH the 'record' override
-    if: github.event.schedule == '15 10 * * 1-5' || (github.event_name == 'workflow_dispatch' && github.event.inputs.prev_close == 'record')
+    # Safely checks if it's the afternoon cron OR a manual run that explicitly requests 'record'
+    if: |
+      github.event.schedule == '15 10 * * 1-5' || 
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.prev_close == 'record')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
