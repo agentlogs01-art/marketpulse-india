@@ -59,12 +59,62 @@ def fetch_official_nifty_close() -> float:
         except Exception as stooq_err:
             raise RuntimeError(f"Both closing data feeds failed: {stooq_err}")
 
+import requests
+import sys
+
+def get_official_nifty_close() -> float:
+    """
+    Fetches the final official closing price of Nifty 50.
+    Tries Yahoo Finance with advanced headers first, but falls back instantly
+    to Stooq if Yahoo returns a 429 or drops connection on GitHub Actions.
+    """
+    # 1. Primary Source: Yahoo Finance with full header spoofing
+    yahoo_url = "https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI"
+    yahoo_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Origin": "https://finance.yahoo.com",
+        "Referer": "https://finance.yahoo.com/"
+    }
+
+    try:
+        print("[+] Attempting to fetch Nifty 50 close from Yahoo Finance...")
+        resp = requests.get(yahoo_url, headers=yahoo_headers, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        close_price = float(data["chart"]["result"][0]["meta"]["regularMarketPrice"])
+        print(f"[✓] Successfully fetched from Yahoo: {close_price}")
+        return close_price
+    except Exception as e:
+        print(f"[!] Yahoo Finance failed (likely data-center 429 rate limit): {e}")
+        print("[+] Activating secondary fallback source: Stooq...")
+
+    # 2. Secondary Fallback Source: Stooq (extremely reliable on CI/CD environments)
+    try:
+        stooq_url = "https://stooq.com/q/l/?s=^nsei&f=sd2t2ohlcv&h&e=csv"
+        resp = requests.get(stooq_url, timeout=10)
+        resp.raise_for_status()
+        
+        # CSV layout layout: Symbol,Date,Time,Open,High,Low,Close,Volume
+        lines = resp.text.strip().splitlines()
+        if len(lines) < 2:
+            raise ValueError("Stooq returned insufficient historical or structural records.")
+            
+        last_line = lines[-1].split(",")
+        close_price = float(last_line[6])  # Index 6 corresponds directly to Close
+        print(f"[✓] Successfully retrieved Nifty 50 close from Stooq Fallback: {close_price}")
+        return close_price
+    except Exception as stooq_err:
+        print(f"[-] Critical Error: Both Yahoo Finance and Stooq fallback providers failed: {stooq_err}")
+        sys.exit(1) # Gracefully kill execution only if both systems fail completely
 
 def main(argv: Optional[list] = None) -> int:
     trade_date = now_ist().date().isoformat()
 
     try:
-        close_price = fetch_official_nifty_close()
+        #close_price = fetch_official_nifty_close()
+        close_price = get_official_nifty_close()
     except Exception as exc:
         print(f"Failed to fetch official Nifty 50 close: {exc}", file=sys.stderr)
         return 1
