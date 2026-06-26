@@ -2,7 +2,9 @@ name: MarketPulse India Record Close (Afternoon)
 
 on:
   schedule:
-    # 10:15 UTC = 15:45 IST
+    # 10:15 UTC = 15:45 IST, shortly after NSE close (15:30 IST). Persists
+    # today's official Nifty 50 close to Supabase so tomorrow's morning
+    # run has a baseline without an extra live call in the critical path.    
     - cron: "15 10 * * 1-5"
   workflow_dispatch: # Allows manual trigger instantly with one click, no keyword needed!
 
