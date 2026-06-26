@@ -16,7 +16,7 @@ MVP volume) -- no new infra cost.
 from __future__ import annotations
 
 import os
-import request
+import requests
 import smtplib
 from email.mime.text import MIMEText
 
