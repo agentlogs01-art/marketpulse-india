@@ -84,23 +84,3 @@ def send_telegram_linked_confirmation(to_email: str) -> None:
     )
     _send_plain_text(to_email, subject, body)
 
-
-def _send_plain_text(to_email: str, subject: str, body: str) -> None:
-    smtp_host = os.environ.get("SMTP_HOST")
-    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
-    smtp_user = os.environ.get("SMTP_USER")
-    smtp_password = os.environ.get("SMTP_PASSWORD")
-    from_addr = os.environ.get("EMAIL_FROM_ADDRESS", smtp_user or "agentlogs01@gmail.com")
-
-    if not all([smtp_host, smtp_user, smtp_password]):
-        raise TransactionalEmailError("SMTP credentials not fully configured in environment")
-
-    msg = MIMEText(body, "plain")
-    msg["Subject"] = subject
-    msg["From"] = from_addr
-    msg["To"] = to_email
-
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.sendmail(from_addr, [to_email], msg.as_string())
