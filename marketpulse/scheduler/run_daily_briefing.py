@@ -63,46 +63,46 @@ def resolve_prev_close(cli_value: Optional[float]) -> Optional[float]:
     except Exception as exc:
         print(f"Could not reach Supabase for prev-close lookup: {exc}", file=sys.stderr)
         
-    # 3. Emergency Self-Healing Fallback: Fetch directly from Google Finance Export
-    print("[!] Supabase baseline empty or unreachable. Attempting emergency Google API lookup...", file=sys.stderr)
-    try:
-        import requests
-        # Google Finance historical text tracker for INDEXNSE:NIFTY_50
-        google_url = "https://www.google.com/finance/quote/NIFTY_50:INDEXNSE"
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        }
-        resp = requests.get(google_url, headers=headers, timeout=10)
-        resp.raise_for_status()
-        
-        # Parse the last price directly out of Google Finance's HTML meta data tags
-        search_str = '"INDEXNSE:NIFTY_50",['
-        if search_str in resp.text:
-            idx = resp.text.index(search_str) + len(search_str)
-            sub_text = resp.text[idx:idx+20] # Grab trailing segment containing price
-            price_val = sub_text.split(",")[0].replace('"', '').strip()
-            fallback_close = float(price_val)
-            print(f"[✓] Emergency baseline recovered via Google Finance: {fallback_close}", file=sys.stderr)
-            return fallback_close
-            
-    except Exception as err:
-        print(f"[-] Google fallback failed: {err}. Trying backup tracker...", file=sys.stderr)
+    # Common headers to prevent 429/404 blocks on data-center IPs
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
 
-    # 4. Ultimate Fallback: Cleaned Stooq Request Format
+    # 3. Emergency API Fallback: Yahoo V7 Quote Engine (highly stable alternative)
+    print("[!] Supabase empty. Attempting emergency Yahoo V7 API lookup...", file=sys.stderr)
     try:
         import requests
-        # Stooq requires the ticker without standard prefix encoding for down-level files
-        stooq_url = "https://stooq.com/q/d/l/?s=^nsei&f=sdwoplc&g=d"
-        resp = requests.get(stooq_url, timeout=10)
+        # Using the quote endpoint instead of the chart endpoint to bypass heavy limits
+        yahoo_url = "https://query1.finance.yahoo.com/v7/finance/quote?symbols=^NSEI"
+        resp = requests.get(yahoo_url, headers=headers, timeout=10)
         resp.raise_for_status()
         
-        # Layout: Date,Open,High,Low,Close,Volume
+        data = resp.json()
+        result = data["quoteResponse"]["result"][0]
+        # Fall back to regularMarketPrice if market is open, or regularMarketPreviousClose if closed
+        fallback_close = float(result.get("regularMarketPreviousClose") or result["regularMarketPrice"])
+        
+        print(f"[✓] Emergency baseline recovered via Yahoo V7: {fallback_close}", file=sys.stderr)
+        return fallback_close
+    except Exception as err:
+        print(f"[-] Yahoo V7 fallback failed: {err}. trying Stooq backend...", file=sys.stderr)
+
+    # 4. Ultimate Fallback: Authenticated Stooq Engine
+    try:
+        import requests
+        stooq_url = "https://stooq.com/q/d/l/?s=^nsei&f=sdwoplc&g=d"
+        # Stooq returns a 404 on GitHub actions unless standard headers are explicitly attached
+        resp = requests.get(stooq_url, headers=headers, timeout=10)
+        resp.raise_for_status()
+        
         line = resp.text.strip().splitlines()[-1]
-        fallback_close = float(line.split(",")[4]) # Index 4 is Close
+        fallback_close = float(line.split(",")[4]) # Index 4 represents the closing window
         print(f"[✓] Emergency baseline recovered via Stooq: {fallback_close}", file=sys.stderr)
         return fallback_close
     except Exception as err:
-        print(f"[-] Critical: All emergency baseline fallback networks failed: {err}", file=sys.stderr)
+        print(f"[-] Critical: All secondary baseline channels exhausted: {err}", file=sys.stderr)
         
     return None
 
