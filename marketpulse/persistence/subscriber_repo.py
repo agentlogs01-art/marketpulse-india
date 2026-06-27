@@ -47,6 +47,7 @@ from marketpulse.persistence.supabase_client import SupabaseClient, get_client
 SUBSCRIBERS_TABLE = "subscribers"
 EMAIL_VERIFICATIONS_TABLE = "email_verifications"
 TELEGRAM_LINKS_TABLE = "telegram_links"
+PASSWORD_RESETS_TABLE = "password_resets"
 
 # Backward-compat alias: earlier versions of this module exposed `TABLE`.
 TABLE = SUBSCRIBERS_TABLE
@@ -336,6 +337,73 @@ def verify_subscriber_email(
     sub_rows = client.select(SUBSCRIBERS_TABLE, params={"id": f"eq.{verification['subscriber_id']}"})
     return Subscriber.from_row(sub_rows[0]) if sub_rows else None
 
+# ---------------------------------------------------------------------------
+# Password reset ("forgot password")
+#
+# Mirrors the email_verifications pattern above, with one addition:
+# expiry is actively checked here (email_verifications relies on a DB
+# default + manual cleanup), since an unexpired password-reset token is
+# functionally equivalent to "full account takeover" if it leaks or is
+# guessed -- a 1-hour window (schema.sql default) is enforced in code as
+# well as documented in the schema, rather than trusting only the DB
+# default to be respected by every future caller.
+# ---------------------------------------------------------------------------
+ 
+def create_password_reset(subscriber_id: str, client: Optional[SupabaseClient] = None) -> str:
+    """Generates and stores a fresh password-reset token, returns it (the
+    caller -- api.handlers.request_password_reset -- embeds it in the
+    reset email link). Does not invalidate any prior unused reset token
+    for the same subscriber; multiple valid tokens can coexist, each
+    independently single-use."""
+    client = client or get_client()
+    token = secrets.token_urlsafe(32)
+    client.insert(
+        PASSWORD_RESETS_TABLE,
+        {"token": token, "subscriber_id": subscriber_id},
+        return_row=False,
+    )
+    return token
+ 
+ 
+def _is_expired(row: dict) -> bool:
+    expires_at = row.get("expires_at")
+    if not expires_at:
+        return False
+    try:
+        from datetime import datetime, timezone
+ 
+        expiry = datetime.fromisoformat(str(expires_at).replace("Z", "+00:00"))
+        return expiry < datetime.now(timezone.utc)
+    except ValueError:
+        return False  # malformed timestamp -- fail open rather than lock someone out on a parse quirk
+ 
+ 
+def consume_password_reset(
+    token: str, new_password: str, reset_at_iso: str, client: Optional[SupabaseClient] = None
+) -> Optional[Subscriber]:
+    """
+    Consumes a password-reset token: verifies it exists, is unused, and
+    is not expired; sets the new password; marks the token used. Returns
+    the updated Subscriber, or None if the token is invalid/used/expired
+    (api.handlers.reset_password decides what response that maps to, and
+    deliberately does not distinguish *which* of those three reasons
+    applied, for the same anti-enumeration reasoning as login failures).
+    """
+    client = client or get_client()
+    rows = client.select(PASSWORD_RESETS_TABLE, params={"token": f"eq.{token}"})
+    if not rows or rows[0].get("used_at") or _is_expired(rows[0]):
+        return None
+ 
+    reset_row = rows[0]
+    client.update(
+        PASSWORD_RESETS_TABLE,
+        params={"token": f"eq.{token}"},
+        patch={"used_at": reset_at_iso},
+    )
+    update_password(reset_row["subscriber_id"], new_password, client=client)
+ 
+    sub_rows = client.select(SUBSCRIBERS_TABLE, params={"id": f"eq.{reset_row['subscriber_id']}"})
+    return Subscriber.from_row(sub_rows[0]) if sub_rows else None
 
 # ---------------------------------------------------------------------------
 # Telegram linking
