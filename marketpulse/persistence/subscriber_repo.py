@@ -167,6 +167,31 @@ def verify_password(subscriber: Subscriber, password: str) -> bool:
         return False
     return check_password_hash(subscriber.password_hash, password)
 
+def update_password(subscriber_id: str, new_password: str, client: Optional[SupabaseClient] = None) -> None:
+    """
+    Sets a new password hash for an account -- used by both the
+    authenticated "change password" flow (FR-04.6) and the unauthenticated
+    "forgot password" reset flow (FR-04.7, via password_reset_repo). Never
+    takes a plaintext password anywhere near logging -- only the hash is
+    ever persisted or returned.
+    """
+    client = client or get_client()
+    client.update(
+        SUBSCRIBERS_TABLE,
+        params={"id": f"eq.{subscriber_id}"},
+        patch={"password_hash": generate_password_hash(new_password)},
+    )
+ 
+ 
+def set_theme_preference(subscriber_id: str, theme: str, client: Optional[SupabaseClient] = None) -> None:
+    """Persists the subscriber's chosen UI theme ('light' or 'dark') so it
+    follows them across devices/sessions, not just localStorage."""
+    if theme not in ("light", "dark"):
+        raise ValueError(f"Unknown theme preference: {theme!r} (must be 'light' or 'dark')")
+    client = client or get_client()
+    client.update(SUBSCRIBERS_TABLE, params={"id": f"eq.{subscriber_id}"}, patch={"theme_preference": theme})
+
+
 
 def update_last_login(subscriber_id: str, login_at_iso: str, client: Optional[SupabaseClient] = None) -> None:
     client = client or get_client()
