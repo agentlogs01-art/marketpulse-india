@@ -57,7 +57,20 @@ class AuthError(Exception):
 
 
 def _base_url() -> str:
-    return os.environ.get("WEBAPP_BASE_URL", "https://marketpulseindia.app").rstrip("/")
+    """
+    Dynamically computes the web application root URL.
+    Prioritizes Railway's dynamically assigned deployment URL,
+    then falls back to your local environment configuration or production domain.
+    """
+    # 1. Look for custom variable, fallback to Railway's public URL, then standard domain
+    url = (
+        os.environ.get("WEBAPP_BASE_URL") or 
+        os.environ.get("RAILWAY_PUBLIC_DOMAIN") or 
+        "https://marketpulseindia.app"
+    )
+    
+    # 2. Clean up leading/trailing whitespaces and remove trailing slashes completely
+    return url.strip().rstrip("/")
 
 
 def _validate_email(email: str) -> str:
