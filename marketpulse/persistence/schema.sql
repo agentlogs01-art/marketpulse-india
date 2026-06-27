@@ -26,7 +26,7 @@
 --                            and is also what the authenticated dashboard
 --                            reads to render "today's briefing" in-browser
 --   7. send_log            -- per-recipient, per-channel delivery outcome
-- -  8. password_resets     -- one-time "forgot password" reset tokens
+--   8. password_resets     -- one-time "forgot password" reset tokens
 --   9. mfa_challenges      -- short-lived pending-MFA tokens issued between
 --                            "password correct" and "TOTP code confirmed",
 --                            so a full session is never issued until both
