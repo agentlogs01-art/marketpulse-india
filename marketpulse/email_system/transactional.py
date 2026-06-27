@@ -63,7 +63,9 @@ def _send_plain_text(to_email, subject, body):
 
     except requests.exceptions.RequestException as exc:
         print(f"[-] HTTP API connection failed: {exc}")
-        return False        
+        return False    
+
+
 def send_verification_email(to_email: str, verify_url: str) -> None:
     subject = "Confirm your MarketPulse India subscription"
     body = (
