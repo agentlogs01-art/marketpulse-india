@@ -26,17 +26,22 @@
 --                            and is also what the authenticated dashboard
 --                            reads to render "today's briefing" in-browser
 --   7. send_log            -- per-recipient, per-channel delivery outcome
-
+- -  8. password_resets     -- one-time "forgot password" reset tokens
+--   9. mfa_challenges      -- short-lived pending-MFA tokens issued between
+--                            "password correct" and "TOTP code confirmed",
+--                            so a full session is never issued until both
+--       
 -- ---------------------------------------------------------------------------
 -- 1. subscribers
 --
 -- A subscriber is the account record. They identify by EITHER email or
 -- mobile_number (at least one is required -- see check constraint below)
--- and authenticate with a password. `channels` is the set of delivery
--- channels currently active -- a person can enable more than one (e.g.
--- Email + Telegram) without creating a second account row. Signing in
--- on the website is a separate action from receiving the daily briefing
--- on a channel; either can be used independently of the other.
+-- and authenticate with a password, optionally hardened with TOTP-based
+-- MFA. `channels` is the set of delivery channels currently active -- a
+-- person can enable more than one (e.g. Email + Telegram) without
+-- creating a second account row. Signing in on the website is a separate
+-- action from receiving the daily briefing on a channel; either can be
+-- used independently of the other.
 -- ---------------------------------------------------------------------------
 create table if not exists subscribers (
     id                  uuid primary key default gen_random_uuid(),
@@ -50,10 +55,18 @@ create table if not exists subscribers (
     channels            text[] not null default array['email']::text[],
     telegram_chat_id    text unique,
     whatsapp_number     text unique,  -- delivery number; may differ from mobile_number (login id)
+    -- MFA (TOTP, RFC 6238 -- compatible with Google Authenticator, Authy, etc.)
+    mfa_enabled         boolean not null default false,
+    mfa_secret          text,            -- base32 TOTP secret; only meaningful while enrolling or enabled
+    mfa_backup_codes    jsonb not null default '[]'::jsonb,  -- array of HASHED one-time backup codes
+    mfa_enrolled_at     timestamptz,
+    -- UI preference
+    theme_preference    text not null default 'light'
+                            check (theme_preference in ('light', 'dark')),
     created_at          timestamptz not null default now(),
-    verified_at         timestamptz,
-    last_login_at       timestamptz,
-    unsubscribed_at     timestamptz,
+    verified_at          timestamptz,
+    last_login_at        timestamptz,
+    unsubscribed_at      timestamptz,
     constraint channels_are_valid check (
         channels <@ array['email', 'whatsapp', 'telegram']::text[]
     ),
@@ -61,7 +74,7 @@ create table if not exists subscribers (
         email is not null or mobile_number is not null
     )
 );
-
+ 
 create index if not exists idx_subscribers_status on subscribers (status);
 create index if not exists idx_subscribers_mobile_number on subscribers (mobile_number);
 create index if not exists idx_subscribers_telegram_chat_id on subscribers (telegram_chat_id);
@@ -171,6 +184,46 @@ create index if not exists idx_send_log_subscriber on send_log (subscriber_id);
 create index if not exists idx_send_log_channel on send_log (channel);
 
 -- ---------------------------------------------------------------------------
+-- 8. password_resets
+--
+-- "Forgot password" flow, mirroring the email_verifications pattern: a
+-- short-lived single-use token emailed to the subscriber, consumed by
+-- POST /api/password/reset to set a new password_hash. Closing the gap
+-- flagged in PRD v1.7 Section 5.8 ("no self-service password reset").
+-- ---------------------------------------------------------------------------
+create table if not exists password_resets (
+    token           text primary key,
+    subscriber_id   uuid not null references subscribers (id) on delete cascade,
+    created_at      timestamptz not null default now(),
+    expires_at      timestamptz not null default (now() + interval '1 hour'),
+    used_at         timestamptz
+);
+ 
+create index if not exists idx_password_resets_subscriber on password_resets (subscriber_id);
+ 
+-- ---------------------------------------------------------------------------
+-- 9. mfa_challenges
+--
+-- Issued by POST /api/login when the subscriber's password is correct
+-- AND mfa_enabled is true, in place of a full session token. The web app
+-- then prompts for a 6-digit TOTP code (or a backup code) and calls
+-- POST /api/login/mfa with this challenge token + the code; only THEN is
+-- a real session issued (session_repo.create_session). This ensures a
+-- correct password alone is never sufficient to obtain a session for an
+-- MFA-enabled account -- the two factors are enforced as a strict
+-- sequence, not as independent, separately-satisfiable checks.
+-- ---------------------------------------------------------------------------
+create table if not exists mfa_challenges (
+    token           text primary key,
+    subscriber_id   uuid not null references subscribers (id) on delete cascade,
+    created_at      timestamptz not null default now(),
+    expires_at      timestamptz not null default (now() + interval '5 minutes'),
+    consumed_at     timestamptz
+);
+ 
+create index if not exists idx_mfa_challenges_subscriber on mfa_challenges (subscriber_id);
+
+-- ---------------------------------------------------------------------------
 -- Row Level Security
 --
 -- The MVP backend talks to Supabase using the service_role key (set as a
@@ -191,6 +244,8 @@ alter table telegram_links enable row level security;
 alter table market_closes enable row level security;
 alter table pipeline_runs enable row level security;
 alter table send_log enable row level security;
+alter table password_resets enable row level security;
+alter table mfa_challenges enable row level security;
 
 -- No policies are defined for anon/authenticated roles -> default-deny.
 -- Service-role key requests bypass RLS automatically.
