@@ -30,14 +30,23 @@ from flask import Flask, jsonify, request, send_from_directory
 from marketpulse.api.handlers import (
     AuthError,
     ValidationError,
+    change_password,
     get_current_subscriber,
     get_latest_briefing,
     login,
+    login_mfa,
     logout,
+    mfa_disable,
+    mfa_enroll_confirm,
+    mfa_enroll_start,
+    mfa_regenerate_backup_codes,
+    request_password_reset,
     request_telegram_link,
+    reset_password,
     signup,
     unsubscribe,
     update_channels,
+    update_theme_preference,
     verify_email,
 )
 
@@ -93,7 +102,16 @@ def serve_verify_page():
     """
     return send_from_directory(_WEBAPP_DIR, "index.html")
 
-
+@app.route("/reset-password")
+def serve_reset_password_page():
+    """
+    The password-reset link emailed by request_password_reset() points
+    here with ?token=... in the query string; index.html's JS detects
+    this the same way it detects an email-verification token and shows
+    the "choose a new password" form instead of the sign-up/sign-in tabs.
+    """
+    return send_from_directory(_WEBAPP_DIR, "index.html")
+    
 # ---------------------------------------------------------------------------
 # JSON API -- signup / verification
 # ---------------------------------------------------------------------------
@@ -129,6 +147,11 @@ def api_login():
     result = login(login_id=body.get("login_id", ""), password=body.get("password", ""))
     return jsonify(result)
 
+@app.route("/api/login/mfa", methods=["POST"])
+def api_login_mfa():
+    body = request.get_json(force=True, silent=True) or {}
+    result = login_mfa(challenge_token=body.get("challenge_token", ""), code=body.get("code", ""))
+    return jsonify(result)
 
 @app.route("/api/logout", methods=["POST"])
 def api_logout():
@@ -173,6 +196,77 @@ def api_unsubscribe():
 def api_update_channels():
     body = request.get_json(force=True, silent=True) or {}
     result = update_channels(_session_token_from_request(), channels=body.get("channels", []))
+    return jsonify(result)
+
+
+# ---------------------------------------------------------------------------
+# JSON API -- password change (authenticated) & reset (unauthenticated)
+# ---------------------------------------------------------------------------
+ 
+@app.route("/api/password/change", methods=["POST"])
+def api_change_password():
+    body = request.get_json(force=True, silent=True) or {}
+    result = change_password(
+        _session_token_from_request(),
+        current_password=body.get("current_password", ""),
+        new_password=body.get("new_password", ""),
+    )
+    return jsonify(result)
+ 
+ 
+@app.route("/api/password/forgot", methods=["POST"])
+def api_request_password_reset():
+    body = request.get_json(force=True, silent=True) or {}
+    result = request_password_reset(login_id=body.get("login_id", ""))
+    return jsonify(result)
+ 
+ 
+@app.route("/api/password/reset", methods=["POST"])
+def api_reset_password():
+    body = request.get_json(force=True, silent=True) or {}
+    token = body.get("token", "") or request.args.get("token", "")
+    result = reset_password(token=token, new_password=body.get("new_password", ""))
+    return jsonify(result)
+ 
+ 
+# ---------------------------------------------------------------------------
+# JSON API -- multi-factor authentication (Profile page)
+# ---------------------------------------------------------------------------
+ 
+@app.route("/api/mfa/enroll/start", methods=["POST"])
+def api_mfa_enroll_start():
+    result = mfa_enroll_start(_session_token_from_request())
+    return jsonify(result)
+ 
+ 
+@app.route("/api/mfa/enroll/confirm", methods=["POST"])
+def api_mfa_enroll_confirm():
+    body = request.get_json(force=True, silent=True) or {}
+    result = mfa_enroll_confirm(_session_token_from_request(), code=body.get("code", ""))
+    return jsonify(result)
+ 
+ 
+@app.route("/api/mfa/disable", methods=["POST"])
+def api_mfa_disable():
+    body = request.get_json(force=True, silent=True) or {}
+    result = mfa_disable(_session_token_from_request(), password=body.get("password", ""))
+    return jsonify(result)
+ 
+ 
+@app.route("/api/mfa/backup-codes/regenerate", methods=["POST"])
+def api_mfa_regenerate_backup_codes():
+    result = mfa_regenerate_backup_codes(_session_token_from_request())
+    return jsonify(result)
+ 
+ 
+# ---------------------------------------------------------------------------
+# JSON API -- theme preference
+# ---------------------------------------------------------------------------
+ 
+@app.route("/api/theme", methods=["POST"])
+def api_update_theme():
+    body = request.get_json(force=True, silent=True) or {}
+    result = update_theme_preference(_session_token_from_request(), theme=body.get("theme", ""))
     return jsonify(result)
 
 
