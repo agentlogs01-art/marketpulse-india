@@ -24,6 +24,28 @@ from email.mime.text import MIMEText
 class TransactionalEmailError(Exception):
     pass
 
+def send_mfa_enabled_notification(to_email: str) -> None:
+    subject = "Two-factor authentication enabled on your MarketPulse India account"
+    body = (
+        "Two-factor authentication was just turned on for your account. "
+        "From now on, signing in will require both your password and a code "
+        "from your authenticator app.\n\n"
+        "If you didn't make this change, please contact support immediately.\n\n"
+        "-- MarketPulse India"
+    )
+    _send_plain_text(to_email, subject, body)
+ 
+ 
+def send_mfa_disabled_notification(to_email: str) -> None:
+    subject = "Two-factor authentication disabled on your MarketPulse India account"
+    body = (
+        "Two-factor authentication was just turned off for your account. "
+        "Signing in now only requires your password.\n\n"
+        "If you didn't make this change, please contact support immediately "
+        "and change your password.\n\n"
+        "-- MarketPulse India"
+    )
+    _send_plain_text(to_email, subject, body)
 
 def _send_plain_text(to_email, subject, body):
     # For the Web API, Brevo requires your master API Key (usually starts with xkeysib-)
