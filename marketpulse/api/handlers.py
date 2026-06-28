@@ -53,8 +53,10 @@ from __future__ import annotations
 
 import os
 import re
+import string
 from datetime import datetime, timezone
 from typing import Optional
+from zxcvbn import zxcvbn
 
 from marketpulse.models.schemas import DeliveryChannel
 
@@ -64,7 +66,7 @@ TOTP_CODE_RE = re.compile(r"^\d{6}$")
 
 VALID_CHANNELS = {c.value for c in DeliveryChannel}
 
-MIN_PASSWORD_LENGTH = 8
+MIN_PASSWORD_LENGTH = 12
 
 
 class ValidationError(Exception):
@@ -116,9 +118,26 @@ def _validate_mobile_number(number: Optional[str]) -> Optional[str]:
     return number
 
 
-def _validate_password(password: str) -> str:
+def _validate_password(password: str, user_context: list = None) -> str:
+    """
+    Validates password using modern NIST/OWASP predictability standards.
+    user_context: Pass [username, email, first_name] to catch context-specific guessing.
+    """
+
     if not password or len(password) < MIN_PASSWORD_LENGTH:
         raise ValidationError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters.")
+
+    # Run pattern, sequence, and common dictionary analysis
+    # user_inputs array tells zxcvbn to also flag passwords containing user data
+    analysis = zxcvbn(password, user_inputs=user_context)
+    
+    # zxcvbn scores range from 0 (very guessable) to 4 (very secure). 
+    # A score of less than 3 is generally considered too predictable for production.
+    if analysis['score'] < 3:
+        # Optional: zxcvbn provides helpful feedback strings on why it failed
+        feedback = analysis['feedback'].get('warning', 'Password is too predictable.')
+        raise ValidationError(f"Weak Password: {feedback}")
+
     return password
 
 def _validate_mfa_code(code: str) -> str:
@@ -135,7 +154,6 @@ def _validate_channels(channels: Optional[list]) -> list:
     if not channels:
         raise ValidationError("Select at least one delivery channel.")
     return channels
-
 
 def _validate_whatsapp_number(number: Optional[str], channels: list) -> Optional[str]:
     if DeliveryChannel.WHATSAPP.value not in channels:
