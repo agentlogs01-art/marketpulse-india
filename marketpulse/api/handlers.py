@@ -68,6 +68,8 @@ VALID_CHANNELS = {c.value for c in DeliveryChannel}
 
 MIN_PASSWORD_LENGTH = 12
 
+VALID_THEMES = {"light", "dark"}
+
 
 class ValidationError(Exception):
     """Raised for malformed input; api/app.py maps this to HTTP 400."""
