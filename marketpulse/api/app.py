@@ -23,6 +23,10 @@ Deploy: Railway can run this directly via
 
 from __future__ import annotations
 
+import io
+import qrcode
+from flask import jsonify, send_file, request
+
 import os
 
 from flask import Flask, jsonify, request, send_from_directory
@@ -234,10 +238,30 @@ def api_reset_password():
 # ---------------------------------------------------------------------------
  
 @app.route("/api/mfa/enroll/start", methods=["POST"])
-def api_mfa_enroll_start():
-    result = mfa_enroll_start(_session_token_from_request())
-    return jsonify(result)
- 
+#def api_mfa_enroll_start():
+#    result = mfa_enroll_start(_session_token_from_request())
+#    return jsonify(result)
+
+@app.route("/api/mfa/enroll/start", methods=["POST"])
+def api_mfa_enroll_start():  
+    # Render the QR Code image on the server using qrcode + pillow
+    provisioning_uri = result.get("provisioning_uri", "")
+    
+    qr = qrcode.QRCode(version=1, box_size=10, border=4)
+    qr.add_data(provisioning_uri)
+    qr.make(fit=True)
+    
+    # Create the Pillow Image asset
+    qr_img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Save the binary image data to an in-memory byte stream buffer
+    img_buffer = io.BytesIO()
+    qr_img.save(img_buffer, "PNG")
+    img_buffer.seek(0)  # Rewind the pointer to the beginning of the file stream
+    
+    # Stream the image file directly to the browser
+    return send_file(img_buffer, mimetype="image/png")
+
  
 @app.route("/api/mfa/enroll/confirm", methods=["POST"])
 def api_mfa_enroll_confirm():
