@@ -279,6 +279,11 @@ class Subscriber:
     channels: list = field(default_factory=lambda: [DeliveryChannel.EMAIL.value])
     telegram_chat_id: Optional[str] = None
     whatsapp_number: Optional[str] = None
+    mfa_enabled: bool = False
+    mfa_secret: Optional[str] = None
+    mfa_backup_codes: list = field(default_factory=list)
+    mfa_enrolled_at: Optional[str] = None
+    theme_preference: str = "light"
     created_at: Optional[str] = None
     verified_at: Optional[str] = None
     last_login_at: Optional[str] = None
@@ -296,13 +301,7 @@ class Subscriber:
         return True
 
     def to_public_dict(self) -> dict:
-        """
-        Serializes everything EXCEPT password_hash. Every API response
-        that includes subscriber data must go through this rather than
-        dataclasses.asdict() / __dict__ directly, so a future field added
-        to this dataclass doesn't accidentally leak into a JSON response
-        the way a raw dict dump would.
-        """
+        """Never includes password_hash, mfa_secret, or mfa_backup_codes."""
         return {
             "id": self.id,
             "email": self.email,
@@ -312,6 +311,9 @@ class Subscriber:
             "channels": self.channels,
             "telegram_chat_id": self.telegram_chat_id,
             "whatsapp_number": self.whatsapp_number,
+            "mfa_enabled": self.mfa_enabled,
+            "mfa_enrolled_at": self.mfa_enrolled_at,
+            "theme_preference": self.theme_preference,
             "created_at": self.created_at,
             "verified_at": self.verified_at,
             "last_login_at": self.last_login_at,
@@ -330,6 +332,11 @@ class Subscriber:
             channels=row.get("channels") or [DeliveryChannel.EMAIL.value],
             telegram_chat_id=row.get("telegram_chat_id"),
             whatsapp_number=row.get("whatsapp_number"),
+            mfa_enabled=bool(row.get("mfa_enabled", False)),
+            mfa_secret=row.get("mfa_secret"),
+            mfa_backup_codes=row.get("mfa_backup_codes") or [],
+            mfa_enrolled_at=row.get("mfa_enrolled_at"),
+            theme_preference=row.get("theme_preference", "light"),
             created_at=row.get("created_at"),
             verified_at=row.get("verified_at"),
             last_login_at=row.get("last_login_at"),
