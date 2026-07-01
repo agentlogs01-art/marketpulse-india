@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,6 +25,22 @@
     --radius:    10px;
   }
 
+  [data-theme="dark"] {
+    --dawn:      #131715;
+    --paper:     #1E2421;
+    --ink:       #FBF7EE;
+    --graphite:  #8E9A94;
+    --line:      #3D4842;
+    --line-soft: #2C3530;
+    --green:     #2BB36C;
+    --green-bg:  #152E20;
+    --red:       #E05343;
+    --red-bg:    #331916;
+    --amber:     #E5A442;
+    --amber-focus: #C98A2C;
+    --amber-bg:  #2D2417;
+  }
+
   * { box-sizing: border-box; }
 
   @media (prefers-reduced-motion: reduce) {
@@ -38,6 +54,7 @@
     font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
+    transition: background 0.2s, color 0.2s;
   }
 
   .mono {
@@ -115,6 +132,20 @@
     font-family: inherit;
   }
   .signout-link:hover { text-decoration-color: var(--ink); }
+
+  /* Theme Toggle Element */
+  .theme-toggle-btn {
+    background: transparent;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    color: var(--graphite);
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    font-family: inherit;
+    margin-top: 6px;
+  }
+  .theme-toggle-btn:hover { color: var(--ink); border-color: var(--ink); }
 
   /* ---------- Countdown signature element ---------- */
   .countdown {
@@ -383,6 +414,19 @@
   }
   .deep-link-box a { color: var(--ink); font-weight: 600; }
 
+  .mfa-qr-placeholder {
+    width: 160px;
+    height: 160px;
+    background: #EAE4D4;
+    color: #4B5550;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    margin: 12px 0;
+    border-radius: var(--radius);
+  }
+
   footer.colophon {
     text-align: center;
     font-size: 11px;
@@ -445,7 +489,6 @@
 <body>
 <div class="wrap" id="page-wrap">
 
-  <!-- ============== MASTHEAD ============== -->
   <div class="masthead">
     <div class="masthead-main">
       <div class="edition-line">
@@ -455,13 +498,17 @@
       <h1 id="masthead-title">Tomorrow's open, before it opens.</h1>
       <p class="tagline" id="masthead-tagline">A plain-English briefing for first-time investors, written before NSE rings the bell at 9:15&nbsp;AM&nbsp;IST.</p>
     </div>
-    <div class="account-box hidden" id="account-box">
-      <div class="who" id="account-who">—</div>
-      <button class="signout-link" id="signout-btn">Sign out</button>
+    <div class="account-box" id="account-box-wrapper">
+      <div class="account-box hidden" id="account-box">
+        <div class="who" id="account-who">—</div>
+        <button class="signout-link" id="signout-btn">Sign out</button>
+      </div>
+      <div>
+        <button class="theme-toggle-btn" id="theme-toggle-btn">Toggle Dark Mode</button>
+      </div>
     </div>
   </div>
 
-  <!-- ============== LIVE COUNTDOWN (signature element) ============== -->
   <div class="countdown" aria-live="off">
     <div class="label">Today's briefing cycle</div>
     <div class="next-checkpoint">
@@ -497,14 +544,12 @@
     </div>
   </div>
 
-  <!-- ============== AUTH VIEW (landing page: sign up / sign in) ============== -->
   <div id="view-auth" class="card">
     <div class="auth-tabs" role="tablist">
       <button type="button" id="tab-signup" class="active" role="tab" aria-selected="true">Sign up</button>
       <button type="button" id="tab-signin" role="tab" aria-selected="false">Sign in</button>
     </div>
 
-    <!-- ---- Sign up ---- -->
     <div id="panel-signup">
       <div id="signup-status" class="status" role="status"></div>
 
@@ -561,7 +606,6 @@
       </p>
     </div>
 
-    <!-- ---- Sign in ---- -->
     <div id="panel-signin" class="hidden">
       <div id="signin-status" class="status" role="status"></div>
 
@@ -575,15 +619,30 @@
         <button type="submit" class="primary" id="signin-submit">Sign in</button>
       </form>
 
+      <p class="fine-print" style="margin-top: 20px;">
+        <a id="forgot-password-toggle" style="font-weight: 600;">Forgot password?</a>
+      </p>
       <p class="fine-print">
-        Forgot your password? Sign up again with the same email to receive a fresh verification link,
+        Sign up again with the same email to receive a fresh verification link,
         or unsubscribe below and start over.
         <a id="manage-link-toggle-2">Manage an existing subscription</a>
       </p>
     </div>
   </div>
 
-  <!-- ============== EMAIL VERIFICATION RESULT VIEW ============== -->
+  <div id="view-forgot-password" class="card hidden">
+    <h2>Reset Password</h2>
+    <div id="forgot-status" class="status" role="status"></div>
+    <form id="forgot-form">
+      <label for="forgot-email">Email address or Mobile Number</label>
+      <input type="text" id="forgot-email" placeholder="you@example.com or +919876543210">
+      <button type="submit" class="primary" id="forgot-submit">Send Reset Link</button>
+    </form>
+    <p class="fine-print">
+      <a id="back-to-signin-from-forgot">&#8592; Back to Sign In</a>
+    </p>
+  </div>
+
   <div id="view-verify" class="card hidden">
     <h2>Confirming your email&hellip;</h2>
     <div id="verify-status" class="status" role="status"></div>
@@ -595,7 +654,6 @@
     </div>
   </div>
 
-  <!-- ============== TELEGRAM DEEP LINK RESULT VIEW ============== -->
   <div id="view-telegram-link" class="card hidden">
     <h2>One more step</h2>
     <p style="font-size:14.5px; margin-bottom:14px; color:var(--graphite);">
@@ -607,7 +665,6 @@
     <button class="ghost" id="telegram-link-done-btn">Back to dashboard</button>
   </div>
 
-  <!-- ============== MANAGE SUBSCRIPTION VIEW ============== -->
   <div id="view-manage" class="card hidden">
     <h2>Manage your subscription</h2>
     <div id="manage-status" class="status" role="status"></div>
@@ -620,7 +677,6 @@
     </p>
   </div>
 
-  <!-- ============== DASHBOARD VIEW (after sign-in) ============== -->
   <div id="view-dashboard" class="hidden">
     <div class="card">
       <div class="dashboard-toolbar">
@@ -665,6 +721,60 @@
         <button class="ghost" id="dashboard-telegram-link-btn">Connect Telegram</button>
       </details>
     </div>
+
+    <div class="card">
+      <details class="dashboard-settings">
+        <summary>Profile & Account Security</summary>
+        <div id="security-status" class="status" role="status"></div>
+        
+        <h3 style="font-size:15px; margin:16px 0 8px;">Change Password</h3>
+        <form id="change-password-form">
+          <label for="current-password">Current Password</label>
+          <input type="password" id="current-password" placeholder="••••••••" autocomplete="current-password">
+          
+          <label for="new-password">New Password</label>
+          <input type="password" id="new-password" placeholder="At least 8 characters" autocomplete="new-password">
+          
+          <button type="submit" class="ghost" id="change-password-btn" style="margin-top:0; margin-bottom:16px;">Update Password</button>
+        </form>
+
+        <hr style="border:0; border-top:1px solid var(--line); margin:20px 0;">
+
+        <h3 style="font-size:15px; margin:0 0 4px;">Two-Factor Authentication (MFA)</h3>
+        <p style="font-size:12.5px; color:var(--graphite); margin:0 0 12px;">Add an extra layer of security to your market account using an authenticator app (Google Authenticator, Authy, etc.).</p>
+        
+        <div id="mfa-unverified-ui">
+          <button class="ghost" id="mfa-init-btn" style="margin-top:0;">Enroll Authenticator App</button>
+          
+          <div id="mfa-setup-step" class="hidden" style="margin-top:16px; padding-left:4px;">
+            <p style="font-size:13px; margin-bottom:8px;">1. Scan this QR code with your app:</p>
+            <div class="mfa-qr-placeholder">[QR Code Generator]</div>
+            <p style="font-size:13px; margin-bottom:8px;">2. Enter the 6-digit code shown in your app:</p>
+            <input type="text" id="mfa-token-input" placeholder="000000" maxlength="6" style="letter-spacing:0.2em; text-align:center;">
+            <button class="ghost" id="mfa-verify-btn" style="margin-top:0;">Verify and Activate MFA</button>
+          </div>
+        </div>
+
+        <div id="mfa-active-ui" class="hidden">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; color:var(--green); font-size:13.5px; font-weight:600;">
+            <span>● MFA is currently enabled</span>
+          </div>
+          <button class="ghost" id="mfa-disable-btn" style="margin-top:0; color:var(--red);">Disable MFA</button>
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--line); margin:20px 0;">
+
+        <h3 style="font-size:15px; margin:0 0 4px;">Emergency Recovery Codes</h3>
+        <p style="font-size:12.5px; color:var(--graphite); margin:0 0 12px;">Use fallback recovery codes to access your briefing dashboard if you lose device token access.</p>
+        <button class="ghost" id="generate-recovery-btn" style="margin-top:0;">Generate New Recovery Codes</button>
+        
+        <div id="recovery-codes-box" class="hidden" style="margin-top:14px; border:1px dashed var(--line); border-radius:7px; padding:14px; background:var(--dawn);">
+          <div id="recovery-codes-list" class="mono" style="font-size:13px; display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+            </div>
+          <p style="font-size:11.5px; color:var(--red); margin:0;">Save these secure codes immediately! They will not be displayed again.</p>
+        </div>
+      </details>
+    </div>
   </div>
 
   <footer class="colophon">Educational content, not investment advice &middot; Indian Standard Time throughout</footer>
@@ -677,6 +787,7 @@
 
   const API_BASE = window.location.origin + "/api";
   const SESSION_STORAGE_KEY = "marketpulse_session_token";
+  const THEME_STORAGE_KEY = "marketpulse_theme";
 
   const els = {
     pageWrap: document.getElementById("page-wrap"),
@@ -685,12 +796,14 @@
     signoutBtn: document.getElementById("signout-btn"),
     mastheadTitle: document.getElementById("masthead-title"),
     mastheadTagline: document.getElementById("masthead-tagline"),
+    themeToggleBtn: document.getElementById("theme-toggle-btn"),
 
     authView: document.getElementById("view-auth"),
     verifyView: document.getElementById("view-verify"),
     telegramLinkView: document.getElementById("view-telegram-link"),
     manageView: document.getElementById("view-manage"),
     dashboardView: document.getElementById("view-dashboard"),
+    forgotView: document.getElementById("view-forgot-password"),
 
     tabSignup: document.getElementById("tab-signup"),
     tabSignin: document.getElementById("tab-signin"),
@@ -713,6 +826,13 @@
     signinSubmit: document.getElementById("signin-submit"),
     signinId: document.getElementById("signin-id"),
     signinPassword: document.getElementById("signin-password"),
+
+    forgotPasswordToggle: document.getElementById("forgot-password-toggle"),
+    forgotForm: document.getElementById("forgot-form"),
+    forgotStatus: document.getElementById("forgot-status"),
+    forgotSubmit: document.getElementById("forgot-submit"),
+    forgotEmail: document.getElementById("forgot-email"),
+    backToSigninFromForgot: document.getElementById("back-to-signin-from-forgot"),
 
     verifyStatus: document.getElementById("verify-status"),
     verifyTelegramPrompt: document.getElementById("verify-telegram-prompt"),
@@ -738,6 +858,24 @@
     settingsStatus: document.getElementById("settings-status"),
     dashboardTelegramLinkBtn: document.getElementById("dashboard-telegram-link-btn"),
 
+    securityStatus: document.getElementById("security-status"),
+    changePasswordForm: document.getElementById("change-password-form"),
+    currentPassword: document.getElementById("current-password"),
+    newPassword: document.getElementById("new-password"),
+    changePasswordBtn: document.getElementById("change-password-btn"),
+
+    mfaUnverifiedUi: document.getElementById("mfa-unverified-ui"),
+    mfaInitBtn: document.getElementById("mfa-init-btn"),
+    mfaSetupStep: document.getElementById("mfa-setup-step"),
+    mfaTokenInput: document.getElementById("mfa-token-input"),
+    mfaVerifyBtn: document.getElementById("mfa-verify-btn"),
+    mfaActiveUi: document.getElementById("mfa-active-ui"),
+    mfaDisableBtn: document.getElementById("mfa-disable-btn"),
+
+    generateRecoveryBtn: document.getElementById("generate-recovery-btn"),
+    recoveryCodesBox: document.getElementById("recovery-codes-box"),
+    recoveryCodesList: document.getElementById("recovery-codes-list"),
+
     editionDate: document.getElementById("edition-date"),
     countdownClock: document.getElementById("countdown-clock"),
     countdownNextLabel: document.getElementById("countdown-next-label"),
@@ -747,8 +885,35 @@
   let sessionToken = localStorage.getItem(SESSION_STORAGE_KEY) || null;
   let currentSubscriber = null;
 
+  // ---- Theme Toggle Engine ----
+  function initTheme() {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    
+    if (savedTheme === "dark" || (!savedTheme && systemPrefersDark)) {
+      document.documentElement.setAttribute("data-theme", "dark");
+      els.themeToggleBtn.textContent = "Toggle Light Mode";
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+      els.themeToggleBtn.textContent = "Toggle Dark Mode";
+    }
+  }
+
+  els.themeToggleBtn.addEventListener("click", function() {
+    const currentTheme = document.documentElement.getAttribute("data-theme");
+    if (currentTheme === "dark") {
+      document.documentElement.setAttribute("data-theme", "light");
+      localStorage.setItem(THEME_STORAGE_KEY, "light");
+      els.themeToggleBtn.textContent = "Toggle Dark Mode";
+    } else {
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem(THEME_STORAGE_KEY, "dark");
+      els.themeToggleBtn.textContent = "Toggle Light Mode";
+    }
+  });
+
   function showView(view) {
-    [els.authView, els.verifyView, els.telegramLinkView, els.manageView, els.dashboardView].forEach((v) =>
+    [els.authView, els.verifyView, els.telegramLinkView, els.manageView, els.dashboardView, els.forgotView].forEach((v) =>
       v.classList.add("hidden")
     );
     view.classList.remove("hidden");
@@ -810,7 +975,7 @@
     });
   });
 
-  // ---- Channel checkbox UI (shared handler for both signup and dashboard channel lists) ----
+  // ---- Channel checkbox UI ----
   function wireChannelOptions(container, onWhatsappToggle) {
     container.querySelectorAll(".channel-option").forEach((option) => {
       option.addEventListener("click", function (e) {
@@ -829,6 +994,43 @@
     els.whatsappField.classList.toggle("visible", anyWhatsapp);
   });
   wireChannelOptions(els.dashboardChannels);
+
+  // ---- Forgot Password Flow ----
+  els.forgotPasswordToggle.addEventListener("click", function(e) {
+    e.preventDefault();
+    clearStatus(els.forgotStatus);
+    showView(els.forgotView);
+  });
+
+  els.backToSigninFromForgot.addEventListener("click", function(e) {
+    e.preventDefault();
+    showLandingState();
+  });
+
+  els.forgotForm.addEventListener("submit", async function(e) {
+    e.preventDefault();
+    clearStatus(els.forgotStatus);
+    
+    const id = els.forgotEmail.value.trim();
+    if(!id) {
+      setStatus(els.forgotStatus, "Please enter your identifier setup info.", "error");
+      return;
+    }
+
+    els.forgotSubmit.disabled = true;
+    els.forgotSubmit.textContent = "Sending link...";
+
+    const { ok, data } = await postJSON("/auth/forgot-password", { login_id: id });
+    els.forgotSubmit.disabled = false;
+    els.forgotSubmit.textContent = "Send Reset Link";
+
+    if(ok) {
+      setStatus(els.forgotStatus, "If account details match, a direct security reset update path has been triggered.", "success");
+      els.forgotForm.reset();
+    } else {
+      setStatus(els.forgotStatus, data.error || "Failed to process recovery path.", "error");
+    }
+  });
 
   // ---- Signup ----
   els.signupForm.addEventListener("submit", async function (e) {
@@ -909,7 +1111,7 @@
     showLandingState();
   });
 
-  // ---- Email verification (runs automatically if ?token= is present) ----
+  // ---- Email verification ----
   async function runVerification() {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
@@ -932,7 +1134,7 @@
     switchAuthTab("signin");
   });
 
-  // ---- Telegram linking (from the dashboard, signed in) ----
+  // ---- Telegram linking ----
   async function startTelegramLink() {
     const { ok, data } = await postJSON("/telegram/link", {});
     if (ok && data.deep_link) {
@@ -948,7 +1150,7 @@
     refreshChannelCheckboxes();
   });
 
-  // ---- Manage / unsubscribe (works without a session, by email) ----
+  // ---- Manage / unsubscribe ----
   function openManageView(e) {
     if (e) e.preventDefault();
     showView(els.manageView);
@@ -975,6 +1177,110 @@
       setStatus(els.manageStatus, "You've been unsubscribed from all channels.", "success");
     } else {
       setStatus(els.manageStatus, data.error || "Something went wrong.", "error");
+    }
+  });
+
+  // ---- Dashboard Settings & Account Updates ----
+  els.changePasswordForm.addEventListener("submit", async function(e) {
+    e.preventDefault();
+    clearStatus(els.securityStatus);
+
+    const oldPassword = els.currentPassword.value;
+    const updatePassword = els.newPassword.value;
+
+    if(!oldPassword || !updatePassword) {
+      setStatus(els.securityStatus, "Please complete both fields to update password settings.", "error");
+      return;
+    }
+
+    els.changePasswordBtn.disabled = true;
+    const { ok, data } = await postJSON("/account/change-password", {
+      current_password: oldPassword,
+      new_password: updatePassword
+    });
+    els.changePasswordBtn.disabled = false;
+
+    if(ok) {
+      setStatus(els.securityStatus, "Password saved successfully.", "success");
+      els.changePasswordForm.reset();
+    } else {
+      setStatus(els.securityStatus, data.error || "Could not update the account credentials.", "error");
+    }
+  });
+
+  // ---- Multi-Factor Authentication (MFA) Setup & Actions ----
+  els.mfaInitBtn.addEventListener("click", async function() {
+    clearStatus(els.securityStatus);
+    const { ok, data } = await postJSON("/account/mfa/initiate", {});
+    if(ok) {
+      els.mfaSetupStep.classList.remove("hidden");
+      els.mfaInitBtn.classList.add("hidden");
+      // If server provides a text/secret variant or dynamic link update here:
+      // els.mfaQrElement.src = data.qr_code_url;
+    } else {
+      setStatus(els.securityStatus, data.error || "Failed to initialize MFA sequence.", "error");
+    }
+  });
+
+  els.mfaVerifyBtn.addEventListener("click", async function() {
+    clearStatus(els.securityStatus);
+    const token = els.mfaTokenInput.value.trim();
+    if(token.length < 6) {
+      setStatus(els.securityStatus, "Please supply your valid 6-digit dynamic token.", "error");
+      return;
+    }
+
+    const { ok, data } = await postJSON("/account/mfa/verify", { code: token });
+    if(ok) {
+      setStatus(els.securityStatus, "MFA enabled successfully.", "success");
+      toggleMfaUiState(true);
+    } else {
+      setStatus(els.securityStatus, data.error || "Verification mismatch. Please check your token.", "error");
+    }
+  });
+
+  els.mfaDisableBtn.addEventListener("click", async function() {
+    if(!confirm("Are you sure you want to disable MFA security settings?")) return;
+    clearStatus(els.securityStatus);
+    const { ok, data } = await postJSON("/account/mfa/disable", {});
+    if(ok) {
+      setStatus(els.securityStatus, "MFA authentication removed from this profile.", "info");
+      toggleMfaUiState(false);
+    } else {
+      setStatus(els.securityStatus, data.error || "Could not decouple MFA constraints.", "error");
+    }
+  });
+
+  function toggleMfaUiState(isEnabled) {
+    if(isEnabled) {
+      els.mfaActiveUi.classList.remove("hidden");
+      els.mfaUnverifiedUi.classList.add("hidden");
+      els.mfaSetupStep.classList.add("hidden");
+      els.mfaTokenInput.value = "";
+    } else {
+      els.mfaActiveUi.classList.add("hidden");
+      els.mfaUnverifiedUi.classList.remove("hidden");
+      els.mfaInitBtn.classList.remove("hidden");
+    }
+  }
+
+  // ---- Emergency Backup Recovery Codes Engine ----
+  els.generateRecoveryBtn.addEventListener("click", async function() {
+    clearStatus(els.securityStatus);
+    if(!confirm("Generating new codes expires any previous recovery backup codes. Continue?")) return;
+
+    const { ok, data } = await postJSON("/account/mfa/recovery-codes", {});
+    if(ok && data.codes) {
+      els.recoveryCodesList.innerHTML = "";
+      data.codes.forEach(code => {
+        const div = document.createElement("div");
+        div.textContent = code;
+        els.recoveryCodesList.appendChild(div);
+      });
+      els.recoveryCodesBox.classList.remove("hidden");
+      setStatus(els.securityStatus, "New recovery keys mapped successfully.", "success");
+    } else {
+      setStatus(els.securityStatus, data.error || "Could not complete keys request.", "error");
     }
   });
 
@@ -1018,6 +1324,7 @@
       option.querySelector("input").checked = checked;
       option.classList.toggle("checked", checked);
     });
+    toggleMfaUiState(!!currentSubscriber.mfa_enabled);
   }
 
   els.saveChannelsBtn.addEventListener("click", async function () {
@@ -1073,8 +1380,6 @@
   }
 
   // ---- Live IST countdown (signature element) ----
-  // India Standard Time is UTC+5:30 with no DST; computed via offset
-  // rather than relying on the visitor's local locale/timezone settings.
   const IST_OFFSET_MINUTES = 5 * 60 + 30;
   const CHECKPOINTS = [
     { hhmm: "06:00", minutes: 6 * 60 },
@@ -1123,7 +1428,7 @@
     for (const cp of CHECKPOINTS) {
       if (cp.minutes * 60 > nowSec) { next = cp; break; }
     }
-    if (!next) next = CHECKPOINTS[0]; // wrapped past 09:15 -> count to tomorrow's 06:00
+    if (!next) next = CHECKPOINTS[0];
 
     let secondsUntil;
     if (next === CHECKPOINTS[0] && nowSec >= CHECKPOINTS[CHECKPOINTS.length - 1].minutes * 60) {
@@ -1152,6 +1457,7 @@
 
   // ---- Entry point ----
   (async function init() {
+    initTheme();
     const cameFromVerification = await runVerification();
     if (cameFromVerification) return;
 
