@@ -23,6 +23,24 @@
     --amber-focus: #9C6A1C;
     --amber-bg:  #FBF1E3;
     --radius:    10px;
+    color-scheme: light;
+  }
+
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --dawn:      #1a1f1c;
+    --paper:     #2a2f2c;
+    --ink:       #f5f3f0;
+    --graphite:  #b4aca0;
+    --line:      #423d35;
+    --line-soft: #3a352d;
+    --green:     #5ed1a0;
+    --green-bg:  #1a3a2a;
+    --red:       #ff6b5b;
+    --red-bg:    #3a1515;
+    --amber:     #ffd000;
+    --amber-focus: #ffed4e;
+    --amber-bg:  #3a2a10;
   }
 
   * { box-sizing: border-box; }
@@ -433,6 +451,44 @@
   }
   .dashboard-settings[open] summary { margin-bottom: 14px; }
 
+  /* Theme Toggle */
+  .theme-toggle-btn {
+    background: none;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 6px 8px;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--ink);
+    font-family: inherit;
+  }
+  .theme-toggle-btn:hover {
+    background: var(--line-soft);
+  }
+
+  /* MFA Modal Styles */
+  .mfa-modal {
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--amber-bg);
+    border-radius: 7px;
+  }
+  .mfa-modal h3 {
+    margin-top: 0;
+  }
+  .backup-codes-list {
+    background: var(--paper);
+    padding: 12px;
+    border-radius: 5px;
+    font-family: monospace;
+    margin-bottom: 16px;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  .backup-codes-list div {
+    padding: 4px 0;
+  }
+
   @media (max-width: 420px) {
     .masthead { flex-direction: column; }
     .masthead .account-box { text-align: left; padding-top: 0; }
@@ -524,8 +580,8 @@
         </div>
 
         <label for="signup-password">Create a password</label>
-        <input type="password" id="signup-password" placeholder="At least 8 characters" autocomplete="new-password">
-        <p class="password-hint">You'll use this to sign in and view your briefing on the website.</p>
+        <input type="password" id="signup-password" placeholder="At least 12 characters" autocomplete="new-password">
+        <p class="password-hint">Must be at least 12 characters and sufficiently strong.</p>
 
         <label>How should we reach you?</label>
         <div class="channels">
@@ -576,11 +632,44 @@
       </form>
 
       <p class="fine-print">
-        Forgot your password? Sign up again with the same email to receive a fresh verification link,
-        or unsubscribe below and start over.
+        <a id="forgot-password-link">Forgot your password?</a>
         <a id="manage-link-toggle-2">Manage an existing subscription</a>
       </p>
     </div>
+  </div>
+
+  <!-- ============== FORGOT PASSWORD VIEW ============== -->
+  <div id="view-forgot-password" class="card hidden">
+    <h2>Reset your password</h2>
+    <p style="font-size:14.5px; margin-bottom:14px; color:var(--graphite);">
+      Enter your email or mobile number and we'll send you a link to reset your password.
+    </p>
+    <div id="forgot-status" class="status" role="status"></div>
+    
+    <form id="forgot-form">
+      <label for="forgot-id">Email or mobile number</label>
+      <input type="text" id="forgot-id" placeholder="you@example.com or +919876543210">
+      
+      <button type="submit" class="primary" id="forgot-submit">Send reset link</button>
+    </form>
+    
+    <p class="fine-print">
+      <a id="back-to-signin">← Back to sign in</a>
+    </p>
+  </div>
+
+  <!-- ============== PASSWORD RESET VIEW (from email link) ============== -->
+  <div id="view-password-reset" class="card hidden">
+    <h2>Create a new password</h2>
+    <div id="reset-status" class="status" role="status"></div>
+    
+    <form id="password-reset-form">
+      <label for="reset-password">New password</label>
+      <input type="password" id="reset-password" placeholder="At least 12 characters" autocomplete="new-password">
+      <p class="password-hint">Must be at least 12 characters and sufficiently strong.</p>
+      
+      <button type="submit" class="primary" id="reset-submit">Set new password</button>
+    </form>
   </div>
 
   <!-- ============== EMAIL VERIFICATION RESULT VIEW ============== -->
@@ -625,7 +714,12 @@
     <div class="card">
       <div class="dashboard-toolbar">
         <h2 style="margin:0;">Today's briefing</h2>
-        <span class="run-date mono" id="briefing-run-date"></span>
+        <div style="display:flex; gap:12px; align-items:center;">
+          <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle theme">
+            <span id="theme-icon">🌙</span>
+          </button>
+          <span class="run-date mono" id="briefing-run-date"></span>
+        </div>
       </div>
       <div id="dashboard-status" class="status" role="status"></div>
 
@@ -665,6 +759,52 @@
         <button class="ghost" id="dashboard-telegram-link-btn">Connect Telegram</button>
       </details>
     </div>
+
+    <div class="card">
+      <details class="dashboard-settings">
+        <summary>Security settings</summary>
+        <div id="mfa-status" class="status" role="status"></div>
+        
+        <div id="mfa-disabled-view">
+          <p style="font-size:14.5px; margin-bottom:14px; color:var(--graphite);">
+            Two-factor authentication adds an extra layer of security to your account.
+          </p>
+          <button class="ghost" id="enable-mfa-btn">Enable two-factor authentication</button>
+        </div>
+        
+        <div id="mfa-enabled-view" class="hidden">
+          <p style="font-size:14.5px; margin-bottom:14px; color:var(--green);">
+            ✓ Two-factor authentication is enabled
+          </p>
+          <button class="ghost" id="backup-codes-btn">View/regenerate backup codes</button>
+          <button class="ghost" id="disable-mfa-btn">Disable two-factor authentication</button>
+        </div>
+        
+        <!-- MFA Enrollment Modal -->
+        <div id="mfa-enrollment-modal" class="hidden mfa-modal">
+          <h3 style="margin-top:0;">Scan this QR code with your authenticator app</h3>
+          <div id="qr-code-container" style="text-align:center; margin:20px 0;"></div>
+          <p style="font-size:12.5px; color:var(--graphite); margin-bottom:10px;">Or enter this code manually:</p>
+          <div style="background:var(--paper); padding:10px; border-radius:5px; font-family:monospace; font-size:14px; word-break:break-all; margin-bottom:16px;" id="mfa-secret"></div>
+          
+          <label for="mfa-code">Enter the 6-digit code from your authenticator app:</label>
+          <input type="text" id="mfa-code" placeholder="000000" maxlength="6" inputmode="numeric" style="font-size:20px; letter-spacing:10px; text-align:center;">
+          
+          <button class="primary" id="confirm-mfa-btn">Confirm</button>
+          <button class="ghost" id="cancel-mfa-btn">Cancel</button>
+        </div>
+        
+        <!-- Backup Codes Display -->
+        <div id="backup-codes-modal" class="hidden mfa-modal" style="background:var(--red-bg);">
+          <h3 style="margin-top:0; color:var(--red);">Save your backup codes</h3>
+          <p style="font-size:13px; color:var(--red); margin-bottom:10px;">
+            Store these codes in a safe place. Each code can be used once if you lose access to your authenticator app.
+          </p>
+          <div id="backup-codes-list" class="backup-codes-list"></div>
+          <button class="primary" id="close-backup-codes-btn">I have saved my codes</button>
+        </div>
+      </details>
+    </div>
   </div>
 
   <footer class="colophon">Educational content, not investment advice &middot; Indian Standard Time throughout</footer>
@@ -691,6 +831,8 @@
     telegramLinkView: document.getElementById("view-telegram-link"),
     manageView: document.getElementById("view-manage"),
     dashboardView: document.getElementById("view-dashboard"),
+    forgotPasswordView: document.getElementById("view-forgot-password"),
+    passwordResetView: document.getElementById("view-password-reset"),
 
     tabSignup: document.getElementById("tab-signup"),
     tabSignin: document.getElementById("tab-signin"),
@@ -713,6 +855,15 @@
     signinSubmit: document.getElementById("signin-submit"),
     signinId: document.getElementById("signin-id"),
     signinPassword: document.getElementById("signin-password"),
+
+    forgotForm: document.getElementById("forgot-form"),
+    forgotStatus: document.getElementById("forgot-status"),
+    forgotSubmit: document.getElementById("forgot-submit"),
+    forgotId: document.getElementById("forgot-id"),
+    passwordResetForm: document.getElementById("password-reset-form"),
+    resetStatus: document.getElementById("reset-status"),
+    resetSubmit: document.getElementById("reset-submit"),
+    resetPassword: document.getElementById("reset-password"),
 
     verifyStatus: document.getElementById("verify-status"),
     verifyTelegramPrompt: document.getElementById("verify-telegram-prompt"),
@@ -738,6 +889,25 @@
     settingsStatus: document.getElementById("settings-status"),
     dashboardTelegramLinkBtn: document.getElementById("dashboard-telegram-link-btn"),
 
+    themeToggleBtn: document.getElementById("theme-toggle-btn"),
+    themeIcon: document.getElementById("theme-icon"),
+
+    mfaStatus: document.getElementById("mfa-status"),
+    mfaDisabledView: document.getElementById("mfa-disabled-view"),
+    mfaEnabledView: document.getElementById("mfa-enabled-view"),
+    enableMfaBtn: document.getElementById("enable-mfa-btn"),
+    disableMfaBtn: document.getElementById("disable-mfa-btn"),
+    backupCodesBtn: document.getElementById("backup-codes-btn"),
+    mfaEnrollmentModal: document.getElementById("mfa-enrollment-modal"),
+    qrCodeContainer: document.getElementById("qr-code-container"),
+    mfaSecret: document.getElementById("mfa-secret"),
+    mfaCode: document.getElementById("mfa-code"),
+    confirmMfaBtn: document.getElementById("confirm-mfa-btn"),
+    cancelMfaBtn: document.getElementById("cancel-mfa-btn"),
+    backupCodesModal: document.getElementById("backup-codes-modal"),
+    backupCodesList: document.getElementById("backup-codes-list"),
+    closeBackupCodesBtn: document.getElementById("close-backup-codes-btn"),
+
     editionDate: document.getElementById("edition-date"),
     countdownClock: document.getElementById("countdown-clock"),
     countdownNextLabel: document.getElementById("countdown-next-label"),
@@ -748,7 +918,7 @@
   let currentSubscriber = null;
 
   function showView(view) {
-    [els.authView, els.verifyView, els.telegramLinkView, els.manageView, els.dashboardView].forEach((v) =>
+    [els.authView, els.verifyView, els.telegramLinkView, els.manageView, els.dashboardView, els.forgotPasswordView, els.passwordResetView].forEach((v) =>
       v.classList.add("hidden")
     );
     view.classList.remove("hidden");
@@ -892,14 +1062,38 @@
     els.signinSubmit.textContent = "Sign in";
 
     if (ok) {
-      setSession(data.session_token);
-      currentSubscriber = data.subscriber;
-      els.signinForm.reset();
-      enterDashboard();
+      if (data.mfa_required) {
+        showMfaPrompt(data.challenge_token);
+      } else {
+        setSession(data.session_token);
+        currentSubscriber = data.subscriber;
+        els.signinForm.reset();
+        enterDashboard();
+      }
     } else {
       setStatus(els.signinStatus, data.error || "Incorrect email/mobile number or password.", "error");
     }
   });
+
+  function showMfaPrompt(challengeToken) {
+    const code = prompt("Enter your 6-digit authenticator code (or backup code):");
+    if (!code) return;
+    
+    postJSON("/login/mfa", {
+      challenge_token: challengeToken,
+      code: code.trim().replace(/\s/g, "")
+    }).then(({ ok, data }) => {
+      if (ok) {
+        setSession(data.session_token);
+        currentSubscriber = data.subscriber;
+        els.signinForm.reset();
+        enterDashboard();
+      } else {
+        setStatus(els.signinStatus, data.error || "Incorrect code. Please try again.", "error");
+        showMfaPrompt(challengeToken);
+      }
+    });
+  }
 
   // ---- Sign out ----
   els.signoutBtn.addEventListener("click", async function () {
@@ -908,6 +1102,86 @@
     currentSubscriber = null;
     showLandingState();
   });
+
+  // ---- Forgot Password Flow ----
+  document.getElementById("forgot-password-link").addEventListener("click", function (e) {
+    e.preventDefault();
+    showView(els.forgotPasswordView);
+  });
+
+  document.getElementById("back-to-signin").addEventListener("click", function (e) {
+    e.preventDefault();
+    showView(els.authView);
+    switchAuthTab("signin");
+  });
+
+  els.forgotForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+    clearStatus(els.forgotStatus);
+    
+    els.forgotSubmit.disabled = true;
+    els.forgotSubmit.textContent = "Sending...";
+    
+    const { ok, data } = await postJSON("/password/forgot", {
+      login_id: els.forgotId.value.trim()
+    });
+    
+    els.forgotSubmit.disabled = false;
+    els.forgotSubmit.textContent = "Send reset link";
+    
+    if (ok) {
+      setStatus(els.forgotStatus, 
+        "Check your email for a password reset link. It will expire in 1 hour.", 
+        "success");
+      els.forgotForm.reset();
+      setTimeout(() => {
+        showView(els.authView);
+        switchAuthTab("signin");
+      }, 2000);
+    } else {
+      setStatus(els.forgotStatus, data.error || data.message || "Something went wrong.", "error");
+    }
+  });
+
+  // ---- Password Reset from Email Link ----
+  async function runPasswordReset() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const resetPath = window.location.pathname === "/reset-password";
+    
+    if (!resetPath || !token) return false;
+    
+    showView(els.passwordResetView);
+    
+    els.passwordResetForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      clearStatus(els.resetStatus);
+      
+      els.resetSubmit.disabled = true;
+      els.resetSubmit.textContent = "Resetting...";
+      
+      const { ok, data } = await postJSON("/password/reset", {
+        token: token,
+        new_password: els.resetPassword.value
+      });
+      
+      els.resetSubmit.disabled = false;
+      els.resetSubmit.textContent = "Set new password";
+      
+      if (ok) {
+        setStatus(els.resetStatus, "Password reset successful! Signing you in...", "success");
+        els.passwordResetForm.reset();
+        setTimeout(() => {
+          showView(els.authView);
+          switchAuthTab("signin");
+        }, 1500);
+      } else {
+        setStatus(els.resetStatus, data.reason || data.error || "Reset link is invalid or expired.", "error");
+      }
+    });
+    
+    return true;
+  }
 
   // ---- Email verification (runs automatically if ?token= is present) ----
   async function runVerification() {
@@ -978,6 +1252,125 @@
     }
   });
 
+  // ---- Theme Preference ----
+  function updateThemePreference(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("marketpulse_theme", theme);
+    els.themeIcon.textContent = theme === "dark" ? "☀️" : "🌙";
+  }
+
+  function loadThemePreference() {
+    const savedTheme = localStorage.getItem("marketpulse_theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = savedTheme || (prefersDark ? "dark" : "light");
+    updateThemePreference(theme);
+  }
+
+  els.themeToggleBtn.addEventListener("click", async function () {
+    const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
+    const newTheme = currentTheme === "dark" ? "light" : "dark";
+    
+    updateThemePreference(newTheme);
+    
+    if (sessionToken) {
+      await postJSON("/theme", { theme: newTheme });
+    }
+  });
+
+  // ---- MFA Management ----
+  async function loadMfaStatus() {
+    if (currentSubscriber && currentSubscriber.mfa_enabled) {
+      els.mfaDisabledView.classList.add("hidden");
+      els.mfaEnabledView.classList.remove("hidden");
+    } else {
+      els.mfaDisabledView.classList.remove("hidden");
+      els.mfaEnabledView.classList.add("hidden");
+    }
+  }
+
+  els.enableMfaBtn.addEventListener("click", async function () {
+    els.enableMfaBtn.disabled = true;
+    const { ok, data } = await postJSON("/mfa/enroll/start", {});
+    els.enableMfaBtn.disabled = false;
+    
+    if (ok) {
+      els.mfaSecret.textContent = data.secret;
+      els.qrCodeContainer.innerHTML = `<p style="font-size:12.5px;color:var(--graphite);">QR Code would be displayed here. Secret: ${data.secret}</p>`;
+      els.mfaEnrollmentModal.classList.remove("hidden");
+    } else {
+      setStatus(els.mfaStatus, data.reason || "Could not start MFA setup.", "error");
+    }
+  });
+
+  els.confirmMfaBtn.addEventListener("click", async function () {
+    clearStatus(els.mfaStatus);
+    const code = els.mfaCode.value.trim().replace(/\s/g, "");
+    
+    if (code.length !== 6 || !/^\d+$/.test(code)) {
+      setStatus(els.mfaStatus, "Enter a valid 6-digit code.", "error");
+      return;
+    }
+    
+    els.confirmMfaBtn.disabled = true;
+    els.confirmMfaBtn.textContent = "Confirming...";
+    
+    const { ok, data } = await postJSON("/mfa/enroll/confirm", { code });
+    
+    els.confirmMfaBtn.disabled = false;
+    els.confirmMfaBtn.textContent = "Confirm";
+    
+    if (ok) {
+      els.mfaEnrollmentModal.classList.add("hidden");
+      els.backupCodesList.innerHTML = data.backup_codes.map((code, i) => 
+        `<div>${code}</div>`
+      ).join("");
+      els.backupCodesModal.classList.remove("hidden");
+      setStatus(els.mfaStatus, "MFA enabled successfully!", "success");
+      currentSubscriber.mfa_enabled = true;
+      loadMfaStatus();
+    } else {
+      setStatus(els.mfaStatus, data.reason || "Code verification failed.", "error");
+    }
+  });
+
+  els.cancelMfaBtn.addEventListener("click", function () {
+    els.mfaEnrollmentModal.classList.add("hidden");
+    els.mfaCode.value = "";
+  });
+
+  els.closeBackupCodesBtn.addEventListener("click", function () {
+    els.backupCodesModal.classList.add("hidden");
+  });
+
+  els.disableMfaBtn.addEventListener("click", async function () {
+    const currentPassword = prompt("Enter your password to disable MFA:");
+    if (!currentPassword) return;
+    
+    els.disableMfaBtn.disabled = true;
+    const { ok, data } = await postJSON("/mfa/disable", { password: currentPassword });
+    els.disableMfaBtn.disabled = false;
+    
+    if (ok) {
+      setStatus(els.mfaStatus, "MFA disabled.", "success");
+      currentSubscriber.mfa_enabled = false;
+      loadMfaStatus();
+    } else {
+      setStatus(els.mfaStatus, data.error || "Password incorrect.", "error");
+    }
+  });
+
+  els.backupCodesBtn.addEventListener("click", async function () {
+    const { ok, data } = await postJSON("/mfa/backup-codes/regenerate", {});
+    if (ok) {
+      els.backupCodesList.innerHTML = data.backup_codes.map(code => 
+        `<div>${code}</div>`
+      ).join("");
+      els.backupCodesModal.classList.remove("hidden");
+    } else {
+      setStatus(els.mfaStatus, data.reason || "Could not regenerate codes.", "error");
+    }
+  });
+
   // ---- Dashboard: load + display today's briefing ----
   async function loadBriefing() {
     clearStatus(els.dashboardStatus);
@@ -998,166 +1391,130 @@
 
     els.briefingRunDate.textContent = data.run_date || "";
     els.briefingIframe.srcdoc = data.html || "<p>No content available.</p>";
-    els.briefingAvailable.classList.remove("hidden");
-
-    if (data.suppressed) {
-      setStatus(
-        els.dashboardStatus,
-        "Today's briefing was withheld by an automated compliance check; showing the most recent available edition.",
-        "info"
-      );
-    }
   }
 
   function refreshChannelCheckboxes() {
     if (!currentSubscriber) return;
-    const active = new Set(currentSubscriber.channels || []);
-    els.dashboardChannels.querySelectorAll(".channel-option").forEach((option) => {
-      const value = option.querySelector("input").value;
-      const checked = active.has(value);
-      option.querySelector("input").checked = checked;
-      option.classList.toggle("checked", checked);
+    document.querySelectorAll("#dashboard-channels .channel-option").forEach((option) => {
+      const channel = option.getAttribute("data-channel");
+      const checkbox = option.querySelector("input");
+      checkbox.checked = (currentSubscriber.channels || []).includes(channel);
+      option.classList.toggle("checked", checkbox.checked);
     });
   }
 
   els.saveChannelsBtn.addEventListener("click", async function () {
-    clearStatus(els.settingsStatus);
-    const channels = Array.from(els.dashboardChannels.querySelectorAll(".channel-option input:checked")).map(
-      (c) => c.value
-    );
+    const channels = Array.from(els.dashboardChannels.querySelectorAll(".channel-option input:checked")).map((c) => c.value);
     if (channels.length === 0) {
-      setStatus(els.settingsStatus, "Choose at least one delivery channel.", "error");
+      setStatus(els.settingsStatus, "Select at least one channel.", "error");
       return;
     }
-    const { ok, data } = await postJSON("/channels", { channels: channels });
+
+    els.saveChannelsBtn.disabled = true;
+    const { ok, data } = await postJSON("/channels", { channels });
+    els.saveChannelsBtn.disabled = false;
+
     if (ok) {
       currentSubscriber.channels = data.channels;
-      setStatus(els.settingsStatus, "Saved.", "success");
+      setStatus(els.settingsStatus, "Channels saved.", "success");
     } else {
-      setStatus(els.settingsStatus, data.error || "Could not save channels.", "error");
+      setStatus(els.settingsStatus, data.error || "Something went wrong.", "error");
+      refreshChannelCheckboxes();
     }
   });
 
-  // ---- View state transitions ----
+  // ---- Countdown / timeline updates ----
+  function updateCountdown() {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentSeconds = now.getSeconds();
+
+    const points = [
+      { hhmm: "06:00", name: "Pre-render" },
+      { hhmm: "06:45", name: "GIFT Nifty snapshot" },
+      { hhmm: "06:50", name: "Assembled" },
+      { hhmm: "07:00", name: "Sent to you" },
+      { hhmm: "09:15", name: "NSE opens" },
+    ];
+
+    let nextPoint = null;
+    let secondsUntilNext = null;
+
+    for (const point of points) {
+      const [h, m] = point.hhmm.split(":").map(Number);
+      const pointSeconds = h * 3600 + m * 60;
+      const currentSeconds_total = currentHour * 3600 + currentMinute * 60 + currentSeconds;
+
+      if (currentSeconds_total < pointSeconds) {
+        nextPoint = point;
+        secondsUntilNext = pointSeconds - currentSeconds_total;
+        break;
+      }
+    }
+
+    if (nextPoint) {
+      const hours = Math.floor(secondsUntilNext / 3600);
+      const minutes = Math.floor((secondsUntilNext % 3600) / 60);
+      const secs = secondsUntilNext % 60;
+
+      els.countdownClock.innerHTML = `<span class="amber-dot" aria-hidden="true"></span>${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+      els.countdownNextLabel.textContent = `until ${nextPoint.name}`;
+
+      els.timelinePoints.forEach((pt) => {
+        const ptHhmm = pt.getAttribute("data-hhmm");
+        pt.classList.remove("active", "done");
+        if (ptHhmm === nextPoint.hhmm) {
+          pt.classList.add("active");
+        } else if (ptHhmm < nextPoint.hhmm) {
+          pt.classList.add("done");
+        }
+      });
+    }
+  }
+
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
+
+  // ---- Initial page state (check for saved session, verify/reset tokens) ----
   function showLandingState() {
-    els.accountBox.classList.add("hidden");
-    els.mastheadTitle.textContent = "Tomorrow's open, before it opens.";
-    els.mastheadTagline.innerHTML =
-      "A plain-English briefing for first-time investors, written before NSE rings the bell at 9:15&nbsp;AM&nbsp;IST.";
-    els.pageWrap.classList.remove("dashboard");
     showView(els.authView);
+    els.accountBox.classList.add("hidden");
     switchAuthTab("signin");
   }
 
-  function enterDashboard() {
-    els.accountBox.classList.remove("hidden");
-    els.accountWho.textContent = currentSubscriber.email || currentSubscriber.mobile_number || "Signed in";
-    els.mastheadTitle.textContent = "Today's open, decoded.";
-    els.mastheadTagline.textContent = "Your briefing, ready whenever you are.";
-    els.pageWrap.classList.add("dashboard");
-    showView(els.dashboardView);
+  async function enterDashboard() {
+    loadMfaStatus();
     refreshChannelCheckboxes();
+    loadThemePreference();
+    els.accountBox.classList.remove("hidden");
+    els.accountWho.textContent = currentSubscriber.email || currentSubscriber.mobile_number || "Subscriber";
+    showView(els.dashboardView);
     loadBriefing();
   }
 
-  async function restoreSessionIfPresent() {
-    if (!sessionToken) return false;
-    const { ok, data } = await getJSON("/me");
-    if (ok && data.subscriber) {
-      currentSubscriber = data.subscriber;
-      enterDashboard();
-      return true;
-    }
-    setSession(null);
-    return false;
-  }
-
-  // ---- Live IST countdown (signature element) ----
-  // India Standard Time is UTC+5:30 with no DST; computed via offset
-  // rather than relying on the visitor's local locale/timezone settings.
-  const IST_OFFSET_MINUTES = 5 * 60 + 30;
-  const CHECKPOINTS = [
-    { hhmm: "06:00", minutes: 6 * 60 },
-    { hhmm: "06:45", minutes: 6 * 60 + 45 },
-    { hhmm: "06:50", minutes: 6 * 60 + 50 },
-    { hhmm: "07:00", minutes: 7 * 60 },
-    { hhmm: "09:15", minutes: 9 * 60 + 15 },
-  ];
-
-  function nowISTMinutes() {
-    const now = new Date();
-    const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes() + now.getUTCSeconds() / 60;
-    return (utcMinutes + IST_OFFSET_MINUTES) % (24 * 60);
-  }
-
-  function formatHMS(totalSeconds) {
-    const h = Math.floor(totalSeconds / 3600);
-    const m = Math.floor((totalSeconds % 3600) / 60);
-    const s = Math.floor(totalSeconds % 60);
-    const pad = (n) => String(n).padStart(2, "0");
-    return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
-  }
-
-  const CHECKPOINT_NAMES = {
-    "06:00": "pre-render begins",
-    "06:45": "GIFT Nifty snapshot",
-    "06:50": "today's briefing assembled",
-    "07:00": "delivery to your inbox",
-    "09:15": "NSE opens",
-  };
-
-  function updateCountdown() {
-    const nowMin = nowISTMinutes();
-    const nowSec = nowMin * 60;
-
-    const istHours = Math.floor(nowMin / 60);
-    const istMins = Math.floor(nowMin % 60);
-    const dateFmt = new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", timeZone: "Asia/Kolkata" });
-    try {
-      els.editionDate.textContent = dateFmt.format(new Date()) + " · IST";
-    } catch (e) {
-      els.editionDate.textContent = String(istHours).padStart(2, "0") + ":" + String(istMins).padStart(2, "0") + " IST";
-    }
-
-    let next = null;
-    for (const cp of CHECKPOINTS) {
-      if (cp.minutes * 60 > nowSec) { next = cp; break; }
-    }
-    if (!next) next = CHECKPOINTS[0]; // wrapped past 09:15 -> count to tomorrow's 06:00
-
-    let secondsUntil;
-    if (next === CHECKPOINTS[0] && nowSec >= CHECKPOINTS[CHECKPOINTS.length - 1].minutes * 60) {
-      secondsUntil = (24 * 60 * 60) - nowSec + next.minutes * 60;
-    } else {
-      secondsUntil = next.minutes * 60 - nowSec;
-    }
-
-    els.countdownClock.innerHTML = '<span class="amber-dot" aria-hidden="true"></span>' + formatHMS(Math.max(0, secondsUntil));
-    els.countdownNextLabel.textContent = "until " + (CHECKPOINT_NAMES[next.hhmm] || "next checkpoint");
-
-    els.timelinePoints.forEach((point) => {
-      const hhmm = point.getAttribute("data-hhmm");
-      const cpMinutes = CHECKPOINTS.find((c) => c.hhmm === hhmm).minutes;
-      point.classList.remove("done", "active");
-      if (hhmm === next.hhmm) {
-        point.classList.add("active");
-      } else if (cpMinutes * 60 < nowSec) {
-        point.classList.add("done");
+  async function restoreSessionOrShowLanding() {
+    if (sessionToken) {
+      const { ok, data } = await getJSON("/me");
+      if (ok && data.subscriber) {
+        currentSubscriber = data.subscriber;
+        enterDashboard();
+        return;
+      } else {
+        setSession(null);
       }
-    });
+    }
+    showLandingState();
   }
 
-  updateCountdown();
-  setInterval(updateCountdown, 1000);
+  // Initialization
+  loadThemePreference();
 
-  // ---- Entry point ----
-  (async function init() {
-    const cameFromVerification = await runVerification();
-    if (cameFromVerification) return;
-
-    const restored = await restoreSessionIfPresent();
-    if (!restored) showLandingState();
-  })();
+  if (!await runVerification()) {
+    if (!await runPasswordReset()) {
+      restoreSessionOrShowLanding();
+    }
+  }
 })();
 </script>
 </body>
