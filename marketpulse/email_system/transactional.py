@@ -101,6 +101,19 @@ def send_verification_email(to_email: str, verify_url: str) -> None:
     )
     _send_plain_text(to_email, subject, body)
 
+def send_password_reset_email(to_email: str, reset_url: str) -> None:
+    subject = "Reset your MarketPulse India password"
+    body = (
+        "We received a request to reset your password for MarketPulse India.\n\n"
+        "Click the link below to verify your identity and choose a "
+        "new password for your profile dashboard:\n\n"
+        f"{reset_url}\n\n"
+        "This link expires shortly. If you didn't request this change, you "
+        "can safely ignore this email -- your account remains secure.\n\n"
+        "-- MarketPulse India Management"
+    )
+    _send_plain_text(to_email, subject, body)
+    
 
 def send_telegram_linked_confirmation(to_email: str) -> None:
     subject = "Telegram connected to MarketPulse India"
