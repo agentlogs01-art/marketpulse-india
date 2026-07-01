@@ -9,4 +9,6 @@ flask>=3.0.0
 gunicorn>=21.2.0
 werkzeug>=3.0.0   # ships with Flask; pinned explicitly for password hashing (persistence/subscriber_repo.py)
 pyotp>=2.9.0      # TOTP-based MFA (persistence/mfa_repo.py) -- RFC 6238, no external service required
+Pillow>=10.4.0
+qrcode>=8.0
  
