@@ -839,13 +839,19 @@
   // -------------------------------------------------------------------------
   // Password reset landing page (/reset-password?token=...)
   // -------------------------------------------------------------------------
-  async function handlePasswordReset() {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    if (!token) return false;
-    showView("view-reset-password");
-    return true;
+async function handlePasswordReset() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+  const action = params.get("action");
+  
+  // Only intercept if token exists AND the path contains reset OR an action query parameter is explicit
+  if (!token || (!window.location.pathname.includes("reset-password") && action !== "reset")) {
+    return false; 
   }
+  
+  showView("view-reset-password");
+  return true;
+}
 
   E("reset-submit-btn").addEventListener("click", async function () {
     clearStatus(E("reset-status"));
@@ -873,25 +879,25 @@
   // Email verification
   // -------------------------------------------------------------------------
   async function handleEmailVerification() {
-   const params = new URLSearchParams(window.location.search);
-   const token = params.get("token");
-   const action = params.get("action");
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const action = params.get("action");
   
-   // Guard clause: skip if it's explicitly a password reset context
-   if (!token || window.location.pathname.includes("reset-password") || action === "reset") {
-     return false;
-   }
+    // Guard clause: skip if it's explicitly a password reset context
+    if (!token || window.location.pathname.includes("reset-password") || action === "reset") {
+      return false;
+    }
   
-   showView("view-verify");
-   const { ok, data } = await POST("/verify", { token });
-   if (ok) {
-     setStatus(E("verify-status"), "Email confirmed! Sign in to view your briefing.", "success");
-     E("verify-telegram-prompt").classList.remove("hidden");
-   } else {
-     setStatus(E("verify-status"), data.reason || "This verification link is invalid or expired.", "error");
-   }
-   return true;
- }
+    showView("view-verify");
+    const { ok, data } = await POST("/verify", { token });
+    if (ok) {
+      setStatus(E("verify-status"), "Email confirmed! Sign in to view your briefing.", "success");
+      E("verify-telegram-prompt").classList.remove("hidden");
+    } else {
+      setStatus(E("verify-status"), data.reason || "This verification link is invalid or expired.", "error");
+    }
+    return true;
+  }
 
   E("verify-go-to-signin").addEventListener("click", function () { showView("view-auth"); switchTab("signin"); });
 
