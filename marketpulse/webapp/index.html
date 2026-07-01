@@ -873,19 +873,25 @@
   // Email verification
   // -------------------------------------------------------------------------
   async function handleEmailVerification() {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get("token");
-    if (!token || window.location.pathname.includes("reset-password")) return false;
-    showView("view-verify");
-    const { ok, data } = await POST("/verify", { token });
-    if (ok) {
-      setStatus(E("verify-status"), "Email confirmed! Sign in to view your briefing.", "success");
-      E("verify-telegram-prompt").classList.remove("hidden");
-    } else {
-      setStatus(E("verify-status"), data.reason || "This verification link is invalid or expired.", "error");
-    }
-    return true;
-  }
+   const params = new URLSearchParams(window.location.search);
+   const token = params.get("token");
+   const action = params.get("action");
+  
+   // Guard clause: skip if it's explicitly a password reset context
+   if (!token || window.location.pathname.includes("reset-password") || action === "reset") {
+     return false;
+   }
+  
+   showView("view-verify");
+   const { ok, data } = await POST("/verify", { token });
+   if (ok) {
+     setStatus(E("verify-status"), "Email confirmed! Sign in to view your briefing.", "success");
+     E("verify-telegram-prompt").classList.remove("hidden");
+   } else {
+     setStatus(E("verify-status"), data.reason || "This verification link is invalid or expired.", "error");
+   }
+   return true;
+ }
 
   E("verify-go-to-signin").addEventListener("click", function () { showView("view-auth"); switchTab("signin"); });
 
