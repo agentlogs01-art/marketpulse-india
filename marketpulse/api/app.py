@@ -289,16 +289,11 @@ def telegram_webhook():
     from marketpulse.delivery.telegram_sender import handle_start_command
     from marketpulse.email_system.transactional import send_telegram_linked_confirmation
 
-    # 👇 ADD THIS LINE RIGHT AT THE TOP
-    print("🚀 PYTHON WEBHOOK CODE WAS HIT! Payload received.", flush=True)
 
     from marketpulse.delivery.telegram_sender import handle_start_command
     from marketpulse.email_system.transactional import send_telegram_linked_confirmation
     
     update = request.get_json(force=True, silent=True) or {}
-
-    # 👇 ADD THIS TO SEE THE RAW DATA STREAM IN RAILWAY
-    print(f"📦 Raw Update Payload: {update}", flush=True)
     
     subscriber_dict = handle_start_command(update)
 
