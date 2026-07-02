@@ -2,9 +2,9 @@ name: MarketPulse India Daily Briefing (Morning)
 
 on:
   schedule:
-    # 00:30 UTC = 06:00 IST (pre-render checkpoint). The script itself
+    # 00:33 UTC = 06:03 IST (pre-render checkpoint). The script itself
     # sleeps internally until 06:45 / 06:50 / 07:00 IST.
-    - cron: "30 0 * * 1-5"
+    - cron: "33 0 * * 1-5"
   workflow_dispatch:
     inputs:
       prev_close:
