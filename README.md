@@ -394,7 +394,7 @@ See `.github/workflows/daily_briefing.yml` and `marketpulse/.github/workflows/da
 
 ## 📦 Dependencies
 
-See `marketpulse/requirements.txt`:
+See `root/requirements.txt`:
 
 - **`requests`** ≥2.31.0 — HTTP client for RSS, APIs, market data
 - **`feedparser`** ≥6.0.10 — RSS feed parsing
@@ -404,8 +404,6 @@ See `marketpulse/requirements.txt`:
 - **`pyotp`** ≥2.9.0 — TOTP-based MFA (RFC 6238, no external service)
 - **`qrcode`** ≥8.0 — QR code generation for MFA enrollment
 - **`Pillow`** ≥10.4.0 — image processing for QR codes
-
-*(Optional, in root `requirements.txt`:)*
 - **`zxcvbn`** 4.4.28 — password strength validation
 
 ---
