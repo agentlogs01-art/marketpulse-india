@@ -1,221 +1,522 @@
-# MarketPulse India — MVP Implementation
+# MarketPulse India — Core Application Module
 
-Implementation of **PRD v1.6** ("Critical Path De-Risk, SEBI Token
-Hardening & Override Extension"), extended with a public signup/sign-in
-web app, an authenticated in-browser dashboard, and multi-channel
-delivery (Email / WhatsApp / Telegram). Every module below is traceable
-to a specific FR in the PRD via its docstring.
+**Version**: 1.6.0 | **Language**: Python (82.4%) | Built against PRD v1.6 (Critical Path De-Risk, SEBI Token Hardening & Override Extension)
 
-## Layout
+---
+
+## 📌 Overview
+
+The `marketpulse/` module is the heart of the MarketPulse India platform — an **AI-powered pre-market intelligence system** delivering daily market briefings to Indian equity traders. It ingests overnight news from curated RSS sources, analyzes sentiment/sector impact via LLM, reconciles signals against GIFT Nifty snapshots, and dispatches briefings across Email, WhatsApp, and Telegram.
+
+**Core Design Principle**: Graceful degradation at every stage. A single source failure or LLM timeout never blocks the 07:00 IST send — the pipeline falls back to neutral analysis or suppresses the run entirely rather than sending non-compliant briefings.
+
+---
+
+## 🏗️ Module Architecture
 
 ```
 marketpulse/
-├── models/schemas.py            FR-01.1, FR-01.2, FR-02.2/2.3/2.5/2.6 data models,
-│                                 plus DeliveryChannel / Subscriber / Session for auth
-├── constants/
-│   ├── paragraph4_tokens.py     FR-02.5 deterministic sentinel-token resolution
-│   ├── jargon_registry.py       FR-02.4.1 jargon term registry (Appendix A glossary)
-│   └── sebi_entity_rules.py     FR-02.4.2 entity blacklist + conversion matrix
-├── ai_engine/
-│   ├── llm_client.py            FR-02.2 Gemini 1.5 Flash sentiment/sector analysis
-│   ├── jargon_enforcer.py       FR-02.4.1 Layer 2 deterministic jargon injection
-│   ├── entity_scanner.py        FR-02.4.2 Layer 2 deterministic entity scrub + suppression
-│   └── bias_engine.py           FR-02.3 aggregation, FR-02.5 reconciliation, FR-02.6 override
-├── pipeline/
-│   ├── ingestion.py             FR-01.2 RSS ingestion & event normalization
-│   ├── market_data.py           FR-01.1 GIFT Nifty (3-tier fallback) + instrument snapshots
-│   └── orchestrator.py          Ties 06:00→07:00 IST stages together
-├── email_system/
-│   ├── render.py                FR-03.1 HTML email template assembly
-│   ├── sender.py                Batched SMTP dispatch to the Email channel
-│   └── transactional.py         One-off transactional emails (verification link, etc.)
-├── delivery/                     Multi-channel fan-out layer
-│   ├── text_render.py            Plain-text + Telegram MarkdownV2 versions of the briefing
-│   ├── whatsapp_sender.py        Twilio WhatsApp Business API sender
-│   ├── telegram_sender.py        Telegram Bot API sender + /start webhook handler
-│   └── dispatcher.py              Fans out one day's briefing to Email + WhatsApp + Telegram
-├── webapp/
-│   └── index.html                 Single-file app: landing (sign-up/sign-in) + dashboard
-├── api/                            Backend for the web app
-│   ├── handlers.py                 Signup/verify/login/logout/me/briefing/telegram-link/etc.
-│   └── app.py                      Flask routes wiring handlers.py to HTTP
-├── persistence/                   Supabase persistence layer
-│   ├── schema.sql                  DDL: subscribers, sessions, email_verifications,
-│   │                                telegram_links, market_closes, pipeline_runs, send_log
-│   ├── supabase_client.py          Thin PostgREST HTTP wrapper (no supabase-py dep)
-│   ├── subscriber_repo.py          Subscriber CRUD, password auth, email verification,
-│   │                                Telegram linking
-│   ├── session_repo.py             Session token issuance/lookup/revocation
-│   ├── market_close_repo.py        Previous-day Nifty close storage + lookup
-│   └── run_log_repo.py             PipelineRunRecord + per-channel send-result audit,
-│                                    plus cached briefing HTML/text for the dashboard
-├── scheduler/
-│   ├── run_daily_briefing.py       GitHub Actions cron entry point (06:00→07:00 IST)
-│   └── record_daily_close.py       EOD job: persists today's official Nifty close
-├── utils/
-│   ├── timeutils.py                IST checkpoint helpers (06:00/06:45/06:50/07:00)
-│   └── qa_logging.py               Structured stdout audit log of every run
-├── tests/                          106 unit tests covering all deterministic logic,
-│                                    persistence repos, auth/session flows, API handlers,
-│                                    and chat-channel rendering
-├── .env.example                    All required environment variables, documented
-└── .github/workflows/daily_briefing.yml   Free-tier cron scheduling (2 jobs)
+├── __init__.py              # Package metadata (v1.6.0)
+├── requirements.txt         # Core + Flask/Gunicorn for web app
+│
+├── api/                     # REST API + Web Dashboard (Flask)
+│   ├── app.py               # Flask wiring: static webapp, JSON endpoints
+│   └── handlers.py          # Auth, MFA, session, subscription logic
+│
+├── pipeline/                # Daily briefing orchestration (06:00 – 07:00 IST)
+│   ├── orchestrator.py      # Top-level run_full_pipeline() + AI analysis stage
+│   ├── ingestion.py         # RSS feed fetch + event normalization (FR-01.2)
+│   └── market_data.py       # GIFT Nifty + instrument snapshots (FR-01.1)
+│
+├── ai_engine/               # Sentiment analysis & bias reconciliation
+│   ├── llm_client.py        # LLM calls for event analysis (FR-02.2)
+│   ├── bias_engine.py       # Sector scoring + bias reconciliation (FR-02.3/02.5)
+│   ├── jargon_enforcer.py   # Beginner-friendly text enforcement
+│   └── entity_scanner.py    # Entity genericization (FR-02.4.2)
+│
+├── delivery/                # Multi-channel dispatch
+│   ├── dispatcher.py        # Orchestration: email + Telegram + WhatsApp
+│   ├── text_render.py       # Plain-text briefing render
+│   ├── telegram_sender.py   # Telegram API integration
+│   └── whatsapp_sender.py   # WhatsApp (Twilio) integration
+│
+├── email_system/            # Email rendering & transactional mail
+│   ├── render.py            # HTML email template rendering
+│   ├── sender.py            # SMTP delivery (SendGrid / Resend)
+│   └── transactional.py     # Verification, password reset, MFA emails
+│
+├── models/                  # Data schemas & domain objects
+│   ├── __init__.py
+│   └── schemas.py           # NewsEvent, EventAnalysis, Subscriber, Session, etc.
+│
+├── persistence/             # Database layer (Supabase PostgreSQL)
+│   ├── supabase_client.py   # Authenticated Supabase client
+│   ├── subscriber_repo.py   # Subscriber CRUD + auth (email, MFA, password)
+│   ├── session_repo.py      # Session token management
+│   ├── market_close_repo.py # Official Nifty 50 daily closes
+│   ├── run_log_repo.py      # Pipeline audit logs
+│   ├── mfa_repo.py          # MFA secret / backup codes (TOTP RFC 6238)
+│   └── schema.sql           # Database DDL: tables, constraints, indexes
+│
+├── scheduler/               # Background cron jobs (GitHub Actions)
+│   ├── run_daily_briefing.py  # Entry point: full pipeline + dispatch (07:00 IST)
+│   └── record_daily_close.py  # Fetch & record Nifty 50 official close (16:00 IST)
+│
+├── constants/               # Lookup tables & constants
+│   ├── paragraph4_tokens.py # Bias description templates
+│   └── ...
+│
+├── utils/                   # Helpers: time, logging, etc.
+│   ├── qa_logging.py        # QA audit trail (jargon/entity violations)
+│   └── ...
+│
+├── webapp/                  # Frontend (HTML + JavaScript, 17.6%)
+│   └── index.html           # Single-page app: signup, login, dashboard
+│
+├── docs/                    # Documentation & deployment guides
+│   └── ...
+│
+└── tests/                   # Unit & integration tests
+    └── ...
 ```
 
-## Authentication & the in-browser dashboard
+---
 
-**The landing page is sign-up / sign-in, not a bare mailing-list form.**
-`webapp/index.html` opens on an auth card with two tabs: Sign up (email
-or mobile number + password + delivery channels) and Sign in (email or
-mobile number + password). After a successful sign-in, the same
-single-page app swaps client-side to a dashboard view that renders
-**today's actual briefing inline** — this is the "view MarketPulse on
-the website after login" requirement.
+## 🔄 Daily Pipeline Flow (06:00 – 07:00 IST)
 
-### How it works
+The briefing generation follows a strict IST timeline, orchestrated by GitHub Actions:
 
-1. **Sign up** (`POST /api/signup`) requires a password and at least one
-   of email/mobile number. If an email is given, a verification link is
-   sent and the account stays `pending_verification` until clicked — a
-   mobile-only signup activates immediately (there's no email to
-   verify). Either way, a password is always set, so signing in is
-   possible as soon as the account is active.
-2. **Sign in** (`POST /api/login`) accepts either an email or a mobile
-   number plus the password, looked up by whichever shape the input has
-   (`@` → email, else → mobile). On success it returns an opaque
-   session token (not a JWT — see `persistence/session_repo.py`'s
-   docstring for why) that the web app stores and sends back as a
-   `Authorization: Bearer <token>` header on every subsequent request.
-3. **The dashboard** (`GET /api/briefing/latest`) reads the most
-   recently cached briefing render (`pipeline_runs.briefing_html`,
-   written by `scheduler/run_daily_briefing.py` once the day's pipeline
-   completes) and displays it inline in a sandboxed `<iframe>` — no
-   pipeline re-run, no re-render, just a read of the cached row.
-4. **Session restore on reload**: the web app keeps the token in
-   `localStorage` and calls `GET /api/me` on load to silently restore
-   the signed-in state without re-prompting for credentials, until the
-   token is revoked (logout) or expires (30 days).
-5. **Delivery channel management** moved into the dashboard too
-   (`POST /api/channels`, `POST /api/telegram/link`) — both now require
-   an authenticated session rather than a bare email string in the
-   request body, closing the gap where anyone who knew (or guessed) a
-   subscriber's email could previously change their delivery
-   preferences or request a Telegram link on their behalf.
+### **Stage 1: Pre-Render (06:00 IST)**
+- Static HTML template shell rendered; used as fallback if stage 2 fails
 
-### Security notes
+### **Stage 2: Snapshot (06:45 IST)** — `pipeline/market_data.py`
+- Fetch **GIFT Nifty** (^NSEI) from NSE iFC API; fall back to Yahoo Finance → Stooq
+- Capture **instrument snapshots** (commodities, currency, indices) from external APIs
+- Flag stale data (>6 hours old) for transparency in briefing
 
-- Passwords are hashed with `werkzeug.security` (scrypt) before ever
-  reaching Supabase — `password_hash` is never returned in any API
-  response (`Subscriber.to_public_dict()` is the single serialization
-  path every handler uses, specifically so a future field added to the
-  dataclass can't accidentally leak into a JSON response).
-- Login failure messages are identical whether the account doesn't
-  exist or the password is wrong, so a login attempt can't be used to
-  enumerate registered emails/numbers.
-- Sessions are DB-backed (`sessions` table), not stateless tokens, so
-  logout and "sign out everywhere" (`revoke_all_sessions_for_subscriber`)
-  are a single `UPDATE` rather than needing a token blocklist.
-- Telegram linking still requires a *verified* email anchor even for an
-  authenticated session — a mobile-only account can sign in and view the
-  dashboard, but can't link Telegram until it also adds and verifies an
-  email, since that binding was deliberately built to never trust an
-  unverified identity claim.
+### **Stage 3: Ingestion** — `pipeline/ingestion.py` (any time, before assembly)
+- Pull from 10 curated RSS sources (NSE, RBI, Reuters, MarketWatch, etc.)
+- Classify events by type (CENTRAL_BANK, EARNINGS, MACRO_DATA, INDIA_DOMESTIC, etc.)
+- Normalize into `NewsEvent` schema; filter by 16-hour lookback window
+- Resilience: single source down doesn't abort the run
 
-## Multi-channel delivery
+### **Stage 4: AI Analysis (06:50 IST)** — `pipeline/orchestrator.py`
+- For each event, call LLM to generate:
+  - **Sentiment**: BULLISH | BEARISH | NEUTRAL | MIXED
+  - **Affected Sectors**: one per sector (BANKING, IT, AUTO, ENERGY, FMCG)
+  - **Direction & Magnitude**: POSITIVE/NEGATIVE, 1–5 impact level
+  - **One-line beginner summary** (max 25 words)
+- Apply deterministic enforcers:
+  - **Jargon Enforcer**: inject plain-English definitions for financial terms
+  - **Entity Scanner**: genericize company names (e.g., "TCS" → "major IT firm")
+  - Violate safety thresholds? Suppress the run (non-fatal)
 
-`scheduler/run_daily_briefing.py` calls
-`delivery.dispatcher.dispatch_all_channels()` once the pipeline output is
-ready, fanning out to every active subscriber across Email (batched
-SMTP), WhatsApp (Twilio), and Telegram (Bot API). All three renderers
-consume the same `pipeline_output` dict, so the channels never diverge
-in substance — only formatting. The same render is also what gets
-cached onto `pipeline_runs.briefing_html` / `briefing_text` for the
-website dashboard to display, so a signed-in user sees exactly what was
-sent to their inbox/chat that morning.
+### **Stage 5: Aggregation & Reconciliation** — `ai_engine/bias_engine.py`
+- **Sector Scorecard**: weighted average of sentiment magnitudes per sector
+- **GIFT Nifty Bias**: reconcile LLM signals vs. actual GIFT Nifty gap
+  - Gap >1% up → GAP_UP_STRONG | Gap <−1% down → GAP_DOWN_STRONG | else FLAT
+- **Divergence Detection**: if signals conflict with GIFT gap (e.g., bearish events but +0.5% gap), flag for transparency
+- **Domestic Override (FR-02.6)**: high-intensity INDIA_DOMESTIC events can override bias if conditions met
 
-WhatsApp's 24-hour messaging-session rule (Meta policy) means production
-sending should use an approved Message Template — see
-`delivery/whatsapp_sender.py`'s `WHATSAPP_TEMPLATE_NOTE`.
+### **Stage 6: Render & Send (07:00 IST)** — `email_system/render.py` + `delivery/`
+- Render HTML email template with sector scorecards, bias badge, top events, GIFT snapshot
+- Render plain-text version for SMS/Telegram
+- **Fan-out dispatch**:
+  - **Email**: SendGrid / Resend API
+  - **Telegram**: Direct API push or webhook callback
+  - **WhatsApp**: Twilio API
+- Audit log: who received, who bounced, delivery status
 
-## Persistence layer (Supabase)
+---
 
-| Table | Purpose |
-|---|---|
-| `subscribers` | Identity, password hash, channel preferences (`channels text[]`, `telegram_chat_id`, `whatsapp_number`, `mobile_number`) |
-| `sessions` | Opaque session tokens issued at login, backing the dashboard |
-| `email_verifications` | One-time tokens for the signup confirmation flow |
-| `telegram_links` | Short-lived codes for the `/start` deep-link binding flow |
-| `market_closes` | Yesterday's official Nifty 50 close (baseline for GIFT Nifty %) |
-| `pipeline_runs` | One audit row per daily run, plus cached `briefing_html`/`briefing_text` |
-| `send_log` | Per-recipient, per-channel delivery outcome |
+## 🔐 API & Authentication
 
-See `persistence/schema.sql` for full DDL and RLS posture (default-deny;
-the backend uses the service-role key server-side — the browser never
-talks to Supabase directly, only to `api/app.py`'s endpoints, and
-`password_hash` is never reachable from a public key even if one were
-ever exposed).
+### **REST Endpoints** — `api/app.py` + `api/handlers.py`
 
-### Setting up Supabase
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/` | GET | Serve single-page app (index.html) |
+| `/api/signup` | POST | Create account (email, phone, delivery channels) |
+| `/api/verify` | POST | Verify email via token |
+| `/api/login` | POST | Sign in; returns session token |
+| `/api/login/mfa` | POST | Complete MFA challenge |
+| `/api/me` | GET | Fetch current subscriber profile |
+| `/api/briefing/latest` | GET | Fetch today's briefing (cached HTML + plain text) |
+| `/api/channels` | POST | Update delivery channel preferences |
+| `/api/mfa/enroll/start` | POST | Begin TOTP enrollment; return QR code |
+| `/api/mfa/enroll/confirm` | POST | Complete MFA setup |
+| `/api/mfa/disable` | POST | Disable MFA (requires password) |
+| `/api/password/forgot` | POST | Request password reset email |
+| `/api/password/reset` | POST | Complete password reset |
+| `/api/theme` | POST | Save light/dark theme preference |
+| `/api/telegram/link` | POST | Generate Telegram link code |
+| `/api/telegram/webhook` | POST | Telegram bot webhook (handle /start command) |
 
-1. Create a free-tier Supabase project.
-2. Run `persistence/schema.sql` in the Supabase SQL editor (or
-   `supabase db push`).
-3. Set `SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` (service role, never
-   anon) as secrets / in `.env` — see `.env.example`.
+**Session Management**:
+- Bearer token in `Authorization` header or JSON `session_token` field
+- 30-day expiry (configurable)
+- Revoke on logout
 
-## Key design decisions traced to the PRD
+**Error Handling**:
+- `ValidationError` (400): invalid input
+- `AuthError` (401): session expired or invalid credentials
 
-- **Zero LLM calls in the critical 06:45→06:50 window** (FR-02.5):
-  Paragraph 4 is never generated live — resolved from one of three
-  sentinel tokens via pure string templates in `constants/paragraph4_tokens.py`.
-- **Two-layer jargon/entity safety nets** (FR-02.4.1 / FR-02.4.2): LLM
-  self-compliance (Layer 1) plus a deterministic regex pass (Layer 2),
-  with run suppression if entity leakage is severe.
-- **Domestic override** (FR-02.6): a high-intensity `INDIA_DOMESTIC`
-  event is weighted 70/30 against the rest of the day's global news.
-- **Multi-channel content parity**: every channel — including the
-  website dashboard — renders from the same pipeline output, so nothing
-  ever diverges in substance, only formatting.
-- **Verified-identity-first signup, session-gated everything else**:
-  WhatsApp/Telegram and channel management are additive to a real
-  account, never reachable by guessing an email string in a request
-  body.
-- **Infra stays inside the $16–26/mo budget** (Section 3): free RSS
-  feeds, Gemini 1.5 Flash free tier, GitHub Actions free-tier cron, SMTP
-  via a free-tier provider, Supabase free tier, Telegram's free Bot API,
-  and Twilio's free WhatsApp Sandbox for development.
+---
 
-## Running
+## 🗄️ Data Models & Persistence
+
+### **Core Schemas** — `models/schemas.py`
+
+- **`NewsEvent`**: Ingested news item (headline, body, type, geography, credibility score)
+- **`EventAnalysis`**: LLM output (sentiment, affected sectors, bias label, beginner summary)
+- **`SectorScorecard`**: Aggregated direction + impact per sector
+- **`GiftNiftySnapshot`**: GIFT Nifty last traded price + % change
+- **`ReconciliationResult`**: Final bias label, divergence flag, domestic override status
+- **`Subscriber`**: User account (email, password hash, MFA, channels, preferences)
+- **`Session`**: Auth token + expiry
+- **`PipelineRunRecord`**: Audit log (jargon/entity violations, suppression reason)
+
+### **Database Schema** — Supabase (PostgreSQL) — `persistence/schema.sql`
+
+Designed for **Supabase FREE TIER** ($0 cost at MVP scale; 500MB database limit well-exceeded).
+
+#### **Table 1: `subscribers`** — User Accounts
+Primary identity table. Users authenticate via **email OR mobile_number** + password, optionally with TOTP-based MFA.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | Primary key, auto-generated |
+| `email` | text | Unique, nullable (but must have email OR mobile) |
+| `mobile_number` | text | Unique, E.164 format (e.g., +919876543210) |
+| `password_hash` | text | Never returned in API responses |
+| `status` | text | `pending_verification` \| `active` \| `paused` \| `unsubscribed` |
+| `persona` | text | `beginner` (MVP: single persona only) |
+| `channels` | text[] | Array of `email` \| `whatsapp` \| `telegram` |
+| `telegram_chat_id` | text | Unique, linked via `/start` deep-link flow |
+| `whatsapp_number` | text | Unique, delivery number (may differ from login `mobile_number`) |
+| `mfa_enabled` | boolean | TOTP-based MFA active? |
+| `mfa_secret` | text | Base32 TOTP secret (RFC 6238) |
+| `mfa_backup_codes` | jsonb | Array of hashed one-time backup codes |
+| `mfa_enrolled_at` | timestamptz | When MFA was first enabled |
+| `theme_preference` | text | `light` \| `dark` |
+| `created_at` | timestamptz | Account creation timestamp |
+| `verified_at` | timestamptz | When email was verified |
+| `last_login_at` | timestamptz | Last successful login |
+| `unsubscribed_at` | timestamptz | When user unsubscribed (if applicable) |
+
+**Constraints**:
+- `has_email_or_mobile`: at least one of `email` or `mobile_number` must be present
+- `channels_are_valid`: only allows 'email', 'whatsapp', 'telegram'
+
+**Indexes**:
+- `idx_subscribers_status` — for querying active subscribers
+- `idx_subscribers_mobile_number` — for login lookups
+- `idx_subscribers_telegram_chat_id` — for Telegram linking
+- `idx_subscribers_whatsapp_number` — for WhatsApp dispatch
+
+---
+
+#### **Table 2: `sessions`** — Authentication Tokens
+Backs the website's signed-in dashboard. Sessions expire after 30 days or can be revoked on logout.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `token` | text | Primary key, random opaque string |
+| `subscriber_id` | UUID | Foreign key to `subscribers` |
+| `created_at` | timestamptz | Issued at login |
+| `expires_at` | timestamptz | Default: +30 days |
+| `revoked_at` | timestamptz | Nullable; set on logout |
+
+**Indexes**:
+- `idx_sessions_subscriber` — fast lookup by user
+
+---
+
+#### **Table 3: `email_verifications`** — Email Verification Tokens
+One-time tokens emailed during signup. Expires after 24 hours.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `token` | text | Primary key |
+| `subscriber_id` | UUID | Foreign key to `subscribers` |
+| `created_at` | timestamptz | Issued at signup |
+| `expires_at` | timestamptz | Default: +24 hours |
+| `used_at` | timestamptz | Set when verified; token becomes single-use |
+
+**Indexes**:
+- `idx_email_verifications_subscriber` — lookup by subscriber
+
+---
+
+#### **Table 4: `telegram_links`** — Telegram Deep-Link Tracking
+Tracks pending/confirmed Telegram chat_id bindings. Users receive a `/start` link code that expires in 30 minutes.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `link_code` | text | Primary key, short alphanumeric |
+| `subscriber_id` | UUID | Foreign key to `subscribers` |
+| `created_at` | timestamptz | Issued when user clicks "Link Telegram" |
+| `expires_at` | timestamptz | Default: +30 minutes |
+| `consumed_at` | timestamptz | Set when `/start` command processed |
+| `chat_id` | text | Telegram chat ID captured after `/start` |
+
+**Indexes**:
+- `idx_telegram_links_subscriber` — lookup by user
+
+---
+
+#### **Table 5: `market_closes`** — Official Nifty 50 Closes
+Persists previous-day official Nifty 50 close so the 06:45 IST snapshot stage has a baseline without an extra live call.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `trade_date` | date | Primary key; day of market close |
+| `nifty_close` | numeric(10, 2) | Official Nifty 50 close price |
+| `source` | text | "NSE official" (default) |
+| `recorded_at` | timestamptz | When recorded (typically ~16:00 IST) |
+
+---
+
+#### **Table 6: `pipeline_runs`** — Daily Briefing Audit Log
+One row per daily run. Mirrors `PipelineRunRecord` for QA/audit traceability (FR-02.4.1 / FR-02.4.2). Caches rendered HTML/text so the dashboard can display today's briefing without re-running the pipeline.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | Primary key |
+| `run_date_ist` | date | Unique; the IST date of the run |
+| `domestic_override_active` | boolean | Whether FR-02.6 override triggered |
+| `divergence_flag` | boolean | LLM signals conflict with GIFT gap? |
+| `flat_override_triggered` | boolean | Was bias forced to FLAT? |
+| `jargon_injections` | jsonb | List of jargon terms that were auto-defined |
+| `entity_violations` | jsonb | List of entities that were genericized |
+| `suppressed` | boolean | Run did not send (safety threshold exceeded) |
+| `suppression_reason` | text | Why suppressed (e.g., "Entity violation count exceeded") |
+| `bias_label` | text | `GAP_UP_STRONG` \| `GAP_UP_MILD` \| `FLAT` \| `GAP_DOWN_MILD` \| `GAP_DOWN_STRONG` |
+| `gift_nifty_pct_change` | numeric(6, 3) | GIFT Nifty % change (used for bias reconciliation) |
+| `briefing_html` | text | Cached rendered HTML briefing |
+| `briefing_text` | text | Cached rendered plain-text briefing |
+| `created_at` | timestamptz | When run completed |
+
+**Indexes**:
+- `idx_pipeline_runs_run_date` — fast lookup by date (descending for latest-first)
+
+---
+
+#### **Table 7: `send_log`** — Delivery Audit Trail
+Per-recipient, per-channel delivery outcome. Tracks successes and failures across email, WhatsApp, Telegram.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | Primary key |
+| `pipeline_run_id` | UUID | Foreign key to `pipeline_runs` |
+| `subscriber_id` | UUID | Foreign key to `subscribers` (nullable on delete) |
+| `recipient_email` | text | Recipient email address at send time |
+| `channel` | text | `email` \| `whatsapp` \| `telegram` |
+| `status` | text | `sent` \| `failed` |
+| `error_message` | text | Reason for failure (if applicable) |
+| `sent_at` | timestamptz | Timestamp of send attempt |
+
+**Indexes**:
+- `idx_send_log_run` — lookup by pipeline run
+- `idx_send_log_recipient` — lookup by email
+- `idx_send_log_subscriber` — lookup by subscriber
+- `idx_send_log_channel` — filter by delivery channel
+
+---
+
+#### **Table 8: `password_resets`** — Password Reset Tokens
+One-time tokens emailed during "Forgot Password" flow. Closes the gap from PRD v1.7 Section 5.8. Expires after 1 hour.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `token` | text | Primary key |
+| `subscriber_id` | UUID | Foreign key to `subscribers` |
+| `created_at` | timestamptz | Issued at "forgot password" request |
+| `expires_at` | timestamptz | Default: +1 hour |
+| `used_at` | timestamptz | Set when new password submitted; single-use |
+
+**Indexes**:
+- `idx_password_resets_subscriber` — lookup by subscriber
+
+---
+
+#### **Table 9: `mfa_challenges`** — MFA Challenge Tokens
+Issued by `POST /api/login` when password is correct AND `mfa_enabled=true`. Replaces the session token until user submits a valid TOTP/backup code. Expires after 5 minutes.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `token` | text | Primary key |
+| `subscriber_id` | UUID | Foreign key to `subscribers` |
+| `created_at` | timestamptz | Issued after password check |
+| `expires_at` | timestamptz | Default: +5 minutes |
+| `consumed_at` | timestamptz | Set when TOTP verified; token becomes single-use |
+
+**Constraint**: Ensures a correct password alone is never sufficient for an MFA-enabled account — password + TOTP are enforced as a strict sequence.
+
+**Indexes**:
+- `idx_mfa_challenges_subscriber` — lookup by subscriber
+
+---
+
+#### **Row-Level Security (RLS)**
+All tables have RLS enabled defensively. Backend uses the `service_role` key (from GitHub Actions / Railway secrets), which bypasses RLS by design. If an `anon` key were ever exposed, **default-deny policies protect sensitive data** (password_hash, mfa_secret, etc.) from public access. No explicit policies are defined for anon/authenticated roles → guaranteed default-deny.
+
+---
+
+## 🚀 Deployment
+
+### **Local Development**
+```bash
+pip install -r marketpulse/requirements.txt
+export FLASK_APP=marketpulse.api.app
+flask run --port 8000
+```
+
+### **Production (Railway)**
+```bash
+gunicorn marketpulse.api.app:app --workers 2 --bind 0.0.0.0:$PORT
+```
+
+### **Database Setup (Supabase)**
+```bash
+# Via Supabase SQL editor or CLI:
+psql <supabase_connection_string> < marketpulse/persistence/schema.sql
+```
+
+### **Pipeline Scheduling (GitHub Actions)**
+- **Cron 1**: 06:45 IST → `marketpulse.scheduler.record_daily_close` (fetch Nifty close)
+- **Cron 2**: 07:00 IST → `marketpulse.scheduler.run_daily_briefing --skip-wait` (full pipeline)
+
+See `scheduler/` for entry points.
+
+---
+
+## 📦 Dependencies
+
+See `marketpulse/requirements.txt`:
+
+- **`requests`** ≥2.31.0 — HTTP client for RSS, APIs, market data
+- **`feedparser`** ≥6.0.10 — RSS feed parsing
+- **`flask`** ≥3.0.0 — Web server
+- **`gunicorn`** ≥21.2.0 — WSGI app server
+- **`werkzeug`** ≥3.0.0 — password hashing
+- **`pyotp`** ≥2.9.0 — TOTP-based MFA (RFC 6238, no external service)
+- **`qrcode`** ≥8.0 — QR code generation for MFA enrollment
+- **`Pillow`** ≥10.4.0 — image processing for QR codes
+
+*(Optional, in root `requirements.txt`:)*
+- **`zxcvbn`** 4.4.28 — password strength validation
+
+---
+
+## 🧪 Testing
+
+Run unit tests:
+```bash
+python -m pytest marketpulse/tests/ -v
+```
+
+Key test areas:
+- **Ingestion**: RSS feed parsing, event classification, time-window filtering
+- **Analysis**: LLM prompt construction, response parsing, fallback neutrals
+- **Bias**: Sector aggregation, reconciliation logic, divergence detection
+- **Persistence**: subscriber auth, session lookup, audit logging
+- **Delivery**: email/Telegram/WhatsApp dispatch logic, channel preferences
+
+---
+
+## 🔍 Key Concepts & PRD References
+
+| Concept | Module | PRD Section |
+|---------|--------|-------------|
+| Event ingestion & normalization | `pipeline/ingestion.py` | FR-01.2 |
+| Market snapshot capture | `pipeline/market_data.py` | FR-01.1 |
+| LLM-driven sentiment analysis | `ai_engine/llm_client.py` | FR-02.2 |
+| Sector aggregation | `ai_engine/bias_engine.py` | FR-02.3 |
+| Bias reconciliation | `ai_engine/bias_engine.py` | FR-02.5 |
+| Domestic override | `ai_engine/bias_engine.py` | FR-02.6 |
+| Jargon/entity enforcement | `ai_engine/jargon_enforcer.py`, `entity_scanner.py` | FR-02.4.2 |
+| Email templating | `email_system/render.py` | FR-03.1 |
+| Multi-channel dispatch | `delivery/dispatcher.py` | FR-03.2 |
+| Web dashboard & auth | `api/handlers.py` | FR-03.3 |
+
+---
+
+## 📋 Configuration
+
+### **Environment Variables**
 
 ```bash
-pip install -r requirements.txt
-python -m unittest discover -s marketpulse/tests
+# Supabase Database
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=your-service-role-key
 
-# Local dev: copy .env.example to .env and fill in real values, then:
-export $(grep -v '^#' .env | xargs)
+# Email Delivery (choose one)
+SENDGRID_API_KEY=your-sendgrid-key
+# OR
+RESEND_API_KEY=your-resend-key
 
-# Run the web app + API locally:
-python -m marketpulse.api.app   # serves webapp/index.html + /api/* on :8000
+# Telegram Bot
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
 
-# Manual full-pipeline run (skips sleep-until-checkpoint waits):
-python -m marketpulse.scheduler.run_daily_briefing --prev-close 24838.20 --skip-wait
+# WhatsApp via Twilio
+TWILIO_ACCOUNT_SID=your-twilio-account-sid
+TWILIO_AUTH_TOKEN=your-twilio-auth-token
+TWILIO_WHATSAPP_FROM_NUMBER=+14155552671  # Twilio sandbox number
 
-# End-of-day close recording (normally on its own cron):
-python -m marketpulse.scheduler.record_daily_close
+# LLM (if using OpenAI)
+OPENAI_API_KEY=your-openai-key
+
+# Flask App
+PORT=8000
+FLASK_ENV=production
+
+# Other
+LOG_LEVEL=INFO
 ```
 
-## What's stubbed vs. production-ready
+See `.env.example` for a template.
 
-- **Production-ready, fully tested (106 tests)**: jargon enforcement,
-  entity scrubbing, bias reconciliation, domestic override, sector
-  aggregation, sentinel token resolution, HTML/plain-text/Telegram
-  rendering, the full Supabase persistence layer including password
-  hashing and session management, every API handler (signup, verify,
-  login, logout, me, briefing/latest, telegram-link, channels,
-  unsubscribe) exercised end-to-end through Flask's test client, and the
-  audit-flattening logic in the dispatcher.
-- **Stubbed network calls** (interfaces match the PRD's specified
-  sources/providers exactly, need live credentials to fully exercise):
-  RSS ingestion, GIFT Nifty 3-tier fallback, Yahoo Finance snapshots,
-  Gemini API, SMTP send, Twilio WhatsApp send, Telegram Bot API send,
-  and the live PostgREST HTTP round-trip itself.
+---
+
+## 🛠️ Troubleshooting
+
+### Pipeline hangs or times out
+- Check `pipeline/orchestrator.py` stage timing vs. IST clock
+- Verify RSS feeds are responding (common culprit: NSE maintenance windows)
+- Check LLM API availability and rate limits
+
+### Briefing not sent
+- Verify `subscriber.status = 'active'` in database
+- Check email/Telegram/WhatsApp credentials in `.env`
+- Review `send_log` table for delivery errors:
+  ```sql
+  SELECT * FROM send_log WHERE status = 'failed' ORDER BY sent_at DESC LIMIT 10;
+  ```
+- Check `pipeline_runs.suppressed` flag — run may have been suppressed due to safety thresholds
+
+### Email not received (bounces)
+- Verify sender email domain is authenticated in SendGrid/Resend
+- Check `send_log.error_message` for SMTP errors
+- Ensure subscriber email is not in spam filter
+
+### MFA enrollment fails
+- Verify QR code is being generated correctly (`/api/mfa/enroll/start` should return base64 PNG)
+- Check that `mfa_secret` is stored in `subscribers` table
+- Ensure time is synchronized on server (TOTP depends on server time)
+
+### Telegram linking times out
+- Verify `TELEGRAM_BOT_TOKEN` is correct and bot is active
+- Check that `/start` command webhook is configured (`api.telegram.org/botXXX/setWebhook`)
+- Review `telegram_links` table for expired or consumed tokens
+
+### Jargon/entity violations detected
+- Inspect `pipeline_runs.jargon_injections` / `pipeline_runs.entity_violations` audit logs
+- Adjust `ai_engine/jargon_enforcer.py` or `entity_scanner.py` if false positives
+- Update entity list in `ai_engine/entity_scanner.py` if needed
+
+---
+
+## 📄 License & Contributing
+
+[License TBD] — for questions or issues, contact the maintainers.
