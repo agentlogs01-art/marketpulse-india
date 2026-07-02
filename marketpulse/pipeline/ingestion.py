@@ -23,6 +23,25 @@ from marketpulse.models.schemas import EventType, GeographicOrigin, NewsEvent
 # score and a default geographic_origin/event_type used when classification
 # heuristics below don't find a stronger signal.
 RSS_SOURCES = [
+
+    {
+        "name": "NSE Corporate Announcements",
+        "url": "https://nsearchives.nseindia.com/content/RSS/Online_announcements.xml",
+        "credibility_score": 1.00, # Primary regulatory truth
+        "default_origin": GeographicOrigin.INDIA,
+    },
+    {
+        "name": "NSE Corporate Actions",
+        "url": "https://nsearchives.nseindia.com/content/RSS/Corporate_action.xml",
+        "credibility_score": 1.00, # Primary regulatory truth
+        "default_origin": GeographicOrigin.INDIA,
+    },
+    {
+        "name": "NSE Financial Results",
+        "url": "https://nsearchives.nseindia.com/content/RSS/Financial_Results.xml",
+        "credibility_score": 1.00, # Primary regulatory truth
+        "default_origin": GeographicOrigin.INDIA,
+    }    
     # --- DOMESTIC FOUNDATION ---
     {
         "name": "RBI Press Releases",
