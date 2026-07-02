@@ -86,34 +86,48 @@ def send_briefing_to_subscriber(chat_id: str, markdown_text: str) -> dict:
         return send_message(chat_id, plain_fallback, parse_mode=None)
 
 
-def handle_start_command(update: dict) -> Optional[dict]:
+def handle_start_command(update):
     """
-    Processes a Telegram webhook `update` object for a `/start <code>`
-    message. Returns the bound Subscriber row (or None if the link_code
-    was invalid/expired/already used) -- the webhook endpoint (api/) uses
-    this to decide what confirmation message, if any, to send back.
-
-    Expected update shape (Telegram Bot API "Update" object):
-        {"message": {"text": "/start abc123", "chat": {"id": 123456789}}}
+    Parses incoming Telegram webhook payloads for a /start command containing 
+    a subscriber deep-link token, saves the chat_id, and returns the updated record dict.
     """
-    from datetime import datetime, timezone
-
-    from marketpulse.persistence.subscriber_repo import consume_telegram_link
-
+    # 1. Safely navigate the structural Telegram payload nesting
     message = update.get("message", {})
-    text = message.get("text", "")
     chat = message.get("chat", {})
-    chat_id = str(chat.get("id", ""))
+    chat_id = chat.get("id")
+    text = message.get("text", "").strip()
 
-    if not text.startswith("/start") or not chat_id:
+    if not chat_id or not text.startswith("/start"):
         return None
 
+    # 2. Extract the deep link token parameter string
+    # If text is "/start WDjh2LsoxmKycfu9PFcUHw", splitting by whitespace gives us the token
     parts = text.split(maxsplit=1)
     if len(parts) < 2:
-        return None
+        return None  # Plain /start clicked without a linkage token
+        
     link_code = parts[1].strip()
 
-    subscriber = consume_telegram_link(
-        link_code, chat_id, datetime.now(timezone.utc).isoformat()
-    )
-    return subscriber.__dict__ if subscriber else None
+    # 3. Connect to your database engine and execute the update query
+    # (Adapt the exact ORM/SQL execution framework used across your app)
+    from marketpulse.db import get_db_connection  # Example database connection import
+    
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            # Look up the profile matching the dynamic token link string
+            # and populate the respective telegram_chat_id parameter slot
+            cur.execute(
+                """
+                UPDATE subscribers 
+                SET telegram_chat_id = %s, updated_at = NOW() 
+                WHERE telegram_link_code = %s 
+                RETURNING id, email, telegram_chat_id;
+                """,
+                (chat_id, link_code)
+            )
+            updated_row = cur.fetchone()
+            if updated_row:
+                conn.commit()
+                return dict(updated_row)
+
+    return None
