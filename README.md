@@ -6,9 +6,9 @@
 
 ## 📌 Overview
 
-The `marketpulse/` module is the heart of the MarketPulse India platform — an **AI-powered pre-market intelligence system** delivering daily market briefings to Indian equity traders. It ingests overnight news from curated RSS sources, analyzes sentiment/sector impact via LLM, reconciles signals against GIFT Nifty snapshots, and dispatches briefings across Email, WhatsApp, and Telegram.
+The `marketpulse/` module is the heart of the MarketPulse India platform — an **AI-powered pre-market intelligence system** delivering daily market briefings to Indian equity traders. It ingests curated news sources, reconciles LLM-driven sentiment with market snapshots, and delivers a concise briefing across email, Telegram and WhatsApp to subscribed users.
 
-**Core Design Principle**: Graceful degradation at every stage. A single source failure or LLM timeout never blocks the 07:00 IST send — the pipeline falls back to neutral analysis or suppresses the run entirely rather than sending non-compliant briefings.
+**Core Design Principle**: Graceful degradation at every stage. A single source failure or LLM timeout never blocks the morning send — the pipeline falls back to neutral analysis or suppresses the run as appropriate.
 
 ---
 
@@ -84,7 +84,7 @@ marketpulse/
 
 ## 🔄 Daily Pipeline Flow (06:00 – 07:00 IST)
 
-The briefing generation follows a strict IST timeline, orchestrated by GitHub Actions:
+The briefing generation follows a strict IST timeline, orchestrated by GitHub Actions and internal time checkpoints in the scheduler scripts.
 
 ### **Stage 1: Pre-Render (06:00 IST)**
 - Static HTML template shell rendered; used as fallback if stage 2 fails
@@ -95,7 +95,7 @@ The briefing generation follows a strict IST timeline, orchestrated by GitHub Ac
 - Flag stale data (>6 hours old) for transparency in briefing
 
 ### **Stage 3: Ingestion** — `pipeline/ingestion.py` (any time, before assembly)
-- Pull from 10 curated RSS sources (NSE, RBI, Reuters, MarketWatch, etc.)
+- Pull from curated RSS sources (NSE, RBI, Reuters, MarketWatch, etc.)
 - Classify events by type (CENTRAL_BANK, EARNINGS, MACRO_DATA, INDIA_DOMESTIC, etc.)
 - Normalize into `NewsEvent` schema; filter by 16-hour lookback window
 - Resilience: single source down doesn't abort the run
@@ -122,7 +122,7 @@ The briefing generation follows a strict IST timeline, orchestrated by GitHub Ac
 - Render HTML email template with sector scorecards, bias badge, top events, GIFT snapshot
 - Render plain-text version for SMS/Telegram
 - **Fan-out dispatch**:
-  - **Email**: SendGrid / Resend API
+  - **Email**: SendGrid / Resend API or SMTP gateway
   - **Telegram**: Direct API push or webhook callback
   - **WhatsApp**: Twilio API
 - Audit log: who received, who bounced, delivery status
@@ -178,188 +178,9 @@ The briefing generation follows a strict IST timeline, orchestrated by GitHub Ac
 
 ### **Database Schema** — Supabase (PostgreSQL) — `persistence/schema.sql`
 
-Designed for **Supabase FREE TIER** ($0 cost at MVP scale; 500MB database limit well-exceeded).
+Designed for **Supabase FREE TIER** (MVP assumptions).
 
-#### **Table 1: `subscribers`** — User Accounts
-Primary identity table. Users authenticate via **email OR mobile_number** + password, optionally with TOTP-based MFA.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | UUID | Primary key, auto-generated |
-| `email` | text | Unique, nullable (but must have email OR mobile) |
-| `mobile_number` | text | Unique, E.164 format (e.g., +919876543210) |
-| `password_hash` | text | Never returned in API responses |
-| `status` | text | `pending_verification` \| `active` \| `paused` \| `unsubscribed` |
-| `persona` | text | `beginner` (MVP: single persona only) |
-| `channels` | text[] | Array of `email` \| `whatsapp` \| `telegram` |
-| `telegram_chat_id` | text | Unique, linked via `/start` deep-link flow |
-| `whatsapp_number` | text | Unique, delivery number (may differ from login `mobile_number`) |
-| `mfa_enabled` | boolean | TOTP-based MFA active? |
-| `mfa_secret` | text | Base32 TOTP secret (RFC 6238) |
-| `mfa_backup_codes` | jsonb | Array of hashed one-time backup codes |
-| `mfa_enrolled_at` | timestamptz | When MFA was first enabled |
-| `theme_preference` | text | `light` \| `dark` |
-| `created_at` | timestamptz | Account creation timestamp |
-| `verified_at` | timestamptz | When email was verified |
-| `last_login_at` | timestamptz | Last successful login |
-| `unsubscribed_at` | timestamptz | When user unsubscribed (if applicable) |
-
-**Constraints**:
-- `has_email_or_mobile`: at least one of `email` or `mobile_number` must be present
-- `channels_are_valid`: only allows 'email', 'whatsapp', 'telegram'
-
-**Indexes**:
-- `idx_subscribers_status` — for querying active subscribers
-- `idx_subscribers_mobile_number` — for login lookups
-- `idx_subscribers_telegram_chat_id` — for Telegram linking
-- `idx_subscribers_whatsapp_number` — for WhatsApp dispatch
-
----
-
-#### **Table 2: `sessions`** — Authentication Tokens
-Backs the website's signed-in dashboard. Sessions expire after 30 days or can be revoked on logout.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| `token` | text | Primary key, random opaque string |
-| `subscriber_id` | UUID | Foreign key to `subscribers` |
-| `created_at` | timestamptz | Issued at login |
-| `expires_at` | timestamptz | Default: +30 days |
-| `revoked_at` | timestamptz | Nullable; set on logout |
-
-**Indexes**:
-- `idx_sessions_subscriber` — fast lookup by user
-
----
-
-#### **Table 3: `email_verifications`** — Email Verification Tokens
-One-time tokens emailed during signup. Expires after 24 hours.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| `token` | text | Primary key |
-| `subscriber_id` | UUID | Foreign key to `subscribers` |
-| `created_at` | timestamptz | Issued at signup |
-| `expires_at` | timestamptz | Default: +24 hours |
-| `used_at` | timestamptz | Set when verified; token becomes single-use |
-
-**Indexes**:
-- `idx_email_verifications_subscriber` — lookup by subscriber
-
----
-
-#### **Table 4: `telegram_links`** — Telegram Deep-Link Tracking
-Tracks pending/confirmed Telegram chat_id bindings. Users receive a `/start` link code that expires in 30 minutes.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| `link_code` | text | Primary key, short alphanumeric |
-| `subscriber_id` | UUID | Foreign key to `subscribers` |
-| `created_at` | timestamptz | Issued when user clicks "Link Telegram" |
-| `expires_at` | timestamptz | Default: +30 minutes |
-| `consumed_at` | timestamptz | Set when `/start` command processed |
-| `chat_id` | text | Telegram chat ID captured after `/start` |
-
-**Indexes**:
-- `idx_telegram_links_subscriber` — lookup by user
-
----
-
-#### **Table 5: `market_closes`** — Official Nifty 50 Closes
-Persists previous-day official Nifty 50 close so the 06:45 IST snapshot stage has a baseline without an extra live call.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| `trade_date` | date | Primary key; day of market close |
-| `nifty_close` | numeric(10, 2) | Official Nifty 50 close price |
-| `source` | text | "NSE official" (default) |
-| `recorded_at` | timestamptz | When recorded (typically ~16:00 IST) |
-
----
-
-#### **Table 6: `pipeline_runs`** — Daily Briefing Audit Log
-One row per daily run. Mirrors `PipelineRunRecord` for QA/audit traceability (FR-02.4.1 / FR-02.4.2). Caches rendered HTML/text so the dashboard can display today's briefing without re-running the pipeline.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | UUID | Primary key |
-| `run_date_ist` | date | Unique; the IST date of the run |
-| `domestic_override_active` | boolean | Whether FR-02.6 override triggered |
-| `divergence_flag` | boolean | LLM signals conflict with GIFT gap? |
-| `flat_override_triggered` | boolean | Was bias forced to FLAT? |
-| `jargon_injections` | jsonb | List of jargon terms that were auto-defined |
-| `entity_violations` | jsonb | List of entities that were genericized |
-| `suppressed` | boolean | Run did not send (safety threshold exceeded) |
-| `suppression_reason` | text | Why suppressed (e.g., "Entity violation count exceeded") |
-| `bias_label` | text | `GAP_UP_STRONG` \| `GAP_UP_MILD` \| `FLAT` \| `GAP_DOWN_MILD` \| `GAP_DOWN_STRONG` |
-| `gift_nifty_pct_change` | numeric(6, 3) | GIFT Nifty % change (used for bias reconciliation) |
-| `briefing_html` | text | Cached rendered HTML briefing |
-| `briefing_text` | text | Cached rendered plain-text briefing |
-| `created_at` | timestamptz | When run completed |
-
-**Indexes**:
-- `idx_pipeline_runs_run_date` — fast lookup by date (descending for latest-first)
-
----
-
-#### **Table 7: `send_log`** — Delivery Audit Trail
-Per-recipient, per-channel delivery outcome. Tracks successes and failures across email, WhatsApp, Telegram.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| `id` | UUID | Primary key |
-| `pipeline_run_id` | UUID | Foreign key to `pipeline_runs` |
-| `subscriber_id` | UUID | Foreign key to `subscribers` (nullable on delete) |
-| `recipient_email` | text | Recipient email address at send time |
-| `channel` | text | `email` \| `whatsapp` \| `telegram` |
-| `status` | text | `sent` \| `failed` |
-| `error_message` | text | Reason for failure (if applicable) |
-| `sent_at` | timestamptz | Timestamp of send attempt |
-
-**Indexes**:
-- `idx_send_log_run` — lookup by pipeline run
-- `idx_send_log_recipient` — lookup by email
-- `idx_send_log_subscriber` — lookup by subscriber
-- `idx_send_log_channel` — filter by delivery channel
-
----
-
-#### **Table 8: `password_resets`** — Password Reset Tokens
-One-time tokens emailed during "Forgot Password" flow. Closes the gap from PRD v1.7 Section 5.8. Expires after 1 hour.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| `token` | text | Primary key |
-| `subscriber_id` | UUID | Foreign key to `subscribers` |
-| `created_at` | timestamptz | Issued at "forgot password" request |
-| `expires_at` | timestamptz | Default: +1 hour |
-| `used_at` | timestamptz | Set when new password submitted; single-use |
-
-**Indexes**:
-- `idx_password_resets_subscriber` — lookup by subscriber
-
----
-
-#### **Table 9: `mfa_challenges`** — MFA Challenge Tokens
-Issued by `POST /api/login` when password is correct AND `mfa_enabled=true`. Replaces the session token until user submits a valid TOTP/backup code. Expires after 5 minutes.
-
-| Column | Type | Notes |
-|--------|------|-------|
-| `token` | text | Primary key |
-| `subscriber_id` | UUID | Foreign key to `subscribers` |
-| `created_at` | timestamptz | Issued after password check |
-| `expires_at` | timestamptz | Default: +5 minutes |
-| `consumed_at` | timestamptz | Set when TOTP verified; token becomes single-use |
-
-**Constraint**: Ensures a correct password alone is never sufficient for an MFA-enabled account — password + TOTP are enforced as a strict sequence.
-
-**Indexes**:
-- `idx_mfa_challenges_subscriber` — lookup by subscriber
-
----
-
-#### **Row-Level Security (RLS)**
-All tables have RLS enabled defensively. Backend uses the `service_role` key (from GitHub Actions / Railway secrets), which bypasses RLS by design. If an `anon` key were ever exposed, **default-deny policies protect sensitive data** (password_hash, mfa_secret, etc.) from public access. No explicit policies are defined for anon/authenticated roles → guaranteed default-deny.
+(Full DB table descriptions are preserved in code documentation under `marketpulse/persistence/schema.sql`.)
 
 ---
 
@@ -384,10 +205,13 @@ psql <supabase_connection_string> < marketpulse/persistence/schema.sql
 ```
 
 ### **Pipeline Scheduling (GitHub Actions)**
-- **Cron 1**: 06:45 IST → `marketpulse.scheduler.record_daily_close` (fetch Nifty close)
-- **Cron 2**: 07:00 IST → `marketpulse.scheduler.run_daily_briefing --skip-wait` (full pipeline)
+- The repository includes workflow files in both `.github/workflows/` and `marketpulse/.github/workflows/`. The authoritative schedules and job definitions are the YAML files in those directories.
+- Notable schedule behaviour (current workflows):
+  - Morning pre-render / briefing entry: scheduled at 00:30 UTC (06:00 IST). The scheduler script contains internal checkpoints and may sleep until later IST checkpoints (06:45 / 06:50 / 07:00) to align market/time-sensitive stages.
+  - Record-close job: scheduled at 10:15 UTC (15:45 IST) to capture the official Nifty 50 close shortly after market close (15:30 IST).
+  - Both workflows support manual `workflow_dispatch` with an optional `prev_close` input. Passing `prev_close=record` triggers the record-close job via dispatch.
 
-See `scheduler/` for entry points.
+See `.github/workflows/daily_briefing.yml` and `marketpulse/.github/workflows/daily_briefing.yml` for exact cron expressions and environment mappings.
 
 ---
 
@@ -446,36 +270,52 @@ Key test areas:
 
 ### **Environment Variables**
 
+The workflows and code expect a combination of API keys and (optionally) SMTP configuration. Use `marketpulse/.env.example` as a template during development.
+
 ```bash
 # Supabase Database
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-service-role-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # used by GitHub Actions and server-side services
 
-# Email Delivery (choose one)
+# LLM (primary used by workflows)
+GEMINI_API_KEY=your-gemini-key   # repository workflows use GEMINI_API_KEY; ai_engine may also accept OPENAI_API_KEY
+# Alternative: OPENAI_API_KEY=your-openai-key  # supported if configured in ai_engine/llm_client.py
+
+# Email Delivery (either API or SMTP)
+# If using an API provider like SendGrid/Resend, set the corresponding API key (optional):
 SENDGRID_API_KEY=your-sendgrid-key
-# OR
 RESEND_API_KEY=your-resend-key
+
+# If the workflows / email sender are configured to use SMTP, supply these instead:
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=smtp-user
+SMTP_PASSWORD=smtp-password
+EMAIL_FROM_ADDRESS=alerts@yourdomain.com
 
 # Telegram Bot
 TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+TELEGRAM_BOT_USERNAME=your-bot-username
 
 # WhatsApp via Twilio
 TWILIO_ACCOUNT_SID=your-twilio-account-sid
 TWILIO_AUTH_TOKEN=your-twilio-auth-token
 TWILIO_WHATSAPP_FROM_NUMBER=+14155552671  # Twilio sandbox number
 
-# LLM (if using OpenAI)
-OPENAI_API_KEY=your-openai-key
-
-# Flask App
+# Other runtime
 PORT=8000
 FLASK_ENV=production
-
-# Other
 LOG_LEVEL=INFO
+
+# Optional: a comma-separated SUBSCRIBER_LIST (used by some workflows for small test deployments)
+SUBSCRIBER_LIST="email1@example.com,email2@example.com"
 ```
 
-See `.env.example` for a template.
+Notes:
+- The workflows reference `GEMINI_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` explicitly — ensure these are set in repository secrets for GitHub Actions runs.
+- The code may accept `OPENAI_API_KEY` if you prefer OpenAI; check `ai_engine/llm_client.py` for supported providers.
+
+See `marketpulse/.env.example` for a full template.
 
 ---
 
@@ -488,7 +328,7 @@ See `.env.example` for a template.
 
 ### Briefing not sent
 - Verify `subscriber.status = 'active'` in database
-- Check email/Telegram/WhatsApp credentials in `.env`
+- Check email/Telegram/WhatsApp credentials in `.env` / repository secrets
 - Review `send_log` table for delivery errors:
   ```sql
   SELECT * FROM send_log WHERE status = 'failed' ORDER BY sent_at DESC LIMIT 10;
@@ -496,7 +336,7 @@ See `.env.example` for a template.
 - Check `pipeline_runs.suppressed` flag — run may have been suppressed due to safety thresholds
 
 ### Email not received (bounces)
-- Verify sender email domain is authenticated in SendGrid/Resend
+- Verify sender email domain is authenticated in SendGrid/Resend or SMTP provider
 - Check `send_log.error_message` for SMTP errors
 - Ensure subscriber email is not in spam filter
 
