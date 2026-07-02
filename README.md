@@ -180,7 +180,186 @@ The briefing generation follows a strict IST timeline, orchestrated by GitHub Ac
 
 Designed for **Supabase FREE TIER** (MVP assumptions).
 
-(Full DB table descriptions are preserved in code documentation under `marketpulse/persistence/schema.sql`.)
+#### **Table 1: `subscribers`** — User Accounts
+Primary identity table. Users authenticate via **email OR mobile_number** + password, optionally with TOTP-based MFA.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | Primary key, auto-generated |
+| `email` | text | Unique, nullable (but must have email OR mobile) |
+| `mobile_number` | text | Unique, E.164 format (e.g., +919876543210) |
+| `password_hash` | text | Never returned in API responses |
+| `status` | text | `pending_verification` \| `active` \| `paused` \| `unsubscribed` |
+| `persona` | text | `beginner` (MVP: single persona only) |
+| `channels` | text[] | Array of `email` \| `whatsapp` \| `telegram` |
+| `telegram_chat_id` | text | Unique, linked via `/start` deep-link flow |
+| `whatsapp_number` | text | Unique, delivery number (may differ from login `mobile_number`) |
+| `mfa_enabled` | boolean | TOTP-based MFA active? |
+| `mfa_secret` | text | Base32 TOTP secret (RFC 6238) |
+| `mfa_backup_codes` | jsonb | Array of hashed one-time backup codes |
+| `mfa_enrolled_at` | timestamptz | When MFA was first enabled |
+| `theme_preference` | text | `light` \| `dark` |
+| `created_at` | timestamptz | Account creation timestamp |
+| `verified_at` | timestamptz | When email was verified |
+| `last_login_at` | timestamptz | Last successful login |
+| `unsubscribed_at` | timestamptz | When user unsubscribed (if applicable) |
+
+**Constraints**:
+- `has_email_or_mobile`: at least one of `email` or `mobile_number` must be present
+- `channels_are_valid`: only allows 'email', 'whatsapp', 'telegram'
+
+**Indexes**:
+- `idx_subscribers_status` — for querying active subscribers
+- `idx_subscribers_mobile_number` — for login lookups
+- `idx_subscribers_telegram_chat_id` — for Telegram linking
+- `idx_subscribers_whatsapp_number` — for WhatsApp dispatch
+
+---
+
+#### **Table 2: `sessions`** — Authentication Tokens
+Backs the website's signed-in dashboard. Sessions expire after 30 days or can be revoked on logout.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `token` | text | Primary key, random opaque string |
+| `subscriber_id` | UUID | Foreign key to `subscribers` |
+| `created_at` | timestamptz | Issued at login |
+| `expires_at` | timestamptz | Default: +30 days |
+| `revoked_at` | timestamptz | Nullable; set on logout |
+
+**Indexes**:
+- `idx_sessions_subscriber` — fast lookup by user
+
+---
+
+#### **Table 3: `email_verifications`** — Email Verification Tokens
+One-time tokens emailed during signup. Expires after 24 hours.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `token` | text | Primary key |
+| `subscriber_id` | UUID | Foreign key to `subscribers` |
+| `created_at` | timestamptz | Issued at signup |
+| `expires_at` | timestamptz | Default: +24 hours |
+| `used_at` | timestamptz | Set when verified; token becomes single-use |
+
+**Indexes**:
+- `idx_email_verifications_subscriber` — lookup by subscriber
+
+---
+
+#### **Table 4: `telegram_links`** — Telegram Deep-Link Tracking
+Tracks pending/confirmed Telegram chat_id bindings. Users receive a `/start` link code that expires in 30 minutes.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `link_code` | text | Primary key, short alphanumeric |
+| `subscriber_id` | UUID | Foreign key to `subscribers` |
+| `created_at` | timestamptz | Issued when user clicks "Link Telegram" |
+| `expires_at` | timestamptz | Default: +30 minutes |
+| `consumed_at` | timestamptz | Set when `/start` command processed |
+| `chat_id` | text | Telegram chat ID captured after `/start` |
+
+**Indexes**:
+- `idx_telegram_links_subscriber` — lookup by user
+
+---
+
+#### **Table 5: `market_closes`** — Official Nifty 50 Closes
+Persists previous-day official Nifty 50 close so the 06:45 IST snapshot stage has a baseline without an extra live call.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `trade_date` | date | Primary key; day of market close |
+| `nifty_close` | numeric(10, 2) | Official Nifty 50 close price |
+| `source` | text | "NSE official" (default) |
+| `recorded_at` | timestamptz | When recorded (typically ~16:00 IST) |
+
+---
+
+#### **Table 6: `pipeline_runs`** — Daily Briefing Audit Log
+One row per daily run. Mirrors `PipelineRunRecord` for QA/audit traceability (FR-02.4.1 / FR-02.4.2). Caches rendered HTML/text so the dashboard can display today's briefing without re-running the pipeline.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | Primary key |
+| `run_date_ist` | date | Unique; the IST date of the run |
+| `domestic_override_active` | boolean | Whether FR-02.6 override triggered |
+| `divergence_flag` | boolean | LLM signals conflict with GIFT gap? |
+| `flat_override_triggered` | boolean | Was bias forced to FLAT? |
+| `jargon_injections` | jsonb | List of jargon terms that were auto-defined |
+| `entity_violations` | jsonb | List of entities that were genericized |
+| `suppressed` | boolean | Run did not send (safety threshold exceeded) |
+| `suppression_reason` | text | Why suppressed (e.g., "Entity violation count exceeded") |
+| `bias_label` | text | `GAP_UP_STRONG` \| `GAP_UP_MILD` \| `FLAT` \| `GAP_DOWN_MILD` \| `GAP_DOWN_STRONG` |
+| `gift_nifty_pct_change` | numeric(6, 3) | GIFT Nifty % change (used for bias reconciliation) |
+| `briefing_html` | text | Cached rendered HTML briefing |
+| `briefing_text` | text | Cached rendered plain-text briefing |
+| `created_at` | timestamptz | When run completed |
+
+**Indexes**:
+- `idx_pipeline_runs_run_date` — fast lookup by date (descending for latest-first)
+
+---
+
+#### **Table 7: `send_log`** — Delivery Audit Trail
+Per-recipient, per-channel delivery outcome. Tracks successes and failures across email, WhatsApp, Telegram.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | UUID | Primary key |
+| `pipeline_run_id` | UUID | Foreign key to `pipeline_runs` |
+| `subscriber_id` | UUID | Foreign key to `subscribers` (nullable on delete) |
+| `recipient_email` | text | Recipient email address at send time |
+| `channel` | text | `email` \| `whatsapp` \| `telegram` |
+| `status` | text | `sent` \| `failed` |
+| `error_message` | text | Reason for failure (if applicable) |
+| `sent_at` | timestamptz | Timestamp of send attempt |
+
+**Indexes**:
+- `idx_send_log_run` — lookup by pipeline run
+- `idx_send_log_recipient` — lookup by email
+- `idx_send_log_subscriber` — lookup by subscriber
+- `idx_send_log_channel` — filter by delivery channel
+
+---
+
+#### **Table 8: `password_resets`** — Password Reset Tokens
+One-time tokens emailed during "Forgot Password" flow. Closes the gap from PRD v1.7 Section 5.8. Expires after 1 hour.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `token` | text | Primary key |
+| `subscriber_id` | UUID | Foreign key to `subscribers` |
+| `created_at` | timestamptz | Issued at "forgot password" request |
+| `expires_at` | timestamptz | Default: +1 hour |
+| `used_at` | timestamptz | Set when new password submitted; single-use |
+
+**Indexes**:
+- `idx_password_resets_subscriber` — lookup by subscriber
+
+---
+
+#### **Table 9: `mfa_challenges`** — MFA Challenge Tokens
+Issued by `POST /api/login` when password is correct AND `mfa_enabled=true`. Replaces the session token until user submits a valid TOTP/backup code. Expires after 5 minutes.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `token` | text | Primary key |
+| `subscriber_id` | UUID | Foreign key to `subscribers` |
+| `created_at` | timestamptz | Issued after password check |
+| `expires_at` | timestamptz | Default: +5 minutes |
+| `consumed_at` | timestamptz | Set when TOTP verified; token becomes single-use |
+
+**Constraint**: Ensures a correct password alone is never sufficient for an MFA-enabled account — password + TOTP are enforced as a strict sequence.
+
+**Indexes**:
+- `idx_mfa_challenges_subscriber` — lookup by subscriber
+
+---
+
+#### **Row-Level Security (RLS)**
+All tables have RLS enabled defensively. Backend uses the `service_role` key (from GitHub Actions / Railway secrets), which bypasses RLS by design. If an `anon` key were ever exposed, **default-deny policies protect sensitive data** (password_hash, mfa_secret, etc.) from public access. No explicit policies are defined for anon/authenticated roles → guaranteed default-deny.
 
 ---
 
