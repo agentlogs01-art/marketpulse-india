@@ -14,14 +14,15 @@ never hardcoded.
 from __future__ import annotations
 
 import os
-import smtplib
+import os
+import requests
+from typing import List, Dict, Any    
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 
 class EmailSendError(Exception):
     pass
-
 
 def _build_message(subject: str, html_body: str, from_addr: str, to_addr: str) -> MIMEMultipart:
     msg = MIMEMultipart("alternative")
@@ -38,41 +39,56 @@ def _build_message(subject: str, html_body: str, from_addr: str, to_addr: str) -
     msg.attach(MIMEText(html_body, "html"))
     return msg
 
-
 def send_email(subject: str, html_body: str, to_addrs: list) -> dict:
     """
-    Send the briefing to a list of subscriber addresses. Returns a result
-    dict with per-recipient success/failure so a single bad address
-    doesn't silently drop the whole batch (FR pipeline reliability goal:
-    07:00 IST send should reach as many subscribers as possible even if
-    one address bounces at SMTP-connect time).
+    Send the briefing to a list of subscriber addresses via Brevo's HTTP API.
+    Returns a result dict with per-recipient success/failure so GitHub Actions 
+    runners never crash over network/IP blocks or a single bad email.
     """
-    smtp_host = os.environ.get("SMTP_HOST")
-    smtp_port = int(os.environ.get("SMTP_PORT", "587"))
-    smtp_user = os.environ.get("SMTP_USER")
-    smtp_password = os.environ.get("SMTP_PASSWORD")
-    from_addr = os.environ.get("EMAIL_FROM_ADDRESS", smtp_user or "noreply@marketpulseindia.app")
+    # Brevo requires the Master API key (starts with xkeysib-)
+    api_key = os.environ.get("BREVO_API_KEY") or os.environ.get("SMTP_PASSWORD")
+    from_addr = os.environ.get("EMAIL_FROM_ADDRESS", "agentlogs01@gmail.com")
 
-    if not all([smtp_host, smtp_user, smtp_password]):
-        raise EmailSendError("SMTP credentials not fully configured in environment")
+    if not api_key:
+        raise EmailSendError("Brevo API Key (BREVO_API_KEY or SMTP_PASSWORD) missing in environment.")
 
-    sent: list = []
-    failed: list = []
+    url = "https://api.brevo.com/v3/smtp/email"
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "api-key": api_key
+    }
 
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_password)
+    sent: List[str] = []
+    failed: List[Dict[str, Any]] = []
 
-        for to_addr in to_addrs:
-            try:
-                msg = _build_message(subject, html_body, from_addr, to_addr)
-                server.sendmail(from_addr, [to_addr], msg.as_string())
+    # Process each recipient individually to maintain pipeline reliability goals
+    for to_addr in to_addrs:
+        payload = {
+            "sender": {"email": from_addr, "name": "MarketPulse India"},
+            "to": [{"email": to_addr}],
+            "subject": subject,
+            "htmlContent": html_body  # Changed from textContent to htmlContent for your briefing layout
+        }
+
+        try:
+            # Short timeout to keep the pipeline moving if a gateway drops
+            response = requests.post(url, json=payload, headers=headers, timeout=10.0)
+            
+            if response.status_code in [200, 201, 202]:
                 sent.append(to_addr)
-            except Exception as exc:
-                failed.append({"address": to_addr, "error": str(exc)})
+            else:
+                failed.append({
+                    "address": to_addr, 
+                    "error": f"Brevo API rejected request ({response.status_code}): {response.text}"
+                })
+        except requests.exceptions.RequestException as exc:
+            failed.append({
+                "address": to_addr, 
+                "error": f"HTTP post failed: {str(exc)}"
+            })
 
     return {"sent": sent, "failed": failed, "total": len(to_addrs)}
-
 
 def load_subscriber_list() -> list:
     """
