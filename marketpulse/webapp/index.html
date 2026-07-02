@@ -143,8 +143,9 @@
   .channel-option .meta { flex: 1; }
   .channel-option .meta .name { font-size: 14.5px; font-weight: 600; }
   .channel-option .meta .note { font-size: 12.5px; color: var(--graphite); }
-  #whatsapp-field, #signup-mobile-field { display: none; }
-  #whatsapp-field.visible, #signup-mobile-field.visible { display: block; }
+  
+  #whatsapp-field, #telegram-field, #signup-mobile-field { display: none; }
+  #whatsapp-field.visible, #telegram-field.visible, #signup-mobile-field.visible { display: block; }
 
   button.primary { width: 100%; padding: 13px; border: none; border-radius: 7px; background: var(--ink); color: var(--dawn); font-size: 15px; font-weight: 600; cursor: pointer; transition: background .12s; font-family: inherit; }
   button.primary:hover { background: var(--ink-hover); }
@@ -152,6 +153,7 @@
   button.primary:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
   button.ghost { width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--ink); font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; font-family: inherit; }
   button.ghost:hover { background: var(--line-soft); }
+  button.ghost:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
   button.ghost:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
   button.danger { border-color: var(--red); color: var(--red); }
   button.danger:hover { background: var(--red-bg); }
@@ -214,7 +216,6 @@
 <body>
 <div class="wrap" id="page-wrap">
 
-  <!-- MASTHEAD -->
   <div class="masthead">
     <div class="masthead-main">
       <div class="edition-line">
@@ -238,7 +239,6 @@
     </div>
   </div>
 
-  <!-- LIVE COUNTDOWN -->
   <div class="countdown" aria-live="off">
     <div class="label">Today's briefing cycle</div>
     <div class="next-checkpoint">
@@ -254,14 +254,12 @@
     </div>
   </div>
 
-  <!-- AUTH VIEW: sign-up / sign-in -->
   <div id="view-auth" class="card">
     <div class="auth-tabs" role="tablist">
       <button type="button" id="tab-signup" class="active" role="tab" aria-selected="true">Sign up</button>
       <button type="button" id="tab-signin" role="tab" aria-selected="false">Sign in</button>
     </div>
 
-    <!-- Sign up panel -->
     <div id="panel-signup">
       <div id="signup-status" class="status" role="status"></div>
       <form id="signup-form">
@@ -302,6 +300,10 @@
           <label for="whatsapp_number">WhatsApp number (with country code)</label>
           <input type="tel" id="whatsapp_number" placeholder="+919876543210">
         </div>
+        <div id="telegram-field">
+          <label for="telegram_chat_id">Telegram Chat ID / Username</label>
+          <input type="text" id="telegram_chat_id" placeholder="@username or Chat ID">
+        </div>
         <button type="submit" class="primary" id="signup-submit">Create account</button>
       </form>
       <p class="fine-print">
@@ -311,11 +313,9 @@
       </p>
     </div>
 
-    <!-- Sign in panel -->
     <div id="panel-signin" class="hidden">
       <div id="signin-status" class="status" role="status"></div>
 
-      <!-- Normal sign-in form -->
       <form id="signin-form">
         <label for="signin-id">Email or mobile number</label>
         <input type="text" id="signin-id" placeholder="you@example.com or +919876543210" autocomplete="username">
@@ -324,7 +324,6 @@
         <button type="submit" class="primary" id="signin-submit">Sign in</button>
       </form>
 
-      <!-- MFA challenge prompt (shown when login returns mfa_required) -->
       <div id="mfa-challenge-panel" class="hidden">
         <p style="font-size:14.5px;margin-bottom:12px;color:var(--graphite);">
           Enter the 6-digit code from your authenticator app, or one of your backup codes.
@@ -335,7 +334,6 @@
         <button type="button" class="ghost" id="mfa-cancel-btn">Cancel — sign in differently</button>
       </div>
 
-      <!-- Forgot password inline flow -->
       <div id="forgot-panel" class="hidden">
         <p style="font-size:14.5px;margin-bottom:12px;color:var(--graphite);">
           Enter your email or mobile number and we'll send a reset link if an account exists.
@@ -354,7 +352,6 @@
     </div>
   </div>
 
-  <!-- EMAIL VERIFICATION RESULT VIEW -->
   <div id="view-verify" class="card hidden">
     <h2>Confirming your email&hellip;</h2>
     <div id="verify-status" class="status" role="status"></div>
@@ -366,7 +363,6 @@
     </div>
   </div>
 
-  <!-- PASSWORD RESET LANDING VIEW (emailed link: /reset-password?token=...) -->
   <div id="view-reset-password" class="card hidden">
     <h2>Choose a new password</h2>
     <div id="reset-status" class="status" role="status"></div>
@@ -379,7 +375,6 @@
     </div>
   </div>
 
-  <!-- TELEGRAM DEEP LINK VIEW -->
   <div id="view-telegram-link" class="card hidden">
     <h2>One more step</h2>
     <p style="font-size:14.5px;margin-bottom:14px;color:var(--graphite);">
@@ -391,7 +386,6 @@
     <button class="ghost" id="telegram-link-done-btn">Back to dashboard</button>
   </div>
 
-  <!-- MANAGE SUBSCRIPTION VIEW -->
   <div id="view-manage" class="card hidden">
     <h2>Manage your subscription</h2>
     <div id="manage-status" class="status" role="status"></div>
@@ -404,7 +398,6 @@
     </p>
   </div>
 
-  <!-- DASHBOARD VIEW -->
   <div id="view-dashboard" class="hidden">
     <div class="card">
       <div class="dashboard-toolbar">
@@ -450,12 +443,10 @@
     </div>
   </div>
 
-  <!-- PROFILE VIEW -->
   <div id="view-profile" class="hidden">
     <div class="card">
       <h2>Profile &amp; Settings</h2>
 
-      <!-- Change password -->
       <p class="section-label">Change password</p>
       <div id="changepw-status" class="status" role="status"></div>
       <label for="changepw-current">Current password</label>
@@ -468,11 +459,9 @@
 
       <hr class="divider">
 
-      <!-- Two-factor authentication -->
       <p class="section-label">Two-factor authentication (2FA)</p>
       <div id="mfa-status" class="status" role="status"></div>
 
-      <!-- MFA off state -->
       <div id="mfa-off-section">
         <div class="mfa-status off">
           <span class="badge">OFF</span>
@@ -480,7 +469,6 @@
         </div>
         <button type="button" class="ghost" id="mfa-enroll-btn">Set up 2FA</button>
 
-        <!-- Enroll step 1: QR code -->
         <div id="mfa-enroll-step1" class="hidden">
           <p style="font-size:14px;color:var(--graphite);margin:16px 0 8px">
             Scan this QR code with Google Authenticator, Authy, or any TOTP app. If you can't scan, enter the code manually.
@@ -496,7 +484,6 @@
           <button type="button" class="ghost" id="mfa-enroll-cancel-btn">Cancel</button>
         </div>
 
-        <!-- Enroll step 2: backup codes -->
         <div id="mfa-backup-codes-display" class="hidden">
           <div class="status visible success">2FA enabled! Save these backup codes somewhere safe — each works once if you lose your phone.</div>
           <div class="backup-codes" id="mfa-backup-codes-list"></div>
@@ -504,7 +491,6 @@
         </div>
       </div>
 
-      <!-- MFA on state -->
       <div id="mfa-on-section" class="hidden">
         <div class="mfa-status on">
           <span class="badge">ON</span>
@@ -671,7 +657,7 @@ function drawQR(canvas, uri) {
   // -------------------------------------------------------------------------
   // Channel checkbox wiring
   // -------------------------------------------------------------------------
-  function wireChannelOptions(container, onWhatsapp) {
+  function wireChannelOptions(container, onChannelToggle) {
     container.querySelectorAll(".channel-option").forEach((opt) => {
       opt.addEventListener("click", function (e) {
         if (e.target.tagName !== "INPUT") {
@@ -679,14 +665,16 @@ function drawQR(canvas, uri) {
           cb.checked = !cb.checked;
         }
         opt.classList.toggle("checked", opt.querySelector("input").checked);
-        if (onWhatsapp) onWhatsapp();
+        if (onChannelToggle) onChannelToggle();
       });
     });
   }
 
   wireChannelOptions(E("signup-form"), function () {
-    const any = document.querySelector('#signup-form .channel-option[data-channel="whatsapp"] input').checked;
-    E("whatsapp-field").classList.toggle("visible", any);
+    const whatsappChecked = document.querySelector('#signup-form .channel-option[data-channel="whatsapp"] input').checked;
+    const telegramChecked = document.querySelector('#signup-form .channel-option[data-channel="telegram"] input').checked;
+    E("whatsapp-field").classList.toggle("visible", whatsappChecked);
+    E("telegram-field").classList.toggle("visible", telegramChecked);
   });
   wireChannelOptions(E("dashboard-channels"));
 
@@ -709,6 +697,7 @@ function drawQR(canvas, uri) {
       mobile_number: useMobile ? E("signup-mobile").value.trim() : undefined,
       channels,
       whatsapp_number: channels.includes("whatsapp") ? E("whatsapp_number").value.trim() : undefined,
+      telegram_chat_id: channels.includes("telegram") ? E("telegram_chat_id").value.trim() : undefined,
     });
 
     btn.disabled = false; btn.textContent = "Create account";
@@ -726,6 +715,7 @@ function drawQR(canvas, uri) {
       document.querySelector('#signup-form .channel-option[data-channel="email"] input').checked = true;
       document.querySelector('#signup-form .channel-option[data-channel="email"]').classList.add("checked");
       E("whatsapp-field").classList.remove("visible");
+      E("telegram-field").classList.remove("visible");
       switchTab("signin");
     } else {
       setStatus(E("signup-status"), data.error || data.reason || "Something went wrong. Please try again.", "error");
