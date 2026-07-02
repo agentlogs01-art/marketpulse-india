@@ -16,8 +16,6 @@ The `marketpulse/` module is the heart of the MarketPulse India platform — an 
 
 ```
 marketpulse/
-├── __init__.py              # Package metadata (v1.6.0)
-├── requirements.txt         # Core + Flask/Gunicorn for web app
 │
 ├── api/                     # REST API + Web Dashboard (Flask)
 │   ├── app.py               # Flask wiring: static webapp, JSON endpoints
