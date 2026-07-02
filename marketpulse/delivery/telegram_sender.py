@@ -85,8 +85,59 @@ def send_briefing_to_subscriber(chat_id: str, markdown_text: str) -> dict:
         plain_fallback = markdown_text.replace("\\", "").replace("*", "").replace("_", "")
         return send_message(chat_id, plain_fallback, parse_mode=None)
 
+from typing import Optional
+from datetime import datetime, timezone
+import logging
 
-def handle_start_command(update):
+# Set up logging so you can see failures in your server console
+logger = logging.getLogger(__name__)
+
+def handle_start_command(update: dict) -> Optional[dict]:
+    """
+    Processes a Telegram webhook `update` object for a `/start <code>`
+    message. Returns the bound Subscriber row (or None if the link_code
+    was invalid/expired/already used).
+    """
+    from marketpulse.persistence.subscriber_repo import consume_telegram_link
+
+    # 1. Extract payload safely
+    message = update.get("message", {})
+    text = message.get("text", "")
+    chat = message.get("chat", {})
+    
+    # Check data type matching: keeps it as an integer if your DB expects a BIGINT number, 
+    # but change to str(chat.get("id", "")) if your DB column is explicitly a string text type.
+    chat_id = chat.get("id") 
+
+    if not text.startswith("/start") or not chat_id:
+        return None
+
+    # 2. Separate command from token code
+    parts = text.split(maxsplit=1)
+    if len(parts) < 2:
+        return None
+    link_code = parts[1].strip()
+
+    logger.info(f"Processing link verification: Code={link_code} for ChatID={chat_id}")
+
+    try:
+        # 3. Fire your repository state update
+        subscriber = consume_telegram_link(
+            link_code, chat_id, datetime.now(timezone.utc).isoformat()
+        )
+        
+        if subscriber:
+            logger.info(f"Successfully linked Telegram account to subscriber: {subscriber.id}")
+            return subscriber.__dict__
+        else:
+            logger.warning(f"Link failed: Code {link_code} may be expired, invalid, or already claimed.")
+            return None
+            
+    except Exception as e:
+        logger.error(f"Database constraint or execution error in consume_telegram_link: {str(e)}", exc_info=True)
+        return None
+
+def handle_start_command1(update):
     """
     Parses incoming Telegram webhook payloads for a /start command containing 
     a subscriber deep-link token, saves the chat_id, and returns the updated record dict.
