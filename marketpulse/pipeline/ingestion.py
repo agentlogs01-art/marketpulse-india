@@ -23,11 +23,12 @@ from marketpulse.models.schemas import EventType, GeographicOrigin, NewsEvent
 # score and a default geographic_origin/event_type used when classification
 # heuristics below don't find a stronger signal.
 RSS_SOURCES = [
+    # --- DOMESTIC FOUNDATION ---
     {
-        "name": "Reuters Business",
-        "url": "https://feeds.reuters.com/reuters/businessNews",
-        "credibility_score": 0.95,
-        "default_origin": GeographicOrigin.GLOBAL,
+        "name": "RBI Press Releases",
+        "url": "https://www.rbi.org.in/pressreleases_rss.xml",
+        "credibility_score": 0.99,
+        "default_origin": GeographicOrigin.INDIA,
     },
     {
         "name": "Economic Times Markets",
@@ -41,14 +42,27 @@ RSS_SOURCES = [
         "credibility_score": 0.80,
         "default_origin": GeographicOrigin.INDIA,
     },
+    
+    # --- WORKING GLOBAL FOUNDATIONS ---
     {
-        "name": "RBI Press Releases",
-        "url": "https://www.rbi.org.in/pressreleases_rss.xml",
-        "credibility_score": 0.99,
-        "default_origin": GeographicOrigin.INDIA,
+        "name": "Reuters Business",
+        "url": "https://feeds.reuters.com/reuters/businessNews",
+        "credibility_score": 0.95,
+        "default_origin": GeographicOrigin.GLOBAL,
     },
+    {
+        "name": "MarketWatch Top Stories",
+        "url": "https://www.marketwatch.com/rss/topstories",
+        "credibility_score": 0.90,
+        "default_origin": GeographicOrigin.GLOBAL,
+    },
+    {
+        "name": "Investing.com Commodities",
+        "url": "https://www.investing.com/rss/news_11.rss",
+        "credibility_score": 0.88,
+        "default_origin": GeographicOrigin.GLOBAL, # Captures Oil/Gold fluctuations accurately
+    }
 ]
-
 # Simple keyword heuristics for event_type classification (FR-01.2). The
 # AI engine (FR-02.2) does the real sentiment work; this is a cheap
 # pre-classification pass to route/prioritize events before the LLM call,
