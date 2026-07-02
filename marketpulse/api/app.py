@@ -278,31 +278,6 @@ def api_update_theme():
 # ---------------------------------------------------------------------------
 
 @app.route("/api/telegram/webhook", methods=["POST"])
-
-import logging
-logger = logging.getLogger(__name__)
-
-def handle_start_command(update: dict) -> Optional[dict]:
-    # ... your extraction logic ...
-    
-    link_code = parts[1].strip()
-    
-    logger.info(f"Attempting to bind chat_id: {chat_id} with token: {link_code}")
-
-    try:
-        subscriber = consume_telegram_link(
-            link_code, chat_id, datetime.now(timezone.utc).isoformat()
-        )
-        if subscriber:
-            logger.info(f"Successfully bound Subscriber ID: {subscriber.id}")
-            return subscriber.__dict__
-        else:
-            logger.warning(f"Link code {link_code} was invalid, expired, or already used.")
-            return None
-    except Exception as e:
-        logger.error(f"Database crash during telegram linkage: {str(e)}", exc_info=True)
-        return None
-        
 def telegram_webhook():
     """
     Telegram POSTs every incoming message/update here once setWebhook has
