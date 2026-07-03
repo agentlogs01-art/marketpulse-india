@@ -41,7 +41,7 @@ RSS_SOURCES = [
         "url": "https://nsearchives.nseindia.com/content/RSS/Financial_Results.xml",
         "credibility_score": 1.00, # Primary regulatory truth
         "default_origin": GeographicOrigin.INDIA,
-    }    
+    },    
     # --- DOMESTIC FOUNDATION ---
     {
         "name": "RBI Press Releases",
