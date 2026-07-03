@@ -34,11 +34,8 @@ from marketpulse.models.schemas import (
     Sentiment,
 )
 
-GEMINI_MODEL = "gemini-1.5-flash"
-GEMINI_API_URL = (
-    f"https://generativelanguage.googleapis.com/v1beta/models/"
-    f"{GEMINI_MODEL}:generateContent"
-)
+GEMINI_MODEL = "gemini-3.1-flash-lite"
+GEMINI_API_URL = (f"https://googleapis.com{MODEL_NAME}:generateContent")
 
 MVP_SECTORS = [s.value for s in Sector]
 
