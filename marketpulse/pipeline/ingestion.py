@@ -23,7 +23,6 @@ from marketpulse.models.schemas import EventType, GeographicOrigin, NewsEvent
 # score and a default geographic_origin/event_type used when classification
 # heuristics below don't find a stronger signal.
 RSS_SOURCES = [
-
     {
         "name": "NSE Corporate Announcements",
         "url": "https://nsearchives.nseindia.com/content/RSS/Online_announcements.xml",
@@ -61,7 +60,6 @@ RSS_SOURCES = [
         "credibility_score": 0.80,
         "default_origin": GeographicOrigin.INDIA,
     },
-    
     # --- WORKING GLOBAL FOUNDATIONS ---
     {
         "name": "Reuters Business",
@@ -80,7 +78,7 @@ RSS_SOURCES = [
         "url": "https://www.investing.com/rss/news_11.rss",
         "credibility_score": 0.88,
         "default_origin": GeographicOrigin.GLOBAL, # Captures Oil/Gold fluctuations accurately
-    }
+    },
 ]
 # Simple keyword heuristics for event_type classification (FR-01.2). The
 # AI engine (FR-02.2) does the real sentiment work; this is a cheap
