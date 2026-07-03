@@ -26,22 +26,21 @@ RSS_SOURCES = [
     {
         "name": "NSE Corporate Announcements",
         "url": "https://nsearchives.nseindia.com/content/RSS/Online_announcements.xml",
-        "credibility_score": 1.00, # Primary regulatory truth
+        "credibility_score": 1.00,
         "default_origin": GeographicOrigin.INDIA,
     },
     {
         "name": "NSE Corporate Actions",
         "url": "https://nsearchives.nseindia.com/content/RSS/Corporate_action.xml",
-        "credibility_score": 1.00, # Primary regulatory truth
+        "credibility_score": 1.00,
         "default_origin": GeographicOrigin.INDIA,
     },
     {
         "name": "NSE Financial Results",
         "url": "https://nsearchives.nseindia.com/content/RSS/Financial_Results.xml",
-        "credibility_score": 1.00, # Primary regulatory truth
+        "credibility_score": 1.00,
         "default_origin": GeographicOrigin.INDIA,
-    },    
-    # --- DOMESTIC FOUNDATION ---
+    },
     {
         "name": "RBI Press Releases",
         "url": "https://www.rbi.org.in/pressreleases_rss.xml",
@@ -60,7 +59,6 @@ RSS_SOURCES = [
         "credibility_score": 0.80,
         "default_origin": GeographicOrigin.INDIA,
     },
-    # --- WORKING GLOBAL FOUNDATIONS ---
     {
         "name": "Reuters Business",
         "url": "https://feeds.reuters.com/reuters/businessNews",
@@ -77,7 +75,7 @@ RSS_SOURCES = [
         "name": "Investing.com Commodities",
         "url": "https://www.investing.com/rss/news_11.rss",
         "credibility_score": 0.88,
-        "default_origin": GeographicOrigin.GLOBAL, # Captures Oil/Gold fluctuations accurately
+        "default_origin": GeographicOrigin.GLOBAL,
     },
 ]
 # Simple keyword heuristics for event_type classification (FR-01.2). The
