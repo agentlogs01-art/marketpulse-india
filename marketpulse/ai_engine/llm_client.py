@@ -35,7 +35,7 @@ from marketpulse.models.schemas import (
 )
 
 GEMINI_MODEL = "gemini-3.1-flash-lite"
-GEMINI_API_URL = (f"https://googleapis.com{MODEL_NAME}:generateContent")
+GEMINI_API_URL = (f"https://googleapis.com{GEMINI_MODEL}:generateContent")
 
 MVP_SECTORS = [s.value for s in Sector]
 
