@@ -34,8 +34,8 @@ from marketpulse.models.schemas import (
     Sentiment,
 )
 
-GEMINI_MODEL = "gemini-3.1-flash-lite"
-GEMINI_API_URL = (f"https://googleapis.com{GEMINI_MODEL}:generateContent")
+GEMINI_MODEL = "gemini-2.5-flash"  # Or your chosen model identifier
+GEMINI_API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 MVP_SECTORS = [s.value for s in Sector]
 
@@ -84,9 +84,12 @@ def _build_user_prompt(event: NewsEvent) -> str:
 
 
 def _extract_json(raw_text: str) -> dict:
-    """Strip markdown fences if present and parse JSON defensively."""
     cleaned = re.sub(r"^```(json)?|```$", "", raw_text.strip(), flags=re.MULTILINE).strip()
-    return json.loads(cleaned)
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError as e:
+        # Log the error safely according to your framework, or attempt partial fix
+        raise ValueError(f"Failed to parse LLM response as JSON: {raw_text}") from e
 
 
 def call_gemini(system_prompt: str, user_prompt: str, api_key: Optional[str] = None) -> str:
