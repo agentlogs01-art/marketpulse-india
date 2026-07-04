@@ -691,12 +691,17 @@ function drawQR(canvas, uri) {
     const btn = E("signup-submit");
     btn.disabled = true; btn.textContent = "Creating account…";
 
+    const rawMobile = E("signup-mobile").value.trim();
+    const rawWhatsApp = E("whatsapp_number").value.trim();
+    
     const { ok, data } = await POST("/signup", {
       password: E("signup-password").value,
       email: useMobile ? undefined : E("signup-email").value.trim(),
-      mobile_number: useMobile ? E("signup-mobile").value.trim() : undefined,
+  
+      //Fallback to the WhatsApp field if the primary mobile field is blank
+      mobile_number: useMobile ? rawMobile : (rawWhatsApp || undefined),
       channels,
-      whatsapp_number: channels.includes("whatsapp") ? E("whatsapp_number").value.trim() : undefined,
+      whatsapp_number: channels.includes("whatsapp") ? rawWhatsApp : undefined,
       telegram_chat_id: channels.includes("telegram") ? E("telegram_chat_id").value.trim() : undefined,
     });
 
