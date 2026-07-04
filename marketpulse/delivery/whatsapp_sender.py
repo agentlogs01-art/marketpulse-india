@@ -27,7 +27,7 @@ WHATSAPP_TEMPLATE_NOTE below.
 """
 
 from __future__ import annotations
-
+import sys
 import os
 from typing import Optional
 
@@ -104,6 +104,8 @@ def send_whatsapp_message(
     if resp.status_code not in (200, 201):
         print(f"!!! RAW TWILIO API REJECTION LOG !!! Code: {resp.status_code} | Body: {resp.text}")
         raise WhatsAppSendError(f"Twilio WhatsApp send failed ({resp.status_code}): {resp.text}")
+        print(f"!!! CRITICAL TWILIO REJECTION: {resp.status_code} | {resp.text}", file=sys.stderr, flush=True)
+        sys.exit(f"FORCED CRASH - Twilio failed: {resp.text}")
     return resp.json()
 
 
