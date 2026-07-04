@@ -100,7 +100,9 @@ def send_whatsapp_message(
         payload["Body"] = body
 
     resp = requests.post(url, data=payload, auth=(account_sid, auth_token), timeout=10)
+    print("Twilio called.....")
     if resp.status_code not in (200, 201):
+        print(f"!!! RAW TWILIO API REJECTION LOG !!! Code: {resp.status_code} | Body: {resp.text}")
         raise WhatsAppSendError(f"Twilio WhatsApp send failed ({resp.status_code}): {resp.text}")
     return resp.json()
 
