@@ -147,6 +147,8 @@ def persist_run_and_send_results(
 def summarize_dispatch(results: dict) -> str:
     parts = []
     for channel, result in results.items():
+        print("Channel Name : ", channel)
+        print("result :", result)
         if result is None:
             parts.append(f"{channel}=skipped")
         else:
