@@ -38,8 +38,11 @@ def dispatch_all_channels(pipeline_output: dict, subject: str, html: str) -> dic
     results: dict = {"email": None, "whatsapp": None, "telegram": None}
 
     results["email"] = _dispatch_email(subject, html)
+    print("Email Sent.....")
     results["whatsapp"] = _dispatch_whatsapp(pipeline_output)
+    print("WhatsApp Sent...")
     results["telegram"] = _dispatch_telegram(pipeline_output)
+    print("telegram Sent....")
 
     return results
 
