@@ -100,13 +100,29 @@ def send_whatsapp_message(
         payload["Body"] = body
 
     resp = requests.post(url, data=payload, auth=(account_sid, auth_token), timeout=10)
-    print("Twilio called.....")
+
+    #### TEST
+    # If it fails, bypass any try/except by returning the error details inside the dict
+    if resp.status_code not in (200, 201):
+        return {
+            "sid": None, 
+            "status": "http_error", 
+            "error_msg": resp.text, 
+            "code": resp.status_code
+        }
+        
+    # If it succeeds, grab the actual Twilio delivery status details
+    twilio_data = resp.json()
+    return {
+        "sid": twilio_data.get("sid"),
+        "status": twilio_data.get("status"), # Will be "queued" or "accepted"
+        "error_message": twilio_data.get("error_message"),
+        "error_code": twilio_data.get("error_code")
+    }
+########### TEST
     if resp.status_code not in (200, 201):
         print(f"!!! RAW TWILIO API REJECTION LOG !!! Code: {resp.status_code} | Body: {resp.text}")
         raise WhatsAppSendError(f"Twilio WhatsApp send failed ({resp.status_code}): {resp.text}")
-    else:
-        print(f"!!! CRITICAL TWILIO REJECTION: {resp.status_code} | {resp.text}", file=sys.stderr, flush=True)
-        sys.exit(f"FORCED CRASH - Twilio failed: {resp.text}")
     return resp.json()
 
 
