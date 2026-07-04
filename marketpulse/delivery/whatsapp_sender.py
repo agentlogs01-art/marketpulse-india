@@ -86,6 +86,8 @@ def send_whatsapp_message(
     url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
 
     to_whatsapp = to_number if to_number.startswith("whatsapp:") else f"whatsapp:{to_number}"
+    from_whatsapp = from_number if from_number.startswith("whatsapp:") else f"whatsapp:{from_number}"
+    
 
     payload = {"From": from_number, "To": to_whatsapp}
     if content_sid:
@@ -104,19 +106,21 @@ def send_whatsapp_message(
 
 
 def send_briefing_to_subscriber(whatsapp_number: str, plain_text: str) -> dict:
-    """
-    Sends today's plain-text briefing (delivery.text_render.render_plain_text
-    output) to one subscriber's WhatsApp number. Twilio caps a single
-    message body at 1600 characters; longer content is split into
-    sequential messages rather than truncated, so nothing is silently
-    dropped from the briefing.
-    """
     chunks = _split_into_whatsapp_chunks(plain_text)
     results = []
+    
     for chunk in chunks:
-        results.append(send_whatsapp_message(whatsapp_number, chunk))
+        res = send_whatsapp_message(whatsapp_number, chunk)
+        # Check if the Twilio sender actually successfully returned a response dictionary with a valid SID
+        if res and res.get("sid"):
+            results.append(res)
+            
+    # If no chunks were actually sent successfully, return None or an empty dict 
+    # to let your main pipeline handle it as a clean 0/1 failure.
+    if not results:
+        return {} 
+        
     return {"message_count": len(results), "sids": [r.get("sid") for r in results]}
-
 
 def _split_into_whatsapp_chunks(text: str, max_len: int = 1500) -> list:
     """Splits on blank-line boundaries where possible, to avoid breaking
