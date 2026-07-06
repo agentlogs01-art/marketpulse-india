@@ -239,7 +239,15 @@ def signup(
     except ValueError as exc:
         # Catches 'This mobile number is already linked to another account.'
         # Returns a structure your JS logic cleanly processes in its 'else' block
-        return {"ok": False, "error": str(exc)}, 400
+        # Cover all structural styles to be completely bulletproof
+        return {
+            "ok": False,
+            "error": str(exc),
+            "data": {
+                "error": str(exc),
+                "reason": str(exc)
+            }
+        }, 400
 
     if not clean_email:
         # No email to verify -- activate immediately (mobile-only account).
