@@ -59,6 +59,8 @@ from typing import Optional
 from zxcvbn import zxcvbn
 
 from marketpulse.models.schemas import DeliveryChannel
+from marketpulse.persistence.supabase_client import SupabaseRequestError
+
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 E164_PHONE_RE = re.compile(r"^\+[1-9]\d{7,14}$")
@@ -226,6 +228,7 @@ def signup(
     clean_password = _validate_password(password)
     clean_channels = _validate_channels(channels)
     clean_whatsapp = _validate_whatsapp_number(whatsapp_number, clean_channels)
+ 
 
 # --- TRY/EXCEPT BLOCK TO CATCH DB UNIQUE CONSTRAINT VALUE_ERRORS ---
     try:
@@ -236,18 +239,22 @@ def signup(
             channels=clean_channels,
             whatsapp_number=clean_whatsapp,
         )
-    except ValueError as exc:
-        # Catches 'This mobile number is already linked to another account.'
-        # Returns a structure your JS logic cleanly processes in its 'else' block
-        # Cover all structural styles to be completely bulletproof
+    except (ValueError, SupabaseRequestError) as exc:
+        # Check if it was a ValueError or a raw Supabase constraint crash string
+        error_msg = "This mobile number is already linked to another account."
+        if isinstance(exc, SupabaseRequestError) and "subscribers_mobile_number_key" not in getattr(exc, "text", ""):
+            error_msg = "A database conflict occurred during signup."
+
+        # Returning 200 guarantees your frontend POST utility receives the object 
+        # instead of rejecting the network promise entirely.
         return {
             "ok": False,
-            "error": str(exc),
+            "error": error_msg,
             "data": {
-                "error": str(exc),
-                "reason": str(exc)
+                "error": error_msg,
+                "reason": error_msg
             }
-        }, 400
+        }, 200
 
     if not clean_email:
         # No email to verify -- activate immediately (mobile-only account).
