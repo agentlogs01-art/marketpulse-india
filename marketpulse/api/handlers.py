@@ -227,13 +227,19 @@ def signup(
     clean_channels = _validate_channels(channels)
     clean_whatsapp = _validate_whatsapp_number(whatsapp_number, clean_channels)
 
-    subscriber_row = create_pending_subscriber(
-        clean_password,
-        email=clean_email,
-        mobile_number=clean_mobile,
-        channels=clean_channels,
-        whatsapp_number=clean_whatsapp,
-    )
+# --- TRY/EXCEPT BLOCK TO CATCH DB UNIQUE CONSTRAINT VALUE_ERRORS ---
+    try:
+        subscriber_row = create_pending_subscriber(
+            clean_password,
+            email=clean_email,
+            mobile_number=clean_mobile,
+            channels=clean_channels,
+            whatsapp_number=clean_whatsapp,
+        )
+    except ValueError as exc:
+        # Catches 'This mobile number is already linked to another account.'
+        # Returns a structure your JS logic cleanly processes in its 'else' block
+        return {"ok": False, "error": str(exc)}, 400
 
     if not clean_email:
         # No email to verify -- activate immediately (mobile-only account).
