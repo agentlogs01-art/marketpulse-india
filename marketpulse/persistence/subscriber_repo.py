@@ -147,10 +147,15 @@ def create_pending_subscriber(
     client = client or get_client()
 
     if mobile_number:
-        existing_sub = get_subscriber_by_mobile(mobile_number, client=client)
-        # If the mobile number exists under a DIFFERENT email account, reject it.
-        if existing_sub and (not email or existing_sub.email != email):
-            raise ValueError("This mobile number is already linked to another account.")
+        # 1. Query the raw table array directly bypassing Subscriber mapping
+        res = client.select(SUBSCRIBERS_TABLE, params={"mobile_number": f"eq.{mobile_number}"})
+        if res:
+            existing_row = res[0]
+            existing_email = existing_row.get("email") # Returns string or None cleanly
+            
+            # 2. Reject if the mobile exists and belongs to another email identity
+            if not email or existing_email != email:
+                raise ValueError("This mobile number is already linked to another account.")
 
     row = {
         "password_hash": generate_password_hash(password),
