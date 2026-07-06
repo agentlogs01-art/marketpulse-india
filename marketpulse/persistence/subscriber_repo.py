@@ -146,13 +146,12 @@ def create_pending_subscriber(
 
     client = client or get_client()
 
-    if mobile_number:
-        # 1. Query the raw table array directly bypassing Subscriber mapping
-        res = client.select(SUBSCRIBERS_TABLE, params={"mobile_number": f"eq.{mobile_number}"})
-        
-        if res:
-            # If the phone number is already registered to ANY account, stop right here
-            raise ValueError("This mobile number is already linked to another account.")
+    # Check BOTH phone fields to see if either collides with an existing account
+    for phone in [mobile_number, whatsapp_number]:
+        if phone:
+            res = client.select(SUBSCRIBERS_TABLE, params={"mobile_number": f"eq.{phone}"})
+            if res:
+                raise ValueError("This mobile number is already linked to another account.")
 
     row = {
         "password_hash": generate_password_hash(password),
