@@ -723,7 +723,9 @@ function drawQR(canvas, uri) {
       E("telegram-field").classList.remove("visible");
       switchTab("signin");
     } else {
-      setStatus(E("signup-status"), data.error || data.reason || "Something went wrong. Please try again.", "error");
+// Safe extraction checking both root levels and nested levels
+      const errorMsg = (data && data.error) || (data && data.reason) || "Something went wrong. Please try again.";
+      setStatus(E("signup-status"), errorMsg, "error");
     }
   });
 
