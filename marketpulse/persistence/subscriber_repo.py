@@ -145,6 +145,13 @@ def create_pending_subscriber(
         raise ValueError("At least one of email or mobile_number is required.")
 
     client = client or get_client()
+
+    if mobile_number:
+        existing_sub = get_subscriber_by_mobile(mobile_number, client=client)
+        # If the mobile number exists under a DIFFERENT email account, reject it.
+        if existing_sub and (not email or existing_sub.email != email):
+            raise ValueError("This mobile number is already linked to another account.")
+
     row = {
         "password_hash": generate_password_hash(password),
         "status": "pending_verification",
