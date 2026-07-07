@@ -171,10 +171,29 @@ def main(argv: Optional[list] = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    # Testing
+
+    print(f"[DEBUG] Script started. skip_wait={args.skip_wait}", file=sys.stderr)
+    
+
     if not args.skip_wait:
+        # Test
+        print("[DEBUG] Entering wait_until('snapshot')...", file=sys.stderr)
+        
         wait_until("snapshot")  # blocks until 06:45 IST
 
+        # Test
+        print("[DEBUG] Exited wait_until('snapshot').", file=sys.stderr)
+        
+
+    # Test 
+    print("[DEBUG] Resolving previous close...", file=sys.stderr)
+    
     prev_close = resolve_prev_close(args.prev_close)
+
+    # Test
+    print(f"[DEBUG] Resolved prev_close to: {prev_close}", file=sys.stderr)
+    
     if prev_close is None:
         print(
             "No previous Nifty close available (no --prev-close flag, "
@@ -183,7 +202,14 @@ def main(argv: Optional[list] = None) -> int:
         )
         return 3
 
+    # Test
+    print("[DEBUG] Starting run_full_pipeline()...", file=sys.stderr)
+    
     output = run_full_pipeline(prev_nifty_close=prev_close)
+
+    # Test
+    print("[DEBUG] Completed run_full_pipeline().", file=sys.stderr)
+    
     record = output["record"]
     log_run_record(record)
     print(summarize_record(record), file=sys.stderr)
