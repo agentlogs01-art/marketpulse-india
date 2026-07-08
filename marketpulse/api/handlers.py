@@ -229,7 +229,7 @@ def signup(
     clean_channels = _validate_channels(channels)
     clean_whatsapp = _validate_whatsapp_number(whatsapp_number, clean_channels)
 
-   if clean_whatsapp:
+    if clean_whatsapp:
         # Query your table directly before executing the insert step
         existing = client.table("subscribers").select("id").eq("whatsapp_number", clean_whatsapp).execute()
         if existing.data:
