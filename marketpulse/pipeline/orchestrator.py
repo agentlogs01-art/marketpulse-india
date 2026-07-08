@@ -102,13 +102,26 @@ def run_full_pipeline(prev_nifty_close: float, run_date_ist: Optional[str] = Non
     run_date_ist = run_date_ist or datetime.now().strftime("%Y-%m-%d")
     record = PipelineRunRecord(run_date_ist=run_date_ist)
 
+    # Test
+    print("[DEBUG] Fetching GIFT Nifty snapshot...", file=sys.stderr)
+    
     # --- 06:45 IST: Snapshot stage -----------------------------------
     gift_nifty = fetch_gift_nifty_snapshot(prev_nifty_close)
+
+    # Test
+    print("[DEBUG] Fetching all instrument snapshots...", file=sys.stderr)
+    
     instrument_snapshots = flag_stale_snapshots(fetch_all_instrument_snapshots())
+
+    # Test
+    print("[DEBUG] Ingesting all sources...", file=sys.stderr)
 
     # --- Ingestion (can run any time before assembly) -----------------
     events = ingest_all_sources()
     events_by_id = {e.event_id: e for e in events}
+
+    # Test
+    print("[DEBUG] Running AI analysis stage...", file=sys.stderr)
 
     # --- 06:50 IST: Assembly stage --------------------------------------
     analyses, jargon_injections, entity_violations = run_ai_analysis_stage(events)
