@@ -51,9 +51,12 @@ def _dispatch_email(subject: str, html: str) -> dict:
     if not recipients:
         return {"sent": [], "failed": [], "total": 0}
     try:
-        return send_email(subject, html, recipients)
+        res = send_email(subject, html, recipients)
+        # TEMPORARY DEBUG: Print why it landed in the failed list!
+        for f in res.get("failed", []):
+            print(f"[BREVO FAILURE DETECTED] Target: {f['address']} | Reason: {f['error']}", file=sys.stderr)
+        return res
     except EmailSendError as exc:
-        print(f"[CRITICAL EMAIL ERROR] Batch sending failed: {exc}", file=sys.stderr)
         return {"sent": [], "failed": [{"address": "ALL", "error": str(exc)}], "total": len(recipients)}
 
 
