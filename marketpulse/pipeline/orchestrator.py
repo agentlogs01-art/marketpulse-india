@@ -16,7 +16,7 @@ run) rather than throwing and missing the 07:00 IST send — see PRD
 Section 3 reliability principles and FR-02.4.2 point 3 (suppression is
 preferable to a non-compliant send).
 """
-import sys
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -37,6 +37,8 @@ from marketpulse.pipeline.market_data import (
     fetch_gift_nifty_snapshot,
     flag_stale_snapshots,
 )
+
+import sys
 
 # Narrative fields that must pass through both Layer-2 deterministic
 # enforcers (jargon injection + entity genericization) before assembly.
