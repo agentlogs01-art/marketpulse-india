@@ -1,717 +1,1186 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MarketPulse India — Trader Dashboard & Journal</title>
-  <meta name="description" content="Pre-market preparation checklist, live Indian market countdowns, and streamlined trade logging for NSE/BSE disciplined traders." />
-  <style>
-    :root {
-      --bg-main: #141916;
-      --bg-surface: #1b221e;
-      --bg-surface-elevated: #242c27;
-      --border-subtle: #2d3731;
-      
-      --text-primary: #e4e9e6;
-      --text-secondary: #a3b2aa;
-      --text-muted: #6b7c73;
-      
-      --emerald-base: #10b981;
-      --emerald-alpha: rgba(16, 185, 129, 0.15);
-      --amber-base: #f59e0b;
-      --amber-alpha: rgba(245, 158, 11, 0.12);
-      --amber-focus: #fbbf24;
-      --crimson-base: #ef4444;
-      --crimson-alpha: rgba(239, 68, 68, 0.15);
-      
-      --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-      --radius-sm: 6px;
-      --radius-md: 10px;
-      --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MarketPulse India — Daily Pre-Market Briefing</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<style>
+  :root {
+    --dawn:            #FBF7EE;
+    --paper:           #FFFFFF;
+    --ink:             #1A1F1C;
+    --graphite:        #4B5550;
+    --line:            #DDD6C4;
+    --line-soft:       #EAE4D4;
+    --green:           #1F7A4D;
+    --green-bg:        #E9F3EC;
+    --red:             #B23A2E;
+    --red-bg:          #FBEDEA;
+    --amber:           #C98A2C;
+    --amber-focus:     #9C6A1C;
+    --amber-bg:        #FBF1E3;
+    --amber-ink:       #8a611f;
+    --ink-hover:       #2c342f;
+    --ink-disabled:    #a9a89c;
+    --line-hover:      #c4bb9f;
+    --email-icon-bg:   #E8F0FE;
+    --email-icon-fg:   #1A56C4;
+    --telegram-icon-bg:#E6F3FB;
+    --telegram-icon-fg:#1A85C9;
+    --shadow-soft:     0 1px 2px rgba(26,31,28,0.06);
+    --radius:          10px;
+  }
+  [data-theme="dark"] {
+    --dawn:            #15140F;
+    --paper:           #1D1B15;
+    --ink:             #F3EFE4;
+    --graphite:        #A8A096;
+    --line:            #3A3628;
+    --line-soft:       #2A271D;
+    --green:           #4FBF82;
+    --green-bg:        #16291E;
+    --red:             #E36B5C;
+    --red-bg:          #2E1714;
+    --amber:           #E0A847;
+    --amber-focus:     #F0C46B;
+    --amber-bg:        #2E2410;
+    --amber-ink:       #E0C383;
+    --ink-hover:       #3a4239;
+    --ink-disabled:    #4a473d;
+    --line-hover:      #4d4836;
+    --email-icon-bg:   #16213A;
+    --email-icon-fg:   #6FA0E8;
+    --telegram-icon-bg:#122A38;
+    --telegram-icon-fg:#5FBEE8;
+    --shadow-soft:     0 1px 3px rgba(0,0,0,0.4);
+  }
+  [data-theme="dark"] { color-scheme: dark; }
+  [data-theme="light"] { color-scheme: light; }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration:.001ms!important; transition-duration:.001ms!important; }
+  }
+  html { background: var(--dawn); }
+  body {
+    margin: 0;
+    background: var(--dawn);
+    color: var(--ink);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-feature-settings:"tnum"; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 0 20px 80px; }
+  .wrap.dashboard { max-width: 680px; }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background-color: var(--bg-main);
-      color: var(--text-primary);
-      font-family: var(--font-sans);
-      line-height: 1.5;
-      -webkit-font-smoothing: antialiased;
-    }
+  /* -- Masthead -- */
+  .masthead { padding: 34px 0 18px; border-bottom: 1px solid var(--line); margin-bottom: 28px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+  .masthead-main { flex: 1; min-width: 0; }
+  .masthead .edition-line { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--graphite); margin-bottom: 10px; gap: 10px; }
+  .masthead h1 { font-family: "Source Serif 4", Georgia, "Times New Roman", serif; font-size: 33px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 6px; }
+  .masthead .tagline { font-size: 14.5px; color: var(--graphite); margin: 0; max-width: 38ch; }
+  .masthead .account-box { flex: none; display: flex; align-items: flex-start; gap: 12px; padding-top: 6px; }
+  .account-meta { text-align: right; }
+  .account-meta .who { font-size: 12.5px; color: var(--graphite); margin-bottom: 6px; max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .signout-link { background: none; border: none; color: var(--ink); font-size: 12.5px; font-weight: 600; text-decoration: underline; text-decoration-color: var(--line); cursor: pointer; padding: 0; font-family: inherit; }
+  .signout-link:hover { text-decoration-color: var(--ink); }
 
-    /* Layout Structure */
-    .app-container {
-      display: grid;
-      grid-template-columns: 280px 1fr;
-      min-height: 100vh;
-    }
+  /* -- Theme toggle pill -- */
+  .theme-toggle { display: inline-flex; align-items: center; gap: 2px; background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+  .theme-toggle button { border: none; background: transparent; color: var(--graphite); width: 28px; height: 28px; border-radius: 999px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; line-height: 1; transition: background 0.1s; }
+  .theme-toggle button.active { background: var(--amber-bg); color: var(--amber-ink); }
+  .theme-toggle button:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
 
-    /* Sidebar Styling */
-    aside {
-      background-color: var(--bg-surface);
-      border-right: 1px solid var(--border-subtle);
-      padding: 1.75rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-    .brand h1 { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem; }
-    .brand h1 span { color: var(--amber-base); }
-    .brand p { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
-    
-    .nav-group { margin-top: 2.5rem; display: flex; flex-direction: column; gap: 0.35rem; }
-    .nav-item {
-      display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem;
-      color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; font-weight: 500;
-      border-radius: var(--radius-sm); transition: var(--transition-smooth);
-    }
-    .nav-item:hover, .nav-item.active { background-color: var(--bg-surface-elevated); color: var(--text-primary); }
-    .nav-item.active { border-left: 3px solid var(--amber-base); padding-left: calc(1rem - 3px); }
+  /* -- Countdown -- */
+  .countdown { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 22px 18px; margin-bottom: 22px; }
+  .countdown .label { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--graphite); margin-bottom: 4px; }
+  .countdown .next-checkpoint { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .countdown .clock { font-size: 30px; font-weight: 600; letter-spacing: .01em; }
+  .countdown .clock .amber-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); margin-right: 9px; position: relative; top: -2px; animation: pulse 2.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  .countdown .next-label { font-size: 13.5px; color: var(--graphite); }
+  .timeline { display: flex; justify-content: space-between; position: relative; padding-top: 14px; }
+  .timeline::before { content:""; position:absolute; top:18px; left:4px; right:4px; height:1px; background:var(--line); }
+  .timeline .point { display: flex; flex-direction: column; align-items: center; gap: 7px; flex: 1; position: relative; }
+  .timeline .point .mark { width: 8px; height: 8px; border-radius: 50%; background: var(--line); border: 2px solid var(--dawn); z-index: 1; }
+  .timeline .point.done .mark { background: var(--graphite); }
+  .timeline .point.active .mark { background: var(--amber); box-shadow: 0 0 0 3px var(--amber-bg); }
+  .timeline .point .time { font-size: 11px; color: var(--graphite); }
+  .timeline .point .what { font-size: 10.5px; color: var(--graphite); opacity: .75; text-align: center; max-width: 64px; }
+  .timeline .point.active .time { color: var(--ink); font-weight: 600; }
 
-    .user-profile {
-      background-color: var(--bg-surface-elevated); padding: 1rem; border-radius: var(--radius-md);
-      display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
-    }
-    .user-info { overflow: hidden; }
-    .user-info h4 { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .user-info p { font-size: 0.75rem; color: var(--text-muted); }
+  /* -- Cards -- */
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; margin-bottom: 16px; }
+  .card h2 { font-family: "Source Serif 4", Georgia, serif; font-size: 19px; font-weight: 600; margin: 0 0 16px; }
+  .section-label { font-size: 12.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--graphite); margin: 20px 0 12px; }
+  .divider { border: none; border-top: 1px solid var(--line); margin: 20px 0; }
 
-    /* Main Dashboard View */
-    main { padding: 2rem; max-width: 1400px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 2rem; }
-    
-    header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border-subtle); padding-bottom: 1.5rem; }
-    .header-title h2 { font-size: 1.75rem; font-weight: 700; }
-    .header-title p { color: var(--text-secondary); font-size: 0.9rem; }
+  /* -- Auth tabs -- */
+  .auth-tabs { display: flex; gap: 4px; background: var(--dawn); border: 1px solid var(--line); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
+  .auth-tabs button { flex: 1; padding: 9px 10px; border: none; border-radius: 6px; background: transparent; color: var(--graphite); font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .auth-tabs button.active { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .auth-tabs button:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
+  .identity-toggle { display: flex; gap: 14px; margin-bottom: 14px; font-size: 13px; }
+  .identity-toggle label { display: flex; align-items: center; gap: 6px; font-weight: 500; color: var(--graphite); margin: 0; }
+  .identity-toggle input[type="radio"] { accent-color: var(--amber); margin: 0; }
 
-    /* Card Panels */
-    .card { background-color: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 1.5rem; }
-    .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 1.25rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem; }
+  /* -- Form controls -- */
+  label { display: block; font-size: 12.5px; font-weight: 600; color: var(--graphite); margin-bottom: 6px; letter-spacing: .01em; }
+  input[type="email"], input[type="tel"], input[type="password"], input[type="text"] {
+    width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 7px; font-size: 15px;
+    color: var(--ink); margin-bottom: 16px; font-family: inherit; background: var(--dawn);
+  }
+  input:focus { outline: 2px solid var(--amber-focus); outline-offset: 1px; border-color: var(--amber-focus); }
+  .password-hint { font-size: 11.5px; color: var(--graphite); margin: -10px 0 16px; }
+  .channels { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+  .channel-option { display: flex; align-items: center; gap: 11px; padding: 12px 13px; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; transition: border-color .12s, background .12s; }
+  .channel-option:hover { border-color: var(--line-hover); }
+  .channel-option.checked { border-color: var(--amber); background: var(--amber-bg); }
+  .channel-option:focus-within { outline: 2px solid var(--amber-focus); outline-offset: 1px; }
+  .channel-option input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--amber); margin: 0; }
+  .channel-option .meta { flex: 1; }
+  .channel-option .meta .name { font-size: 14.5px; font-weight: 600; }
+  .channel-option .meta .note { font-size: 12.5px; color: var(--graphite); }
+  
+  #whatsapp-field, #telegram-field, #signup-mobile-field { display: none; }
+  #whatsapp-field.visible, #telegram-field.visible, #signup-mobile-field.visible { display: block; }
 
-    /* Dashboard Grid Setup */
-    .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; }
-    .sidebar-grid { display: flex; flex-direction: column; gap: 2rem; }
+  button.primary { width: 100%; padding: 13px; border: none; border-radius: 7px; background: var(--ink); color: var(--dawn); font-size: 15px; font-weight: 600; cursor: pointer; transition: background .12s; font-family: inherit; }
+  button.primary:hover { background: var(--ink-hover); }
+  button.primary:disabled { background: var(--ink-disabled); cursor: default; }
+  button.primary:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
+  button.ghost { width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--ink); font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; font-family: inherit; }
+  button.ghost:hover { background: var(--line-soft); }
+  button.ghost:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
+  button.ghost:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
+  button.danger { border-color: var(--red); color: var(--red); }
+  button.danger:hover { background: var(--red-bg); }
 
-    /* Countdown Ticker & Timeline */
-    .countdown-display { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.5rem; }
-    .countdown-time { font-family: monospace; font-size: 2.5rem; font-weight: 700; color: var(--amber-base); letter-spacing: -1px; }
-    .countdown-label { font-size: 0.85rem; color: var(--text-secondary); }
-    .countdown-target { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; }
-    
-    .timeline { display: flex; flex-direction: column; gap: 1rem; position: relative; margin-left: 0.5rem; }
-    .timeline::before { content: ''; position: absolute; left: 5px; top: 8px; bottom: 8px; width: 2px; background-color: var(--border-subtle); }
-    .timeline-point { display: flex; gap: 1rem; position: relative; padding-left: 1.5rem; font-size: 0.85rem; color: var(--text-muted); }
-    .timeline-point::before {
-      content: ''; position: absolute; left: 1px; top: 5px; width: 10px; height: 10px;
-      border-radius: 50%; background-color: var(--bg-surface); border: 2px solid var(--border-subtle); transition: var(--transition-smooth);
-    }
-    .timeline-point.done { color: var(--text-muted); }
-    .timeline-point.done::before { background-color: var(--border-subtle); border-color: var(--border-subtle); }
-    .timeline-point.active { color: var(--text-primary); font-weight: 500; }
-    .timeline-point.active::before { background-color: var(--bg-surface); border-color: var(--amber-base); box-shadow: 0 0 8px var(--amber-base); }
-    .timeline-time { font-family: monospace; font-weight: 600; min-width: 45px; }
+  .status { font-size: 13.5px; border-radius: 7px; padding: 11px 13px; margin-bottom: 16px; display: none; }
+  .status.visible { display: block; }
+  .status.error { background: var(--red-bg); color: var(--red); }
+  .status.success { background: var(--green-bg); color: var(--green); }
+  .status.info { background: var(--amber-bg); color: var(--amber-ink); }
 
-    /* Checklist Styling */
-    .checklist-group { display: flex; flex-direction: column; gap: 0.75rem; }
-    .checklist-item {
-      display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.85rem;
-      background-color: var(--bg-surface-elevated); border-radius: var(--radius-sm);
-      cursor: pointer; transition: var(--transition-smooth); border: 1px solid transparent;
-    }
-    .checklist-item:hover { border-color: var(--border-subtle); }
-    .checklist-item input[type="checkbox"] { transform: translateY(3px); accent-color: var(--amber-base); cursor: pointer; }
-    .checklist-text { display: flex; flex-direction: column; gap: 0.15rem; }
-    .checklist-text span { font-size: 0.9rem; font-weight: 500; }
-    .checklist-text small { font-size: 0.75rem; color: var(--text-secondary); }
-    .checklist-item input:checked + .checklist-text span { text-decoration: line-through; color: var(--text-muted); }
-    .checklist-item input:checked + .checklist-text small { color: var(--text-muted); }
+  .fine-print { font-size: 12px; color: var(--graphite); margin-top: 16px; line-height: 1.6; }
+  .fine-print a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); cursor: pointer; }
+  .fine-print a:hover { text-decoration-color: var(--ink); }
+  .link-btn { background: none; border: none; color: var(--ink); font-size: inherit; font-family: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); padding: 0; }
+  .link-btn:hover { text-decoration-color: var(--ink); }
 
-    /* Briefing Section Frame */
-    .briefing-box { display: flex; flex-direction: column; gap: 1rem; height: 420px; }
-    .briefing-box iframe { flex: 1; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); background-color: #fff; }
+  .icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 5px; font-size: 12px; flex: none; }
+  .icon.email { background: var(--email-icon-bg); color: var(--email-icon-fg); }
+  .icon.whatsapp { background: var(--green-bg); color: var(--green); }
+  .icon.telegram { background: var(--telegram-icon-bg); color: var(--telegram-icon-fg); }
 
-    /* Journal Form Controls */
-    .form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1rem; }
-    .form-group { display: flex; flex-direction: column; gap: 0.4rem; }
-    .form-group.full-width { grid-column: span 2; }
-    label { font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-    input, select, textarea {
-      background-color: var(--bg-surface-elevated); border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; color: var(--text-primary);
-      font-family: var(--font-sans); font-size: 0.9rem; transition: var(--transition-smooth);
-    }
-    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--amber-base); }
-    textarea { resize: vertical; min-height: 80px; }
-    
-    /* Segmented Selection Control */
-    .segmented-control { display: flex; background-color: var(--bg-surface-elevated); padding: 0.25rem; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); }
-    .segmented-control input[type="radio"] { display: none; }
-    .segmented-control label {
-      flex: 1; text-align: center; padding: 0.5rem; margin: 0; font-size: 0.85rem; font-weight: 600;
-      border-radius: calc(var(--radius-sm) - 2px); cursor: pointer; transition: var(--transition-smooth); color: var(--text-muted);
-    }
-    .segmented-control input:checked + label.label-buy { background-color: var(--emerald-alpha); color: var(--emerald-base); }
-    .segmented-control input:checked + label.label-sell { background-color: var(--crimson-alpha); color: var(--crimson-base); }
+  .hidden { display: none !important; }
 
-    /* Buttons styling */
-    button {
-      padding: 0.75rem 1.25rem; font-size: 0.9rem; font-weight: 600; border-radius: var(--radius-sm);
-      cursor: pointer; transition: var(--transition-smooth); border: none; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
-    }
-    button.primary { background-color: var(--amber-base); color: #141916; }
-    button.primary:hover { background-color: var(--amber-focus); }
-    button.ghost { background-color: transparent; border: 1px solid var(--border-subtle); color: var(--text-secondary); }
-    button.ghost:hover { background-color: var(--bg-surface-elevated); color: var(--text-primary); }
-    button.ghost:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
+  .deep-link-box { border: 1px dashed var(--line); border-radius: 7px; padding: 14px; font-size: 13.5px; word-break: break-all; margin-bottom: 12px; background: var(--dawn); }
+  .deep-link-box a { color: var(--ink); font-weight: 600; }
 
-    /* Floating Auth Overlay Views */
-    .auth-overlay {
-      position: fixed; inset: 0; background-color: rgba(10, 13, 11, 0.85); backdrop-filter: blur(8px);
-      display: flex; align-items: center; justify-content: center; z-index: 1000; transition: var(--transition-smooth);
-    }
-    .auth-overlay.hidden { opacity: 0; pointer-events: none; }
-    .auth-card { background-color: var(--bg-surface); border: 1px solid var(--border-subtle); width: 100%; max-width: 400px; padding: 2.25rem; border-radius: var(--radius-md); box-shadow: 0 20px 40px rgba(0,0,0,0.5); }
-    .auth-header { text-align: center; margin-bottom: 1.75rem; }
-    .auth-header h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.35rem; }
-    .auth-header p { font-size: 0.85rem; color: var(--text-secondary); }
-    .auth-footer { text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--text-muted); }
-    .auth-footer a { color: var(--amber-base); text-decoration: none; font-weight: 500; }
-    .auth-footer a:hover { text-decoration: underline; }
-    .error-banner { background-color: var(--crimson-alpha); color: var(--crimson-base); border: 1px solid rgba(239, 68, 68, 0.2); padding: 0.65rem 0.85rem; border-radius: var(--radius-sm); font-size: 0.8rem; margin-bottom: 1rem; display: none; }
+  /* -- Backup codes grid -- */
+  .backup-codes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+  .backup-code { font-family: "IBM Plex Mono", monospace; font-size: 14px; background: var(--dawn); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; letter-spacing: .08em; }
 
-    /* Utilities */
-    .hidden { display: none !important; }
+  /* -- Dashboard -- */
+  .dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
+  .dashboard-toolbar .run-date { font-size: 12.5px; color: var(--graphite); }
+  .briefing-frame { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 4px; margin-bottom: 16px; overflow: hidden; }
+  .briefing-frame iframe { width: 100%; min-height: 640px; border: none; display: block; }
+  .dashboard-empty { text-align: center; padding: 48px 20px; color: var(--graphite); font-size: 14.5px; }
+  .dashboard-settings summary { cursor: pointer; font-weight: 600; font-size: 14px; padding: 4px 0; }
+  .dashboard-settings[open] summary { margin-bottom: 14px; }
 
-    @media (max-width: 1024px) {
-      .app-container { grid-template-columns: 1fr; }
-      aside { display: none; }
-      .dashboard-grid { grid-template-columns: 1fr; }
-    }
-  </style>
+  /* -- MFA status indicator -- */
+  .mfa-status { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 7px; border: 1px solid var(--line); margin-bottom: 16px; font-size: 14px; }
+  .mfa-status .badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; letter-spacing: .04em; }
+  .mfa-status.on { border-color: var(--green); background: var(--green-bg); }
+  .mfa-status.on .badge { background: var(--green); color: #fff; }
+  .mfa-status.off .badge { background: var(--line); color: var(--graphite); }
+
+  footer.colophon { text-align: center; font-size: 11px; color: var(--graphite); opacity: .7; margin-top: 36px; letter-spacing: .03em; }
+
+  @media (max-width: 420px) {
+    .masthead { flex-direction: column; }
+    .masthead .account-box { padding-top: 0; }
+    .account-meta { text-align: left; }
+    .masthead h1 { font-size: 27px; }
+    .timeline .what { display: none; }
+    .countdown .clock { font-size: 24px; }
+    .backup-codes { grid-template-columns: 1fr; }
+  }
+</style>
 </head>
 <body>
+<div class="wrap" id="page-wrap">
 
-  <!-- AUTH LAYER: SIGN IN OVERLAY -->
-  <div id="signin-overlay" class="auth-overlay hidden">
-    <div class="auth-card">
-      <div class="auth-header">
-        <h3>Welcome Back</h3>
-        <p>Access your personal Indian trading dashboard</p>
+  <div class="masthead">
+    <div class="masthead-main">
+      <div class="edition-line">
+        <span>MarketPulse India</span>
+        <span id="edition-date" class="mono">—</span>
       </div>
-      <div id="signin-error" class="error-banner"></div>
-      <form id="signin-form" onsubmit="handleSignIn(event)">
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="signin-id">Trader ID, Email or Mobile</label>
-          <input type="text" id="signin-id" required placeholder="e.g. MKP-1092 or 9876543210" />
-        </div>
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-          <label for="signin-password">Password</label>
-          <input type="password" id="signin-password" required placeholder="••••••••" />
-        </div>
-        <button type="submit" class="primary" style="width: 100%;">Sign In to Dashboard</button>
-      </form>
-      <div class="auth-footer">
-        Don't have an account? <a href="#" onclick="switchAuthView('signup')">Create a Trader Profile</a>
+      <h1 id="masthead-title">Tomorrow's open, before it opens.</h1>
+      <p class="tagline" id="masthead-tagline">A plain-English briefing for first-time investors, written before NSE rings the bell at 9:15&nbsp;AM&nbsp;IST.</p>
+    </div>
+    <div class="account-box">
+      <div class="theme-toggle" role="group" aria-label="Colour theme">
+        <button type="button" id="theme-btn-light" class="active" title="Light theme" aria-pressed="true">&#9728;</button>
+        <button type="button" id="theme-btn-dark" title="Dark theme" aria-pressed="false">&#9790;</button>
+      </div>
+      <div class="account-meta hidden" id="account-meta">
+        <div class="who" id="account-who">—</div>
+        <button class="signout-link" id="profile-btn">Profile</button>
+        <span style="color:var(--line);margin:0 4px">&middot;</span>
+        <button class="signout-link" id="signout-btn">Sign out</button>
       </div>
     </div>
   </div>
 
-  <!-- AUTH LAYER: SIGN UP OVERLAY -->
-  <div id="signup-overlay" class="auth-overlay hidden">
-    <div class="auth-card">
-      <div class="auth-header">
-        <h3>Initialize Profile</h3>
-        <p>Set up your workspace and risk metrics parameters</p>
-      </div>
-      <div id="signup-error" class="error-banner"></div>
-      <form id="signup-form" onsubmit="handleSignUp(event)">
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="signup-name">Full Name</label>
-          <input type="text" id="signup-name" required placeholder="e.g. Ramesh Kumar" />
-        </div>
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="signup-email">Email Address</label>
-          <input type="email" id="signup-email" required placeholder="ramesh@example.com" />
-        </div>
-        <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="signup-mobile">WhatsApp / Mobile Number</label>
-          <input type="tel" id="signup-mobile" required placeholder="e.g. 9876543210" />
-        </div>
-        <div class="form-group" style="margin-bottom: 1.5rem;">
-          <label for="signup-password">Choose Master Password</label>
-          <input type="password" id="signup-password" required placeholder="Minimum 8 characters" />
-        </div>
-        <button type="submit" class="primary" style="width: 100%;">Complete Initialization</button>
-      </form>
-      <div class="auth-footer">
-        Already registered? <a href="#" onclick="switchAuthView('signin')">Sign In here</a>
-      </div>
+  <div class="countdown" aria-live="off">
+    <div class="label">Today's briefing cycle</div>
+    <div class="next-checkpoint">
+      <span class="clock mono" id="countdown-clock"><span class="amber-dot" aria-hidden="true"></span>—:—:—</span>
+      <span class="next-label" id="countdown-next-label">until next checkpoint</span>
+    </div>
+    <div class="timeline" id="timeline" role="list" aria-label="Daily briefing checkpoints, India Standard Time">
+      <div class="point" data-hhmm="06:00" role="listitem"><span class="mark"></span><span class="time mono">06:00</span><span class="what">Pre&#8209;render</span></div>
+      <div class="point" data-hhmm="06:45" role="listitem"><span class="mark"></span><span class="time mono">06:45</span><span class="what">GIFT Nifty snapshot</span></div>
+      <div class="point" data-hhmm="06:50" role="listitem"><span class="mark"></span><span class="time mono">06:50</span><span class="what">Assembled</span></div>
+      <div class="point" data-hhmm="07:00" role="listitem"><span class="mark"></span><span class="time mono">07:00</span><span class="what">Sent to you</span></div>
+      <div class="point" data-hhmm="09:15" role="listitem"><span class="mark"></span><span class="time mono">09:15</span><span class="what">NSE opens</span></div>
     </div>
   </div>
 
-  <!-- CORE CONTAINER FRAMEWORK -->
-  <div class="app-container">
-    
-    <!-- APP LEFT NAVIGATION DRAWER -->
-    <aside>
-      <div>
-        <div class="brand">
-          <h1>MarketPulse <span>India</span></h1>
-          <p>Discipline Execution Environment</p>
+  <div id="view-auth" class="card">
+    <div class="auth-tabs" role="tablist">
+      <button type="button" id="tab-signup" class="active" role="tab" aria-selected="true">Sign up</button>
+      <button type="button" id="tab-signin" role="tab" aria-selected="false">Sign in</button>
+    </div>
+
+    <div id="panel-signup">
+      <div id="signup-status" class="status" role="status"></div>
+      <form id="signup-form">
+        <div class="identity-toggle">
+          <label><input type="radio" name="signup-identity" value="email" checked> Email</label>
+          <label><input type="radio" name="signup-identity" value="mobile"> Mobile number</label>
         </div>
-        <nav class="nav-group">
-          <a href="#" class="nav-item active">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
-            Workspace Desk
-          </a>
-          <a href="#" class="nav-item">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"></path></svg>
-            Performance Journal
-          </a>
-          <a href="#" class="nav-item">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
-            Risk Controller
-          </a>
-        </nav>
+        <div id="signup-email-field">
+          <label for="signup-email">Email address</label>
+          <input type="email" id="signup-email" placeholder="you@example.com">
+        </div>
+        <div id="signup-mobile-field">
+          <label for="signup-mobile">Mobile number (with country code)</label>
+          <input type="tel" id="signup-mobile" placeholder="+919876543210">
+        </div>
+        <label for="signup-password">Create a password</label>
+        <input type="password" id="signup-password" placeholder="At least 12 characters" autocomplete="new-password">
+        <p class="password-hint">You'll use this to sign in and view your briefing on the website.</p>
+        <label>How should we reach you?</label>
+        <div class="channels">
+          <label class="channel-option checked" data-channel="email">
+            <input type="checkbox" value="email" checked>
+            <span class="icon email">&#9993;</span>
+            <span class="meta"><span class="name">Email</span><br><span class="note">The full briefing, every weekday morning</span></span>
+          </label>
+          <label class="channel-option" data-channel="whatsapp">
+            <input type="checkbox" value="whatsapp">
+            <span class="icon whatsapp">&#9679;</span>
+            <span class="meta"><span class="name">WhatsApp</span><br><span class="note">A condensed text version</span></span>
+          </label>
+          <label class="channel-option" data-channel="telegram">
+            <input type="checkbox" value="telegram">
+            <span class="icon telegram">&#9992;</span>
+            <span class="meta"><span class="name">Telegram</span><br><span class="note">A condensed, formatted version</span></span>
+          </label>
+        </div>
+        <div id="whatsapp-field">
+          <label for="whatsapp_number">WhatsApp number (with country code)</label>
+          <input type="tel" id="whatsapp_number" placeholder="+919876543210">
+        </div>
+        <div id="telegram-field">
+          <label for="telegram_chat_id">Telegram Chat ID / Username</label>
+          <input type="text" id="telegram_chat_id" placeholder="@username or Chat ID">
+        </div>
+        <button type="submit" class="primary" id="signup-submit">Create account</button>
+      </form>
+      <p class="fine-print">
+        Email is required to verify your subscription if you sign up with one, even if you choose
+        WhatsApp or Telegram for daily delivery. Educational content only — not investment advice.
+        <a id="manage-link-toggle">Manage an existing subscription</a>
+      </p>
+    </div>
+
+    <div id="panel-signin" class="hidden">
+      <div id="signin-status" class="status" role="status"></div>
+
+      <form id="signin-form">
+        <label for="signin-id">Email or mobile number</label>
+        <input type="text" id="signin-id" placeholder="you@example.com or +919876543210" autocomplete="username">
+        <label for="signin-password">Password</label>
+        <input type="password" id="signin-password" placeholder="Your password" autocomplete="current-password">
+        <button type="submit" class="primary" id="signin-submit">Sign in</button>
+      </form>
+
+      <div id="mfa-challenge-panel" class="hidden">
+        <p style="font-size:14.5px;margin-bottom:12px;color:var(--graphite);">
+          Enter the 6-digit code from your authenticator app, or one of your backup codes.
+        </p>
+        <label for="mfa-code-input">Authentication code</label>
+        <input type="text" id="mfa-code-input" placeholder="123456" maxlength="20" autocomplete="one-time-code">
+        <button type="button" class="primary" id="mfa-submit-btn">Verify</button>
+        <button type="button" class="ghost" id="mfa-cancel-btn">Cancel — sign in differently</button>
       </div>
 
-      <div class="user-profile">
-        <div class="user-info">
-          <h4 id="user-display-name">Guest Identity</h4>
-          <p id="user-display-id">ID: MKP-PENDING</p>
-        </div>
-        <button onclick="logOut()" class="ghost" style="padding: 0.4rem; border-radius: var(--radius-sm);" title="Sign Out Profile">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>
-        </button>
+      <div id="forgot-panel" class="hidden">
+        <p style="font-size:14.5px;margin-bottom:12px;color:var(--graphite);">
+          Enter your email or mobile number and we'll send a reset link if an account exists.
+        </p>
+        <label for="forgot-id">Email or mobile number</label>
+        <input type="text" id="forgot-id" placeholder="you@example.com or +919876543210">
+        <button type="button" class="primary" id="forgot-submit-btn">Send reset link</button>
+        <button type="button" class="ghost" id="forgot-cancel-btn">Back to sign in</button>
       </div>
-    </aside>
 
-    <!-- CONTENT MODULE VIEWPORT -->
-    <main>
-      <header>
-        <div class="header-title">
-          <h2>Trading Terminal Hub</h2>
-          <p id="current-date-string">System initialization sequence running...</p>
-        </div>
-        <div>
-          <button class="ghost" onclick="resetChecklist()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
-            Reset Day Checklists
-          </button>
-        </div>
-      </header>
-
-      <!-- TWO-COLUMN WORKSPACE DESK GRID -->
-      <div class="dashboard-grid">
-        
-        <!-- COLUMN LEFT: INTERACTIVE CONTROLS & LOGGING -->
-        <div style="display: flex; flex-direction: column; gap: 2rem;">
-          
-          <!-- COMPONENT: PRE-MARKET STRATEGY CHECKLIST -->
-          <section class="card">
-            <div class="card-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--amber-base)"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              Pre-Market Preparation Milestones
-            </div>
-            <div class="checklist-group">
-              <label class="checklist-item">
-                <input type="checkbox" id="chk-global" />
-                <div class="checklist-text">
-                  <span>Review Global Vectors & Overnights</span>
-                  <small>Verify GIFT Nifty indication, US futures session trend, and major Asian indices directions.</small>
-                </div>
-              </label>
-              <label class="checklist-item">
-                <input type="checkbox" id="chk-news" />
-                <div class="checklist-text">
-                  <span>Economic Calendar & Stock Earnings Filters</span>
-                  <small>Identify corporate action listings, board meetings, and high-impact macroeconomic print releases.</small>
-                </div>
-              </label>
-              <label class="checklist-item">
-                <input type="checkbox" id="chk-levels" />
-                <div class="checklist-text">
-                  <span>Map Key Structural Levels</span>
-                  <small>Plot previous day close (PDC), high (PDH), low (PDL), and major swing supply/demand zones.</small>
-                </div>
-              </label>
-              <label class="checklist-item">
-                <input type="checkbox" id="chk-rules" />
-                <div class="checklist-text">
-                  <span>Commitment to Execution Safeguards</span>
-                  <small>Acknowledge max-loss thresholds, cap maximum trade counts, and commit to no FOMO validation loops.</small>
-                </div>
-              </label>
-            </div>
-          </section>
-
-          <!-- COMPONENT: RAPID EXECUTION JOURNAL RECORDER -->
-          <section class="card">
-            <div class="card-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--amber-base)"><path d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-              Log Live Execution Order
-            </div>
-            <form id="journal-form" onsubmit="saveJournalEntry(event)">
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Ticker Instrument</label>
-                  <input type="text" id="trade-ticker" required placeholder="e.g. NIFTY, RELIANCE" />
-                </div>
-                <div class="form-group">
-                  <label>Order Direction</label>
-                  <div class="segmented-control">
-                    <input type="radio" name="trade-direction" id="direction-buy" value="BUY" checked />
-                    <label for="direction-buy" class="label-buy">LONG / BUY</label>
-                    <input type="radio" name="trade-direction" id="direction-sell" value="SELL" />
-                    <label for="direction-sell" class="label-sell">SHORT / SELL</label>
-                  </div>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label>Setup Framework</label>
-                  <select id="trade-setup" required>
-                    <option value="">-- Choose Strategy Template --</option>
-                    <option value="ORB">Opening Range Breakout (ORB)</option>
-                    <option value="VWAP">VWAP Pullback / Mean Reversion</option>
-                    <option value="SR">Support / Resistance Breakout</option>
-                    <option value="MOM">Trend Continuation Momentum</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label>Execution Confidence</label>
-                  <select id="trade-confidence" required>
-                    <option value="A+">High Grade Conviction (A+)</option>
-                    <option value="B">Standard Structural Play (B)</option>
-                    <option value="C">Experimental Risk Scalar (C)</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-group full-width" style="margin-bottom: 1.25rem;">
-                <label>Psychological Notes & Context</label>
-                <textarea id="trade-notes" placeholder="Detail market environment context, emotional pulse, structural confluence..."></textarea>
-              </div>
-              <div style="display: flex; justify-content: flex-end;">
-                <button type="submit" class="primary">Commit Entry to Database</button>
-              </div>
-            </form>
-          </section>
-
-        </div>
-
-        <!-- COLUMN RIGHT: TIME TRACKING, TICKER WRAPPERS & INTEL -->
-        <div class="sidebar-grid">
-          
-          <!-- COMPONENT: NSE/BSE REAL-TIME countdown CLOCK -->
-          <section class="card">
-            <div class="card-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--amber-base)"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              Session Sequence Clock
-            </div>
-            <div class="countdown-display">
-              <div class="countdown-time" id="countdown-clock">00:00:00</div>
-            </div>
-            <div class="countdown-target" id="countdown-target-desc">Calculating session horizon...</div>
-            
-            <div class="timeline" id="session-timeline">
-              <div class="timeline-point" data-hhmm="06:00">
-                <span class="timeline-time">06:00</span>
-                <span>Global Vector Intake</span>
-              </div>
-              <div class="timeline-point" data-hhmm="09:00">
-                <span class="timeline-time">09:00</span>
-                <span>Pre-Open Window Open</span>
-              </div>
-              <div class="timeline-point" data-hhmm="09:08">
-                <span class="timeline-time">09:08</span>
-                <span>Pre-Open Price Matching</span>
-              </div>
-              <div class="timeline-point" data-hhmm="09:15">
-                <span class="timeline-time">09:15</span>
-                <span>Normal Market Opening Bell</span>
-              </div>
-            </div>
-          </section>
-
-          <!-- COMPONENT: MARKETPULSE LIVE BRIEFING INSIGHTS -->
-          <section class="card">
-            <div class="card-title">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--amber-base)"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-              MarketPulse India Briefing
-            </div>
-            <div class="briefing-box">
-              <iframe id="briefing-iframe" title="MarketPulse India daily briefing" sandbox=""></iframe>
-            </div>
-          </section>
-
-        </div>
-
-      </div>
-    </main>
-
+      <p class="fine-print" id="signin-fine-print">
+        <button class="link-btn" id="forgot-password-link">Forgot your password?</button>
+        &nbsp;&middot;&nbsp;
+        <a id="manage-link-toggle-2">Manage an existing subscription</a>
+      </p>
+    </div>
   </div>
 
-  <script>
-    // --- APP CORE SESSION MANIFEST CONFIG ---
-    const CHECKPOINTS = [
-      { hhmm: "06:00", text: "Global Vector Intake", minutes: 360 },
-      { hhmm: "09:00", text: "Pre-Open Window Open", minutes: 540 },
-      { hhmm: "09:08", text: "Pre-Open Price Matching", minutes: 548 },
-      { hhmm: "09:15", text: "Normal Market Opening Bell", minutes: 555 }
-    ];
+  <div id="view-verify" class="card hidden">
+    <h2>Confirming your email&hellip;</h2>
+    <div id="verify-status" class="status" role="status"></div>
+    <div id="verify-telegram-prompt" class="hidden">
+      <p style="font-size:14.5px;margin-bottom:14px;color:var(--graphite);">
+        Want today's briefing on Telegram too? Sign in, then connect it from your dashboard.
+      </p>
+      <button class="ghost" id="verify-go-to-signin">Go to sign in</button>
+    </div>
+  </div>
 
-    // State Objects
-    let activeTrader = null;
+  <div id="view-reset-password" class="card hidden">
+    <h2>Choose a new password</h2>
+    <div id="reset-status" class="status" role="status"></div>
+    <div id="reset-form-wrap">
+      <label for="reset-new-password">New password</label>
+      <input type="password" id="reset-new-password" placeholder="At least 8 characters" autocomplete="new-password">
+      <label for="reset-confirm-password">Confirm new password</label>
+      <input type="password" id="reset-confirm-password" placeholder="Same as above" autocomplete="new-password">
+      <button type="button" class="primary" id="reset-submit-btn">Set new password</button>
+    </div>
+  </div>
 
-    // --- APPLICATION STARTUP PIPELINE ---
-    window.addEventListener("DOMContentLoaded", () => {
-      initializeDateTimeDisplay();
-      syncAuthenticationState();
-      loadSavedChecklistState();
-      
-      // Fire up Realtime Engines
-      startCountdownEngine();
-      setInterval(startCountdownEngine, 1000);
-      
-      // Load static briefing sample layout
-      loadSampleBriefingContent();
+  <div id="view-telegram-link" class="card hidden">
+    <h2>One more step</h2>
+    <p style="font-size:14.5px;margin-bottom:14px;color:var(--graphite);">
+      Open the link below, then press <strong>Start</strong> in Telegram. Nothing else to type.
+    </p>
+    <div class="deep-link-box">
+      <a id="telegram-deep-link" href="#" target="_blank" rel="noopener">Open Telegram to finish connecting &#8594;</a>
+    </div>
+    <button class="ghost" id="telegram-link-done-btn">Back to dashboard</button>
+  </div>
+
+  <div id="view-manage" class="card hidden">
+    <h2>Manage your subscription</h2>
+    <div id="manage-status" class="status" role="status"></div>
+    <label for="manage-email">Email address</label>
+    <input type="email" id="manage-email" placeholder="you@example.com">
+    <button class="ghost" id="manage-unsubscribe-btn">Unsubscribe this email</button>
+    <p class="fine-print">
+      Unsubscribing stops delivery on every channel linked to this email.
+      <a id="back-to-auth">&#8592; Back</a>
+    </p>
+  </div>
+
+  <div id="view-dashboard" class="hidden">
+    <div class="card">
+      <div class="dashboard-toolbar">
+        <h2 style="margin:0">Today's briefing</h2>
+        <span class="run-date mono" id="briefing-run-date"></span>
+      </div>
+      <div id="dashboard-status" class="status" role="status"></div>
+      <div id="briefing-available" class="hidden">
+        <div class="briefing-frame">
+          <iframe id="briefing-iframe" title="MarketPulse India daily briefing" sandbox="allow-same-origin"></iframe>
+        </div>
+      </div>
+      <div id="briefing-unavailable" class="dashboard-empty hidden">
+        No briefing has been published yet. Your first one arrives by 07:00&nbsp;AM&nbsp;IST on the next trading day.
+      </div>
+    </div>
+
+    <div class="card">
+      <details class="dashboard-settings">
+        <summary>Delivery settings</summary>
+        <div id="settings-status" class="status" role="status"></div>
+        <label>Channels</label>
+        <div class="channels" id="dashboard-channels">
+          <label class="channel-option" data-channel="email">
+            <input type="checkbox" value="email">
+            <span class="icon email">&#9993;</span>
+            <span class="meta"><span class="name">Email</span></span>
+          </label>
+          <label class="channel-option" data-channel="whatsapp">
+            <input type="checkbox" value="whatsapp">
+            <span class="icon whatsapp">&#9679;</span>
+            <span class="meta"><span class="name">WhatsApp</span></span>
+          </label>
+          <label class="channel-option" data-channel="telegram">
+            <input type="checkbox" value="telegram">
+            <span class="icon telegram">&#9992;</span>
+            <span class="meta"><span class="name">Telegram</span></span>
+          </label>
+        </div>
+        <button class="ghost" id="save-channels-btn">Save channels</button>
+        <button class="ghost" id="dashboard-telegram-link-btn">Connect Telegram</button>
+      </details>
+    </div>
+  </div>
+
+  <div id="view-profile" class="hidden">
+    <div class="card">
+      <h2>Profile &amp; Settings</h2>
+
+      <p class="section-label">Change password</p>
+      <div id="changepw-status" class="status" role="status"></div>
+      <label for="changepw-current">Current password</label>
+      <input type="password" id="changepw-current" placeholder="Your current password" autocomplete="current-password">
+      <label for="changepw-new">New password</label>
+      <input type="password" id="changepw-new" placeholder="At least 8 characters" autocomplete="new-password">
+      <label for="changepw-confirm">Confirm new password</label>
+      <input type="password" id="changepw-confirm" placeholder="Same as above" autocomplete="new-password">
+      <button type="button" class="ghost" id="changepw-btn">Update password</button>
+
+      <hr class="divider">
+
+      <p class="section-label">Two-factor authentication (2FA)</p>
+      <div id="mfa-status" class="status" role="status"></div>
+
+      <div id="mfa-off-section">
+        <div class="mfa-status off">
+          <span class="badge">OFF</span>
+          <span>2FA adds a second step when signing in — a 6-digit code from your authenticator app.</span>
+        </div>
+        <button type="button" class="ghost" id="mfa-enroll-btn">Set up 2FA</button>
+
+        <div id="mfa-enroll-step1" class="hidden">
+          <p style="font-size:14px;color:var(--graphite);margin:16px 0 8px">
+            Scan this QR code with Google Authenticator, Authy, or any TOTP app. If you can't scan, enter the code manually.
+          </p>
+          <div style="text-align:center;margin:12px 0"><canvas id="mfa-qr-canvas" width="180" height="180" style="border-radius:8px;border:1px solid var(--line)"></canvas></div>
+          <details style="margin-bottom:12px">
+            <summary style="font-size:13px;cursor:pointer;color:var(--graphite)">Can't scan? Show manual code</summary>
+            <code id="mfa-secret-text" style="font-size:13px;word-break:break-all;display:block;margin-top:8px;background:var(--dawn);padding:8px;border-radius:6px;border:1px solid var(--line)"></code>
+          </details>
+          <label for="mfa-enroll-code">Enter the 6-digit code shown in your app</label>
+          <input type="text" id="mfa-enroll-code" placeholder="123456" maxlength="6" autocomplete="one-time-code">
+          <button type="button" class="primary" id="mfa-enroll-confirm-btn">Confirm and enable 2FA</button>
+          <button type="button" class="ghost" id="mfa-enroll-cancel-btn">Cancel</button>
+        </div>
+
+        <div id="mfa-backup-codes-display" class="hidden">
+          <div class="status visible success">2FA enabled! Save these backup codes somewhere safe — each works once if you lose your phone.</div>
+          <div class="backup-codes" id="mfa-backup-codes-list"></div>
+          <button type="button" class="ghost" id="mfa-backup-codes-done-btn">I've saved my codes</button>
+        </div>
+      </div>
+
+      <div id="mfa-on-section" class="hidden">
+        <div class="mfa-status on">
+          <span class="badge">ON</span>
+          <span>Your account is protected with 2FA. You'll need your authenticator app each time you sign in.</span>
+        </div>
+        <button type="button" class="ghost" id="mfa-regen-btn">Regenerate backup codes</button>
+        <div id="mfa-regen-codes-display" class="hidden">
+          <div class="status visible info">New backup codes generated — your old ones are now invalid.</div>
+          <div class="backup-codes" id="mfa-regen-codes-list"></div>
+          <button type="button" class="ghost" id="mfa-regen-done-btn">Done</button>
+        </div>
+        <div id="mfa-disable-section" style="margin-top:8px">
+          <button type="button" class="ghost danger" id="mfa-disable-toggle-btn">Disable 2FA</button>
+          <div id="mfa-disable-confirm" class="hidden" style="margin-top:12px">
+            <label for="mfa-disable-password">Enter your password to confirm</label>
+            <input type="password" id="mfa-disable-password" placeholder="Your current password" autocomplete="current-password">
+            <button type="button" class="primary" id="mfa-disable-confirm-btn">Yes, disable 2FA</button>
+            <button type="button" class="ghost" id="mfa-disable-cancel-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <hr class="divider">
+      <button type="button" class="ghost" id="profile-back-btn">&#8592; Back to dashboard</button>
+    </div>
+  </div>
+
+  <footer class="colophon">Educational content, not investment advice &middot; Indian Standard Time throughout</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const API_BASE = window.location.origin + "/api";
+  const SESSION_KEY = "marketpulse_session_token";
+  const THEME_KEY = "marketpulse_theme";
+
+  // -------------------------------------------------------------------------
+  // Theme management (works pre-login via localStorage, persisted to server after login)
+  // -------------------------------------------------------------------------
+  function applyTheme(theme, silent) {
+    document.documentElement.setAttribute("data-theme", theme);
+    document.getElementById("theme-btn-light").classList.toggle("active", theme === "light");
+    document.getElementById("theme-btn-light").setAttribute("aria-pressed", String(theme === "light"));
+    document.getElementById("theme-btn-dark").classList.toggle("active", theme === "dark");
+    document.getElementById("theme-btn-dark").setAttribute("aria-pressed", String(theme === "dark"));
+    localStorage.setItem(THEME_KEY, theme);
+    if (!silent && sessionToken) {
+      apiRequest("POST", "/theme", { theme }).catch(() => {});
+    }
+  }
+
+  (function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY) || "light";
+    applyTheme(saved, true);
+  })();
+
+  document.getElementById("theme-btn-light").addEventListener("click", function () { applyTheme("light"); });
+  document.getElementById("theme-btn-dark").addEventListener("click", function () { applyTheme("dark"); });
+
+  // -------------------------------------------------------------------------
+  // State
+  // -------------------------------------------------------------------------
+  let sessionToken = localStorage.getItem(SESSION_KEY) || null;
+  let currentSubscriber = null;
+  let pendingMfaChallenge = null;
+
+  // -------------------------------------------------------------------------
+  // Element refs
+  // -------------------------------------------------------------------------
+  const E = (id) => document.getElementById(id);
+
+  // -------------------------------------------------------------------------
+  // Utilities
+  // -------------------------------------------------------------------------
+  function showView(id) {
+    ["view-auth","view-verify","view-reset-password","view-telegram-link","view-manage","view-dashboard","view-profile"]
+      .forEach((v) => E(v).classList.add("hidden"));
+    E(id).classList.remove("hidden");
+  }
+
+  function setStatus(el, msg, kind) { el.textContent = msg; el.className = "status visible " + kind; }
+  function clearStatus(el) { el.className = "status"; }
+
+  async function apiRequest(method, path, body) {
+    const headers = { "Content-Type": "application/json" };
+    if (sessionToken) headers["Authorization"] = "Bearer " + sessionToken;
+    const resp = await fetch(API_BASE + path, {
+      method, headers,
+      body: body !== undefined ? JSON.stringify(body) : undefined,
     });
+    const data = await resp.json().catch(() => ({}));
+    return { ok: resp.ok && data.ok !== false, status: resp.status, data };
+  }
 
-    function initializeDateTimeDisplay() {
-      const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
-      document.getElementById("current-date-string").textContent = new Date().toLocaleDateString('en-IN', options);
-    }
+  function POST(path, body) { return apiRequest("POST", path, body); }
+  function GET(path) { return apiRequest("GET", path); }
 
-    // --- AUTHENTICATION MODULE LAYER ---
-    function syncAuthenticationState() {
-      const savedUser = localStorage.getItem("mkp_trader");
-      if (!savedUser) {
-        switchAuthView("signin");
-      } else {
-        activeTrader = JSON.parse(savedUser);
-        document.getElementById("signin-overlay").classList.add("hidden");
-        document.getElementById("signup-overlay").classList.add("hidden");
-        document.getElementById("user-display-name").textContent = activeTrader.name;
-        document.getElementById("user-display-id").textContent = `ID: ${activeTrader.id}`;
-      }
-    }
+  function setSession(token) {
+    sessionToken = token;
+    token ? localStorage.setItem(SESSION_KEY, token) : localStorage.removeItem(SESSION_KEY);
+  }
 
-    function switchAuthView(view) {
-      const signInEl = document.getElementById("signin-overlay");
-      const signUpEl = document.getElementById("signup-overlay");
-      document.getElementById("signin-error").style.display = "none";
-      document.getElementById("signup-error").style.display = "none";
+  // -------------------------------------------------------------------------
+  // QR code drawing (tiny pure-JS TOTP QR via Google Chart API fallback,
+  // no external lib needed in production -- uses the provisioning URI)
+  // -------------------------------------------------------------------------
+function drawQR(canvas, uri) {
+  try {
+    // QRious directly hooks onto the canvas element and paints the pixels locally
+    new QRious({
+      element: canvas,
+      value: uri,
+      size: 180,
+      background: '#ffffff',
+      foreground: '#000000'
+    });
+  } catch (err) {
+    console.error("Local QR generation failed:", err);
+    // Fallback if something goes wrong structurally
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#f3efe4";
+    ctx.fillRect(0, 0, 180, 180);
+    ctx.fillStyle = "#4b5550";
+    ctx.font = "12px sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText("Use the manual code below", 90, 90);
+  }
+}
+  
+  // -------------------------------------------------------------------------
+  // Auth tabs
+  // -------------------------------------------------------------------------
+  E("tab-signup").addEventListener("click", () => switchTab("signup"));
+  E("tab-signin").addEventListener("click", () => switchTab("signin"));
 
-      if (view === "signin") {
-        signInEl.classList.remove("hidden");
-        signUpEl.classList.add("hidden");
-      } else {
-        signInEl.classList.add("hidden");
-        signUpEl.classList.remove("hidden");
-      }
-    }
+  function switchTab(which) {
+    const su = which === "signup";
+    E("tab-signup").classList.toggle("active", su);
+    E("tab-signin").classList.toggle("active", !su);
+    E("tab-signup").setAttribute("aria-selected", String(su));
+    E("tab-signin").setAttribute("aria-selected", String(!su));
+    E("panel-signup").classList.toggle("hidden", !su);
+    E("panel-signin").classList.toggle("hidden", su);
+    // Reset sub-panels when switching tabs
+    E("mfa-challenge-panel").classList.add("hidden");
+    E("forgot-panel").classList.add("hidden");
+    E("signin-form").classList.remove("hidden");
+    E("signin-fine-print").classList.remove("hidden");
+  }
 
-    function handleSignIn(e) {
-      e.preventDefault();
-      const idInput = document.getElementById("signin-id").value.trim();
-      const passInput = document.getElementById("signin-password").value;
-      const errorBanner = document.getElementById("signin-error");
+  // -------------------------------------------------------------------------
+  // Signup identity toggle
+  // -------------------------------------------------------------------------
+  document.querySelectorAll('input[name="signup-identity"]').forEach((radio) => {
+    radio.addEventListener("change", function () {
+      const mob = document.querySelector('input[name="signup-identity"]:checked').value === "mobile";
+      E("signup-email-field").classList.toggle("hidden", mob);
+      E("signup-mobile-field").classList.toggle("visible", mob);
+    });
+  });
 
-      if (passInput.length < 4) {
-        errorBanner.textContent = "Security validation exception: Password requirements incorrect.";
-        errorBanner.style.display = "block";
-        return;
-      }
-
-      // Check against local storage registry mock
-      const existingTraders = JSON.parse(localStorage.getItem("all_registered_traders") || "[]");
-      const matchedTrader = existingTraders.find(t => t.id === idInput || t.email === idInput || t.mobile === idInput);
-
-      const mockTrader = matchedTrader || {
-        name: idInput.includes("@") ? idInput.split("@")[0] : idInput,
-        id: "MKP-" + Math.floor(1000 + Math.random() * 9000),
-        email: idInput.includes("@") ? idInput : "",
-        mobile: !isNaN(idInput) ? idInput : ""
-      };
-      
-      localStorage.setItem("mkp_trader", JSON.stringify(mockTrader));
-      syncAuthenticationState();
-    }
-
-    function handleSignUp(e) {
-      e.preventDefault();
-      const nameInput = document.getElementById("signup-name").value.trim();
-      const emailInput = document.getElementById("signup-email").value.trim();
-      const mobileInput = document.getElementById("signup-mobile").value.trim();
-      const passInput = document.getElementById("signup-password").value;
-      const errorBanner = document.getElementById("signup-error");
-
-      // 1. Password validation check
-      if (passInput.length < 8) {
-        errorBanner.textContent = "Configuration error: Master Passphrase must be >= 8 characters.";
-        errorBanner.style.display = "block";
-        return;
-      }
-
-      // 2. Fetch registry and check if mobile / WhatsApp number already exists
-      const existingTraders = JSON.parse(localStorage.getItem("all_registered_traders") || "[]");
-      const mobileExists = existingTraders.some(trader => trader.mobile === mobileInput);
-      
-      if (mobileExists) {
-        errorBanner.textContent = "Registration Error: This WhatsApp / Mobile number already exists.";
-        errorBanner.style.display = "block";
-        return;
-      }
-
-      // 3. Process setup registration profile if checks clear
-      const mockTrader = {
-        name: nameInput,
-        email: emailInput,
-        mobile: mobileInput,
-        id: "MKP-" + Math.floor(1000 + Math.random() * 9000)
-      };
-
-      existingTraders.push(mockTrader);
-      localStorage.setItem("all_registered_traders", JSON.stringify(existingTraders));
-      localStorage.setItem("mkp_trader", JSON.stringify(mockTrader));
-      
-      syncAuthenticationState();
-    }
-
-    function logOut() {
-      localStorage.removeItem("mkp_trader");
-      activeTrader = null;
-      document.getElementById("user-display-name").textContent = "Guest Identity";
-      document.getElementById("user-display-id").textContent = "ID: MKP-PENDING";
-      switchAuthView("signin");
-    }
-
-    // --- HIGH RESOLUTION ENGINE FOR SESSION TICKER ---
-    function startCountdownEngine() {
-      const now = new Date();
-      const nowSec = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
-      
-      let next = null;
-      let targetTimeSec = 0;
-
-      for (let i = 0; i < CHECKPOINTS.length; i++) {
-        const cpSec = CHECKPOINTS[i].minutes * 60;
-        if (nowSec < cpSec) {
-          next = CHECKPOINTS[i];
-          targetTimeSec = cpSec;
-          break;
+  // -------------------------------------------------------------------------
+  // Channel checkbox wiring
+  // -------------------------------------------------------------------------
+  function wireChannelOptions(container, onChannelToggle) {
+    container.querySelectorAll(".channel-option").forEach((opt) => {
+      opt.addEventListener("click", function (e) {
+        if (e.target.tagName !== "INPUT") {
+          const cb = opt.querySelector("input");
+          cb.checked = !cb.checked;
         }
-      }
-
-      if (!next) {
-        next = CHECKPOINTS[0];
-        targetTimeSec = (24 * 3600) + (CHECKPOINTS[0].minutes * 60);
-      }
-
-      let deltaSec = targetTimeSec - nowSec;
-      const hours = Math.floor(deltaSec / 3600);
-      deltaSec %= 3600;
-      const mins = Math.floor(deltaSec / 60);
-      const secs = deltaSec % 60;
-
-      const pad = (num) => String(num).padStart(2, "0");
-      document.getElementById("countdown-clock").textContent = `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
-      document.getElementById("countdown-target-desc").textContent = `Remaining until: ${next.text} (${next.hhmm})`;
-
-      const timelinePoints = document.querySelectorAll(".timeline-point");
-      const isNextCheckpointTomorrow = (next === CHECKPOINTS[0] && nowSec >= CHECKPOINTS[CHECKPOINTS.length - 1].minutes * 60);
-
-      timelinePoints.forEach((pt) => {
-        const hhmm = pt.getAttribute("data-hhmm");
-        const cpMin = CHECKPOINTS.find((c) => c.hhmm === hhmm).minutes;
-        pt.classList.remove("done", "active");
-
-        if (isNextCheckpointTomorrow) {
-          pt.classList.add("done");
-        } else if (hhmm === next.hhmm) {
-          pt.classList.add("active");
-        } else if (cpMin * 60 < nowSec) {
-          pt.classList.add("done");
-        }
+        opt.classList.toggle("checked", opt.querySelector("input").checked);
+        if (onChannelToggle) onChannelToggle();
       });
-    }
+    });
+  }
 
-    // --- INTERACTIVE CHECKLIST MANAGEMENT ---
-    const checklists = ["chk-global", "chk-news", "chk-levels", "chk-rules"];
+  wireChannelOptions(E("signup-form"), function () {
+    const whatsappChecked = document.querySelector('#signup-form .channel-option[data-channel="whatsapp"] input').checked;
+    const telegramChecked = document.querySelector('#signup-form .channel-option[data-channel="telegram"] input').checked;
+    E("whatsapp-field").classList.toggle("visible", whatsappChecked);
+    E("telegram-field").classList.toggle("visible", telegramChecked);
+  });
+  wireChannelOptions(E("dashboard-channels"));
+
+  // -------------------------------------------------------------------------
+  // Signup
+  // -------------------------------------------------------------------------
+  E("signup-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    clearStatus(E("signup-status"));
+    const useMobile = document.querySelector('input[name="signup-identity"]:checked').value === "mobile";
+    const channels = Array.from(E("signup-form").querySelectorAll(".channel-option input:checked")).map((c) => c.value);
+    if (!channels.length) { setStatus(E("signup-status"), "Choose at least one delivery channel.", "error"); return; }
+
+    const btn = E("signup-submit");
+    btn.disabled = true; btn.textContent = "Creating account…";
+
+    const rawMobile = E("signup-mobile").value.trim();
+    const rawWhatsApp = E("whatsapp_number").value.trim();
     
-    checklists.forEach(id => {
-      document.getElementById(id).addEventListener("change", () => {
-        localStorage.setItem(`mkp_chk_${id}`, document.getElementById(id).checked);
-      });
+    const { ok, data } = await POST("/signup", {
+      password: E("signup-password").value,
+      email: useMobile ? undefined : E("signup-email").value.trim(),
+  
+      //Fallback to the WhatsApp field if the primary mobile field is blank
+      mobile_number: useMobile ? rawMobile : (rawWhatsApp || undefined),
+      channels,
+      whatsapp_number: channels.includes("whatsapp") ? rawWhatsApp : undefined,
+      telegram_chat_id: channels.includes("telegram") ? E("telegram_chat_id").value.trim() : undefined,
     });
 
-    function loadSavedChecklistState() {
-      checklists.forEach(id => {
-        const saved = localStorage.getItem(`mkp_chk_${id}`);
-        if (saved !== null) {
-          document.getElementById(id).checked = (saved === "true");
-        }
-      });
-    }
+    btn.disabled = false; btn.textContent = "Create account";
 
-    function resetChecklist() {
-      checklists.forEach(id => {
-        document.getElementById(id).checked = false;
-        localStorage.setItem(`mkp_chk_${id}`, "false");
-      });
+    if (ok) {
+      if (data.warning) {
+        setStatus(E("signup-status"), "Account created, but we couldn't send the confirmation email right now. Please try again shortly.", "error");
+      } else if (data.status === "active") {
+        setStatus(E("signup-status"), "Account created! Sign in below.", "success");
+      } else {
+        setStatus(E("signup-status"), "Check your inbox — we've sent a confirmation link. Once verified, sign in below.", "success");
+      }
+      E("signup-form").reset();
+      document.querySelectorAll("#signup-form .channel-option").forEach((o) => o.classList.remove("checked"));
+      document.querySelector('#signup-form .channel-option[data-channel="email"] input').checked = true;
+      document.querySelector('#signup-form .channel-option[data-channel="email"]').classList.add("checked");
+      E("whatsapp-field").classList.remove("visible");
+      E("telegram-field").classList.remove("visible");
+      switchTab("signin");
+    } else {
+      setStatus(E("signup-status"), data.error || data.reason || "Something went wrong. Please try again.", "error");
     }
+  });
 
-    // --- FORM EXECUTION ACTION ---
-    function saveJournalEntry(e) {
-      e.preventDefault();
-      
-      const entry = {
-        ticker: document.getElementById("trade-ticker").value.toUpperCase().trim(),
-        direction: document.querySelector('input[name="trade-direction"]:checked').value,
-        setup: document.getElementById("trade-setup").value,
-        confidence: document.getElementById("trade-confidence").value,
-        notes: document.getElementById("trade-notes").value.trim(),
-        timestamp: new Date().toISOString()
-      };
+  // -------------------------------------------------------------------------
+  // Sign in
+  // -------------------------------------------------------------------------
+  E("signin-form").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    clearStatus(E("signin-status"));
+    const btn = E("signin-submit");
+    btn.disabled = true; btn.textContent = "Signing in…";
 
-      alert(`Database Pipeline Call Simulated!\nCommitted trade for ${entry.ticker} (${entry.direction}) successfully.`);
-      
-      document.getElementById("trade-ticker").value = "";
-      document.getElementById("trade-setup").value = "";
-      document.getElementById("trade-notes").value = "";
+    const { ok, status, data } = await POST("/login", {
+      login_id: E("signin-id").value.trim(),
+      password: E("signin-password").value,
+    });
+
+    btn.disabled = false; btn.textContent = "Sign in";
+
+    if (ok && data.mfa_required) {
+      pendingMfaChallenge = data.challenge_token;
+      E("signin-form").classList.add("hidden");
+      E("signin-fine-print").classList.add("hidden");
+      E("mfa-challenge-panel").classList.remove("hidden");
+      E("mfa-code-input").value = "";
+      E("mfa-code-input").focus();
+    } else if (ok) {
+      setSession(data.session_token);
+      currentSubscriber = data.subscriber;
+      applyTheme(currentSubscriber.theme_preference || "light", true);
+      E("signin-form").reset();
+      enterDashboard();
+    } else {
+      setStatus(E("signin-status"), data.error || "Incorrect email/mobile number or password.", "error");
     }
+  });
 
-    // --- BRIEFING DECK IFRAME INJECTOR ---
-    function loadSampleBriefingContent() {
-      const iframe = document.getElementById("briefing-iframe");
-      const sampleHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 15px; margin: 0; color: #2d3748; line-height: 1.4; background: #fafafa; }
-            h3 { margin-top: 0; color: #1a202c; font-size: 16px; border-bottom: 2px solid #edf2f7; padding-bottom: 6px; }
-            .item { margin-bottom: 12px; font-size: 13px; }
-            .bullet { color: #d69e2e; font-weight: bold; margin-right: 4px; }
-            .badge { background: #e2e8f0; font-size: 11px; padding: 2px 6px; border-radius: 4px; font-weight: 600; display: inline-block; margin-top: 4px; }
-          </style>
-        </head>
-        <body>
-          <h3>Nifty & Macro Intelligence Pulse</h3>
-          <div class="item">
-            <span class="bullet">•</span> <strong>GIFT Nifty Open Vector:</strong> Trading flat to minor positive configurations setup near open bounds.
-          </div>
-          <div class="item">
-            <span class="bullet">•</span> <strong>Institutional Flow Data:</strong> FII segment logs modest net sales exposure; domestic DII offsets system momentum cleanly.
-          </div>
-          <div class="item">
-            <span class="bullet">•</span> <strong>High Alert Focus Tick:</strong> Heavyweight components (Reliance, HDFC Bank) testing key multi-week structural exponential moving averages.
-          </div>
-          <span class="badge">Macro Status: Neutral-Rangebound</span>
-        </body>
-        </html>
-      `;
-      iframe.srcdoc = sampleHTML;
+  // -------------------------------------------------------------------------
+  // MFA challenge (second step after password-correct for MFA accounts)
+  // -------------------------------------------------------------------------
+  E("mfa-submit-btn").addEventListener("click", async function () {
+    clearStatus(E("signin-status"));
+    const { ok, data } = await POST("/login/mfa", {
+      challenge_token: pendingMfaChallenge,
+      code: E("mfa-code-input").value.trim(),
+    });
+    if (ok) {
+      pendingMfaChallenge = null;
+      setSession(data.session_token);
+      currentSubscriber = data.subscriber;
+      applyTheme(currentSubscriber.theme_preference || "light", true);
+      E("mfa-challenge-panel").classList.add("hidden");
+      E("signin-form").classList.remove("hidden");
+      enterDashboard();
+    } else {
+      setStatus(E("signin-status"), data.error || "Incorrect code. Please sign in again.", "error");
+      E("mfa-challenge-panel").classList.add("hidden");
+      E("signin-form").classList.remove("hidden");
+      E("signin-fine-print").classList.remove("hidden");
+      pendingMfaChallenge = null;
     }
-  </script>
+  });
+
+  E("mfa-cancel-btn").addEventListener("click", function () {
+    pendingMfaChallenge = null;
+    clearStatus(E("signin-status"));
+    E("mfa-challenge-panel").classList.add("hidden");
+    E("signin-form").classList.remove("hidden");
+    E("signin-fine-print").classList.remove("hidden");
+  });
+
+  // -------------------------------------------------------------------------
+  // Forgot password flow
+  // -------------------------------------------------------------------------
+  E("forgot-password-link").addEventListener("click", function () {
+    E("signin-form").classList.add("hidden");
+    E("signin-fine-print").classList.add("hidden");
+    clearStatus(E("signin-status"));
+    E("forgot-panel").classList.remove("hidden");
+    E("forgot-id").focus();
+  });
+
+  E("forgot-cancel-btn").addEventListener("click", function () {
+    E("forgot-panel").classList.add("hidden");
+    E("signin-form").classList.remove("hidden");
+    E("signin-fine-print").classList.remove("hidden");
+    clearStatus(E("signin-status"));
+  });
+
+  E("forgot-submit-btn").addEventListener("click", async function () {
+    clearStatus(E("signin-status"));
+    const btn = E("forgot-submit-btn");
+    btn.disabled = true; btn.textContent = "Sending…";
+    await POST("/password/forgot", { login_id: E("forgot-id").value.trim() });
+    btn.disabled = false; btn.textContent = "Send reset link";
+    setStatus(E("signin-status"), "If an account exists for that email or mobile number, a password reset link has been sent.", "success");
+    E("forgot-panel").classList.add("hidden");
+    E("signin-form").classList.remove("hidden");
+    E("signin-fine-print").classList.remove("hidden");
+    E("forgot-id").value = "";
+  });
+
+  // -------------------------------------------------------------------------
+  // Password reset landing page (/reset-password?token=...)
+  // -------------------------------------------------------------------------
+async function handlePasswordReset() {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+  const action = params.get("action");
+  
+  // Only intercept if token exists AND the path contains reset OR an action query parameter is explicit
+  if (!token || (!window.location.pathname.includes("reset-password") && action !== "reset")) {
+    return false; 
+  }
+  
+  showView("view-reset-password");
+  return true;
+}
+
+  E("reset-submit-btn").addEventListener("click", async function () {
+    clearStatus(E("reset-status"));
+    const newPw = E("reset-new-password").value;
+    const confirmPw = E("reset-confirm-password").value;
+    if (newPw.length < 8) { setStatus(E("reset-status"), "Password must be at least 8 characters.", "error"); return; }
+    if (newPw !== confirmPw) { setStatus(E("reset-status"), "Passwords don't match.", "error"); return; }
+
+    const btn = E("reset-submit-btn");
+    btn.disabled = true; btn.textContent = "Setting password…";
+    const token = new URLSearchParams(window.location.search).get("token");
+    const { ok, data } = await POST("/password/reset", { token, new_password: newPw });
+    btn.disabled = false; btn.textContent = "Set new password";
+
+    if (ok) {
+      setStatus(E("reset-status"), "Password updated! You can now sign in with your new password.", "success");
+      E("reset-form-wrap").classList.add("hidden");
+      setTimeout(() => { window.history.replaceState({}, "", "/"); showLandingState(); }, 2500);
+    } else {
+      setStatus(E("reset-status"), data.reason || "This reset link is invalid or has expired.", "error");
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // Email verification
+  // -------------------------------------------------------------------------
+  async function handleEmailVerification() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const action = params.get("action");
+  
+    // Guard clause: skip if it's explicitly a password reset context
+    if (!token || window.location.pathname.includes("reset-password") || action === "reset") {
+      return false;
+    }
+  
+    showView("view-verify");
+    const { ok, data } = await POST("/verify", { token });
+    if (ok) {
+      setStatus(E("verify-status"), "Email confirmed! Sign in to view your briefing.", "success");
+      E("verify-telegram-prompt").classList.remove("hidden");
+    } else {
+      setStatus(E("verify-status"), data.reason || "This verification link is invalid or expired.", "error");
+    }
+    return true;
+  }
+
+  E("verify-go-to-signin").addEventListener("click", function () { showView("view-auth"); switchTab("signin"); });
+
+  // -------------------------------------------------------------------------
+  // Telegram linking (from dashboard)
+  // -------------------------------------------------------------------------
+  E("dashboard-telegram-link-btn").addEventListener("click", async function () {
+    const { ok, data } = await POST("/telegram/link", {});
+    if (ok) { E("telegram-deep-link").href = data.deep_link; showView("view-telegram-link"); }
+    else { setStatus(E("settings-status"), data.reason || "Could not start Telegram linking.", "error"); }
+  });
+
+  E("telegram-link-done-btn").addEventListener("click", function () {
+    showView("view-dashboard");
+    refreshChannelCheckboxes();
+  });
+
+  // -------------------------------------------------------------------------
+  // Manage / unsubscribe
+  // -------------------------------------------------------------------------
+  function openManage(e) { if (e) e.preventDefault(); showView("view-manage"); }
+  E("manage-link-toggle").addEventListener("click", openManage);
+  E("manage-link-toggle-2").addEventListener("click", openManage);
+  E("back-to-auth").addEventListener("click", function (e) { e.preventDefault(); showLandingState(); });
+
+  E("manage-unsubscribe-btn").addEventListener("click", async function () {
+    clearStatus(E("manage-status"));
+    const email = E("manage-email").value.trim();
+    if (!email) { setStatus(E("manage-status"), "Enter the email address you subscribed with.", "error"); return; }
+    E("manage-unsubscribe-btn").disabled = true;
+    const { ok, data } = await POST("/unsubscribe", { email });
+    E("manage-unsubscribe-btn").disabled = false;
+    setStatus(E("manage-status"), ok ? "You've been unsubscribed from all channels." : (data.error || "Something went wrong."), ok ? "success" : "error");
+  });
+
+  // -------------------------------------------------------------------------
+  // Dashboard: briefing + channels
+  // -------------------------------------------------------------------------
+  async function loadBriefing() {
+    clearStatus(E("dashboard-status"));
+    E("briefing-available").classList.add("hidden");
+    E("briefing-unavailable").classList.add("hidden");
+    const { ok, data } = await GET("/briefing/latest");
+    if (!ok) { setStatus(E("dashboard-status"), data.error || "Could not load your briefing right now.", "error"); return; }
+    if (!data.available) { E("briefing-unavailable").classList.remove("hidden"); return; }
+    E("briefing-run-date").textContent = data.run_date || "";
+    E("briefing-iframe").srcdoc = data.html || "<p>No content available.</p>";
+    E("briefing-available").classList.remove("hidden");
+    if (data.suppressed) setStatus(E("dashboard-status"), "Today's briefing was withheld by an automated compliance check; showing the most recent available edition.", "info");
+  }
+
+  function refreshChannelCheckboxes() {
+    if (!currentSubscriber) return;
+    const active = new Set(currentSubscriber.channels || []);
+    E("dashboard-channels").querySelectorAll(".channel-option").forEach((opt) => {
+      const v = opt.querySelector("input").value;
+      const checked = active.has(v);
+      opt.querySelector("input").checked = checked;
+      opt.classList.toggle("checked", checked);
+    });
+  }
+
+  E("save-channels-btn").addEventListener("click", async function () {
+    clearStatus(E("settings-status"));
+    const channels = Array.from(E("dashboard-channels").querySelectorAll(".channel-option input:checked")).map((c) => c.value);
+    if (!channels.length) { setStatus(E("settings-status"), "Choose at least one delivery channel.", "error"); return; }
+    const { ok, data } = await POST("/channels", { channels });
+    if (ok) { currentSubscriber.channels = data.channels; setStatus(E("settings-status"), "Saved.", "success"); }
+    else { setStatus(E("settings-status"), data.error || "Could not save channels.", "error"); }
+  });
+
+  // -------------------------------------------------------------------------
+  // Profile page: password change
+  // -------------------------------------------------------------------------
+  E("changepw-btn").addEventListener("click", async function () {
+    clearStatus(E("changepw-status"));
+    const cur = E("changepw-current").value;
+    const nw = E("changepw-new").value;
+    const cf = E("changepw-confirm").value;
+    if (nw.length < 8) { setStatus(E("changepw-status"), "New password must be at least 8 characters.", "error"); return; }
+    if (nw !== cf) { setStatus(E("changepw-status"), "Passwords don't match.", "error"); return; }
+    const btn = E("changepw-btn");
+    btn.disabled = true; btn.textContent = "Updating…";
+    const { ok, data } = await POST("/password/change", { current_password: cur, new_password: nw });
+    btn.disabled = false; btn.textContent = "Update password";
+    if (ok) {
+      setStatus(E("changepw-status"), "Password updated.", "success");
+      E("changepw-current").value = ""; E("changepw-new").value = ""; E("changepw-confirm").value = "";
+    } else {
+      setStatus(E("changepw-status"), data.error || "Password change failed.", "error");
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // Profile page: MFA
+  // -------------------------------------------------------------------------
+  function refreshMfaSection() {
+    const on = currentSubscriber && currentSubscriber.mfa_enabled;
+    E("mfa-off-section").classList.toggle("hidden", !!on);
+    E("mfa-on-section").classList.toggle("hidden", !on);
+    clearStatus(E("mfa-status"));
+    E("mfa-enroll-step1").classList.add("hidden");
+    E("mfa-backup-codes-display").classList.add("hidden");
+    E("mfa-regen-codes-display").classList.add("hidden");
+    E("mfa-disable-confirm").classList.add("hidden");
+  }
+
+  E("mfa-enroll-btn").addEventListener("click", async function () {
+    const { ok, data } = await POST("/mfa/enroll/start", {});
+    if (!ok) { setStatus(E("mfa-status"), data.error || "Could not start 2FA setup.", "error"); return; }
+    E("mfa-secret-text").textContent = data.secret;
+    drawQR(E("mfa-qr-canvas"), data.provisioning_uri);
+    E("mfa-enroll-step1").classList.remove("hidden");
+    E("mfa-enroll-code").value = "";
+    E("mfa-enroll-code").focus();
+  });
+
+  E("mfa-enroll-cancel-btn").addEventListener("click", function () {
+    E("mfa-enroll-step1").classList.add("hidden");
+    clearStatus(E("mfa-status"));
+  });
+
+  E("mfa-enroll-confirm-btn").addEventListener("click", async function () {
+    clearStatus(E("mfa-status"));
+    const btn = E("mfa-enroll-confirm-btn");
+    btn.disabled = true; btn.textContent = "Verifying…";
+    const { ok, data } = await POST("/mfa/enroll/confirm", { code: E("mfa-enroll-code").value.trim() });
+    btn.disabled = false; btn.textContent = "Confirm and enable 2FA";
+    if (ok) {
+      E("mfa-enroll-step1").classList.add("hidden");
+      const list = E("mfa-backup-codes-list");
+      list.innerHTML = data.backup_codes.map((c) => `<div class="backup-code">${c}</div>`).join("");
+      E("mfa-backup-codes-display").classList.remove("hidden");
+    } else {
+      setStatus(E("mfa-status"), data.reason || "Incorrect code. Please try again.", "error");
+    }
+  });
+
+  E("mfa-backup-codes-done-btn").addEventListener("click", async function () {
+    E("mfa-backup-codes-display").classList.add("hidden");
+    // Re-fetch subscriber so mfa_enabled is accurate before refreshing the section
+    const { ok, data } = await GET("/me");
+    if (ok) currentSubscriber = data.subscriber;
+    refreshMfaSection();
+  });
+
+  E("mfa-regen-btn").addEventListener("click", async function () {
+    clearStatus(E("mfa-status"));
+    const { ok, data } = await POST("/mfa/backup-codes/regenerate", {});
+    if (ok) {
+      const list = E("mfa-regen-codes-list");
+      list.innerHTML = data.backup_codes.map((c) => `<div class="backup-code">${c}</div>`).join("");
+      E("mfa-regen-codes-display").classList.remove("hidden");
+    } else {
+      setStatus(E("mfa-status"), data.error || "Could not regenerate backup codes.", "error");
+    }
+  });
+
+  E("mfa-regen-done-btn").addEventListener("click", function () { E("mfa-regen-codes-display").classList.add("hidden"); });
+
+  E("mfa-disable-toggle-btn").addEventListener("click", function () {
+    E("mfa-disable-confirm").classList.remove("hidden");
+    E("mfa-disable-password").value = "";
+    E("mfa-disable-password").focus();
+  });
+
+  E("mfa-disable-cancel-btn").addEventListener("click", function () { E("mfa-disable-confirm").classList.add("hidden"); });
+
+  E("mfa-disable-confirm-btn").addEventListener("click", async function () {
+    clearStatus(E("mfa-status"));
+    const btn = E("mfa-disable-confirm-btn");
+    btn.disabled = true; btn.textContent = "Disabling…";
+    const { ok, data } = await POST("/mfa/disable", { password: E("mfa-disable-password").value });
+    btn.disabled = false; btn.textContent = "Yes, disable 2FA";
+    if (ok) {
+      const meRes = await GET("/me");
+      if (meRes.ok) currentSubscriber = meRes.data.subscriber;
+      refreshMfaSection();
+      setStatus(E("mfa-status"), "2FA has been disabled.", "info");
+    } else {
+      setStatus(E("mfa-status"), data.error || "Incorrect password.", "error");
+    }
+  });
+
+  // -------------------------------------------------------------------------
+  // View transitions
+  // -------------------------------------------------------------------------
+  function showLandingState() {
+    E("account-meta").classList.add("hidden");
+    E("masthead-title").textContent = "Tomorrow's open, before it opens.";
+    E("masthead-tagline").innerHTML = "A plain-English briefing for first-time investors, written before NSE rings the bell at 9:15&nbsp;AM&nbsp;IST.";
+    E("page-wrap").classList.remove("dashboard");
+    showView("view-auth");
+    switchTab("signin");
+  }
+
+  function enterDashboard() {
+    E("account-meta").classList.remove("hidden");
+    E("account-who").textContent = currentSubscriber.email || currentSubscriber.mobile_number || "Signed in";
+    E("masthead-title").textContent = "Today's open, decoded.";
+    E("masthead-tagline").textContent = "Your briefing, ready whenever you are.";
+    E("page-wrap").classList.add("dashboard");
+    showView("view-dashboard");
+    refreshChannelCheckboxes();
+    loadBriefing();
+  }
+
+  // Profile page open/close
+  E("profile-btn").addEventListener("click", function () {
+    refreshMfaSection();
+    clearStatus(E("changepw-status"));
+    E("changepw-current").value = ""; E("changepw-new").value = ""; E("changepw-confirm").value = "";
+    showView("view-profile");
+  });
+
+  E("profile-back-btn").addEventListener("click", function () { showView("view-dashboard"); });
+
+  // Sign out
+  E("signout-btn").addEventListener("click", async function () {
+    await POST("/logout", {});
+    setSession(null);
+    currentSubscriber = null;
+    showLandingState();
+  });
+
+  // -------------------------------------------------------------------------
+  // Session restore on page reload
+  // -------------------------------------------------------------------------
+  async function restoreSession() {
+    if (!sessionToken) return false;
+    const { ok, data } = await GET("/me");
+    if (ok && data.subscriber) {
+      currentSubscriber = data.subscriber;
+      applyTheme(currentSubscriber.theme_preference || localStorage.getItem(THEME_KEY) || "light", true);
+      enterDashboard();
+      return true;
+    }
+    setSession(null);
+    return false;
+  }
+
+  // -------------------------------------------------------------------------
+  // IST countdown clock
+  // -------------------------------------------------------------------------
+  const IST_OFFSET_MINUTES = 5 * 60 + 30;
+  const CHECKPOINTS = [
+    { hhmm: "06:00", minutes: 360 },
+    { hhmm: "06:45", minutes: 405 },
+    { hhmm: "06:50", minutes: 410 },
+    { hhmm: "07:00", minutes: 420 },
+    { hhmm: "09:15", minutes: 555 },
+  ];
+  const CP_NAMES = { "06:00":"pre-render begins","06:45":"GIFT Nifty snapshot","06:50":"today's briefing assembled","07:00":"delivery to your inbox","09:15":"NSE opens" };
+  const timelinePoints = Array.from(document.querySelectorAll(".timeline .point"));
+
+  function updateCountdown() {
+    const now = new Date();
+    const nowMin = (now.getUTCHours() * 60 + now.getUTCMinutes() + now.getUTCSeconds() / 60 + IST_OFFSET_MINUTES) % (24 * 60);
+    const nowSec = nowMin * 60;
+    try { E("edition-date").textContent = new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short",timeZone:"Asia/Kolkata"}).format(now) + " · IST"; } catch (e) {}
+
+    let next = CHECKPOINTS.find((cp) => cp.minutes * 60 > nowSec) || CHECKPOINTS[0];
+    let sUntil = next === CHECKPOINTS[0] && nowSec >= CHECKPOINTS[CHECKPOINTS.length-1].minutes*60
+      ? 86400 - nowSec + next.minutes * 60
+      : next.minutes * 60 - nowSec;
+
+    const pad = (n) => String(Math.floor(n)).padStart(2, "0");
+    const h = Math.floor(sUntil/3600), m = Math.floor((sUntil%3600)/60), s = Math.floor(sUntil%60);
+    E("countdown-clock").innerHTML = '<span class="amber-dot" aria-hidden="true"></span>' + (h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`);
+    E("countdown-next-label").textContent = "until " + (CP_NAMES[next.hhmm] || "next checkpoint");
+
+    timelinePoints.forEach((pt) => {
+      const hhmm = pt.getAttribute("data-hhmm");
+      const cpMin = CHECKPOINTS.find((c) => c.hhmm === hhmm).minutes;
+      pt.classList.remove("done","active");
+      if (hhmm === next.hhmm) pt.classList.add("active");
+      else if (cpMin * 60 < nowSec) pt.classList.add("done");
+    });
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+  // -------------------------------------------------------------------------
+  // Entry point
+  // -------------------------------------------------------------------------
+  (async function init() {
+    if (await handlePasswordReset()) return;
+    if (await handleEmailVerification()) return;
+    if (await restoreSession()) return;
+    showLandingState();
+  })();
+})();
+</script>
 </body>
 </html>
