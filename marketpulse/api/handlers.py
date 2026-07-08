@@ -239,16 +239,23 @@ def signup(
             channels=clean_channels,
             whatsapp_number=clean_whatsapp,
         )
-    except (ValueError, SupabaseRequestError) as exc:
-        exc_text = getattr(exc, "text", "")
+   except Exception as exc:
+        # Convert the entire error object to a lowercase string to catch it anywhere
+        exc_text = str(exc).lower()
         
-        # Explicit check for duplicate WhatsApp constraint
-        if "subscribers_whatsapp_number_key" in exc_text:
+        # Pull internal attributes if they exist on the exception object
+        for attr in ["text", "message", "details", "hint", "code"]:
+            if hasattr(exc, attr):
+                exc_text += " " + str(getattr(exc, attr, "")).lower()
+
+        # Target the WhatsApp unique key violation or any mentions of the field name
+        if "whatsapp_number_key" in exc_text or "whatsapp" in exc_text:
             error_msg = "This WhatsApp number is already linked to another account."
-        elif "subscribers_mobile_number_key" in exc_text:
+        elif "mobile_number_key" in exc_text or "mobile" in exc_text:
             error_msg = "This mobile number is already linked to another account."
         else:
-            error_msg = "A database conflict occurred during signup."
+            # Fallback to prevent silent failures so you can print the real error structure
+            error_msg = f"A database conflict occurred during signup. Raw details: {str(exc)}"
 
         return {
             "ok": False,
