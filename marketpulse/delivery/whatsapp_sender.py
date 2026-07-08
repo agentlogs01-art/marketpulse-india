@@ -91,6 +91,9 @@ def send_whatsapp_message(
 
     #payload = {"From": from_number, "To": to_whatsapp}
     payload = {"From": from_whatsapp, "To": to_whatsapp}
+
+    # Test
+    print("[DEBUG] paylod: ", payload)
     if content_sid:
         import json
 
