@@ -99,6 +99,10 @@ def run_full_pipeline(prev_nifty_close: float, run_date_ist: Optional[str] = Non
     Returns a dict bundling everything email_system/render.py needs, plus
     the PipelineRunRecord for QA/audit logging.
     """
+
+    # Test
+    print("[DEBUG] Started PipelineRunRecord...", file=sys.stderr)
+    
     run_date_ist = run_date_ist or datetime.now().strftime("%Y-%m-%d")
     record = PipelineRunRecord(run_date_ist=run_date_ist)
 
