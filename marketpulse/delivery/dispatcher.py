@@ -53,6 +53,7 @@ def _dispatch_email(subject: str, html: str) -> dict:
     try:
         return send_email(subject, html, recipients)
     except EmailSendError as exc:
+        print(f"[CRITICAL EMAIL ERROR] Batch sending failed: {exc}", file=sys.stderr)
         return {"sent": [], "failed": [{"address": "ALL", "error": str(exc)}], "total": len(recipients)}
 
 
