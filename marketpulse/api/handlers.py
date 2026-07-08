@@ -240,13 +240,16 @@ def signup(
             whatsapp_number=clean_whatsapp,
         )
     except (ValueError, SupabaseRequestError) as exc:
-        # Check if it was a ValueError or a raw Supabase constraint crash string
-        error_msg = "This mobile number is already linked to another account."
-        if isinstance(exc, SupabaseRequestError) and "subscribers_mobile_number_key" not in getattr(exc, "text", ""):
+        exc_text = getattr(exc, "text", "")
+        
+        # Explicit check for duplicate WhatsApp constraint
+        if "subscribers_whatsapp_number_key" in exc_text:
+            error_msg = "This WhatsApp number is already linked to another account."
+        elif "subscribers_mobile_number_key" in exc_text:
+            error_msg = "This mobile number is already linked to another account."
+        else:
             error_msg = "A database conflict occurred during signup."
 
-        # Returning 200 guarantees your frontend POST utility receives the object 
-        # instead of rejecting the network promise entirely.
         return {
             "ok": False,
             "error": error_msg,
