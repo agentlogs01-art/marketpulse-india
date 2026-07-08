@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from marketpulse.delivery.text_render import render_plain_text, render_telegram_markdown
 from marketpulse.models.schemas import DeliveryChannel
+import sys
 
 
 def dispatch_all_channels(pipeline_output: dict, subject: str, html: str) -> dict:
