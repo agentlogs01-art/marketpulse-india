@@ -218,6 +218,7 @@ def signup(
     from marketpulse.persistence.subscriber_repo import (
         create_email_verification,
         create_pending_subscriber,
+        get_client,
     )
 
     if not email and not mobile_number:
@@ -229,8 +230,9 @@ def signup(
     clean_channels = _validate_channels(channels)
     clean_whatsapp = _validate_whatsapp_number(whatsapp_number, clean_channels)
 
- # --- MANUAL DE-DUPLICATION CHECK ---
+    # --- MANUAL DE-DUPLICATION CHECK ---
     if clean_whatsapp:
+        client = get_client()
         # Check if any subscriber row already uses this whatsapp number
         existing = client.table("subscribers").select("id").eq("whatsapp_number", clean_whatsapp).execute()
         if existing.data:
@@ -241,8 +243,7 @@ def signup(
                 "data": {"error": error_msg, "reason": error_msg}
             }, 200
 
-
-# --- TRY/EXCEPT BLOCK TO CATCH DB UNIQUE CONSTRAINT VALUE_ERRORS ---
+    # --- TRY/EXCEPT BLOCK TO CATCH DB UNIQUE CONSTRAINT VALUE_ERRORS ---
     try:
         subscriber_row = create_pending_subscriber(
             clean_password,
@@ -251,7 +252,7 @@ def signup(
             channels=clean_channels,
             whatsapp_number=clean_whatsapp,
         )
-   except Exception as exc:
+    except Exception as exc:
         # Convert the entire error object to a lowercase string to catch it anywhere
         exc_text = str(exc).lower()
         
@@ -302,6 +303,7 @@ def signup(
         }
 
     return {"ok": True, "status": "pending_verification"}
+	
 
 
 def verify_email(token: str) -> dict:
