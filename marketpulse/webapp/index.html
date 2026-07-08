@@ -183,7 +183,7 @@
 
     @media (max-width: 1024px) {
       .app-container { grid-template-columns: 1fr; }
-      aside { display: none; } /* Expanded setup could use a generic drawer */
+      aside { display: none; }
       .dashboard-grid { grid-template-columns: 1fr; }
     }
   </style>
@@ -200,8 +200,8 @@
       <div id="signin-error" class="error-banner"></div>
       <form id="signin-form" onsubmit="handleSignIn(event)">
         <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="signin-id">Trader ID or Email</label>
-          <input type="text" id="signin-id" required placeholder="e.g. MKP-1092" />
+          <label for="signin-id">Trader ID, Email or Mobile</label>
+          <input type="text" id="signin-id" required placeholder="e.g. MKP-1092 or 9876543210" />
         </div>
         <div class="form-group" style="margin-bottom: 1.5rem;">
           <label for="signin-password">Password</label>
@@ -231,6 +231,10 @@
         <div class="form-group" style="margin-bottom: 1rem;">
           <label for="signup-email">Email Address</label>
           <input type="email" id="signup-email" required placeholder="ramesh@example.com" />
+        </div>
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="signup-mobile">WhatsApp / Mobile Number</label>
+          <input type="tel" id="signup-mobile" required placeholder="e.g. 9876543210" />
         </div>
         <div class="form-group" style="margin-bottom: 1.5rem;">
           <label for="signup-password">Choose Master Password</label>
@@ -448,7 +452,6 @@
 
   <script>
     // --- APP CORE SESSION MANIFEST CONFIG ---
-    // Sorted ascending by minute index of day
     const CHECKPOINTS = [
       { hhmm: "06:00", text: "Global Vector Intake", minutes: 360 },
       { hhmm: "09:00", text: "Pre-Open Window Open", minutes: 540 },
@@ -478,7 +481,7 @@
       document.getElementById("current-date-string").textContent = new Date().toLocaleDateString('en-IN', options);
     }
 
-    // --- AUTHENTICATION MOCK LOGIC LAYERS ---
+    // --- AUTHENTICATION MODULE LAYER ---
     function syncAuthenticationState() {
       const savedUser = localStorage.getItem("mkp_trader");
       if (!savedUser) {
@@ -519,10 +522,15 @@
         return;
       }
 
-      // Successful fake authentication mock
-      const mockTrader = {
+      // Check against local storage registry mock
+      const existingTraders = JSON.parse(localStorage.getItem("all_registered_traders") || "[]");
+      const matchedTrader = existingTraders.find(t => t.id === idInput || t.email === idInput || t.mobile === idInput);
+
+      const mockTrader = matchedTrader || {
         name: idInput.includes("@") ? idInput.split("@")[0] : idInput,
-        id: "MKP-" + Math.floor(1000 + Math.random() * 9000)
+        id: "MKP-" + Math.floor(1000 + Math.random() * 9000),
+        email: idInput.includes("@") ? idInput : "",
+        mobile: !isNaN(idInput) ? idInput : ""
       };
       
       localStorage.setItem("mkp_trader", JSON.stringify(mockTrader));
@@ -533,21 +541,39 @@
       e.preventDefault();
       const nameInput = document.getElementById("signup-name").value.trim();
       const emailInput = document.getElementById("signup-email").value.trim();
+      const mobileInput = document.getElementById("signup-mobile").value.trim();
       const passInput = document.getElementById("signup-password").value;
       const errorBanner = document.getElementById("signup-error");
 
+      // 1. Password validation check
       if (passInput.length < 8) {
-        errorBanner.textContent = "Configuration error: Master Passphrase must be >= 8 alpha-characters.";
+        errorBanner.textContent = "Configuration error: Master Passphrase must be >= 8 characters.";
         errorBanner.style.display = "block";
         return;
       }
 
+      // 2. Fetch registry and check if mobile / WhatsApp number already exists
+      const existingTraders = JSON.parse(localStorage.getItem("all_registered_traders") || "[]");
+      const mobileExists = existingTraders.some(trader => trader.mobile === mobileInput);
+      
+      if (mobileExists) {
+        errorBanner.textContent = "Registration Error: This WhatsApp / Mobile number already exists.";
+        errorBanner.style.display = "block";
+        return;
+      }
+
+      // 3. Process setup registration profile if checks clear
       const mockTrader = {
         name: nameInput,
+        email: emailInput,
+        mobile: mobileInput,
         id: "MKP-" + Math.floor(1000 + Math.random() * 9000)
       };
 
+      existingTraders.push(mockTrader);
+      localStorage.setItem("all_registered_traders", JSON.stringify(existingTraders));
       localStorage.setItem("mkp_trader", JSON.stringify(mockTrader));
+      
       syncAuthenticationState();
     }
 
@@ -562,14 +588,11 @@
     // --- HIGH RESOLUTION ENGINE FOR SESSION TICKER ---
     function startCountdownEngine() {
       const now = new Date();
-      
-      // Calculate current seconds passed since midnight in Indian Timezone
       const nowSec = (now.getHours() * 3600) + (now.getMinutes() * 60) + now.getSeconds();
       
       let next = null;
       let targetTimeSec = 0;
 
-      // Scan for incoming session checkpoint
       for (let i = 0; i < CHECKPOINTS.length; i++) {
         const cpSec = CHECKPOINTS[i].minutes * 60;
         if (nowSec < cpSec) {
@@ -579,13 +602,11 @@
         }
       }
 
-      // Loop-around check for state conditions past final bell (wrap back to first checkpoint tomorrow)
       if (!next) {
         next = CHECKPOINTS[0];
         targetTimeSec = (24 * 3600) + (CHECKPOINTS[0].minutes * 60);
       }
 
-      // Render actual time delta string
       let deltaSec = targetTimeSec - nowSec;
       const hours = Math.floor(deltaSec / 3600);
       deltaSec %= 3600;
@@ -596,7 +617,6 @@
       document.getElementById("countdown-clock").textContent = `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
       document.getElementById("countdown-target-desc").textContent = `Remaining until: ${next.text} (${next.hhmm})`;
 
-      // Dynamic timeline styling updates
       const timelinePoints = document.querySelectorAll(".timeline-point");
       const isNextCheckpointTomorrow = (next === CHECKPOINTS[0] && nowSec >= CHECKPOINTS[CHECKPOINTS.length - 1].minutes * 60);
 
@@ -615,7 +635,7 @@
       });
     }
 
-    // --- INTERACTIVE CHECKLIST COMPONENT MANIFEST ---
+    // --- INTERACTIVE CHECKLIST MANAGEMENT ---
     const checklists = ["chk-global", "chk-news", "chk-levels", "chk-rules"];
     
     checklists.forEach(id => {
@@ -655,7 +675,6 @@
 
       alert(`Database Pipeline Call Simulated!\nCommitted trade for ${entry.ticker} (${entry.direction}) successfully.`);
       
-      // Clean form state layout
       document.getElementById("trade-ticker").value = "";
       document.getElementById("trade-setup").value = "";
       document.getElementById("trade-notes").value = "";
