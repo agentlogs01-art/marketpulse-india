@@ -246,6 +246,7 @@ alter table pipeline_runs enable row level security;
 alter table send_log enable row level security;
 alter table password_resets enable row level security;
 alter table mfa_challenges enable row level security;
+ALTER TABLE subscribers ADD CONSTRAINT subscribers_whatsapp_number_key UNIQUE (whatsapp_number);
 
 -- No policies are defined for anon/authenticated roles -> default-deny.
 -- Service-role key requests bypass RLS automatically.
