@@ -46,11 +46,13 @@ def send_email(subject: str, html_body: str, to_addrs: list) -> dict:
     runners never crash over network/IP blocks or a single bad email.
     """
     # Brevo requires the Master API key (starts with xkeysib-)
-    api_key = os.environ.get("BREVO_API_KEY") or os.environ.get("SMTP_PASSWORD")
+    #api_key = os.environ.get("BREVO_API_KEY") or os.environ.get("SMTP_PASSWORD")
+    api_key = os.environ.get("BREVO_API_KEY")
     from_addr = os.environ.get("EMAIL_FROM_ADDRESS", "agentlogs01@gmail.com")
 
     if not api_key:
-        raise EmailSendError("Brevo API Key (BREVO_API_KEY or SMTP_PASSWORD) missing in environment.")
+        #raise EmailSendError("Brevo API Key (BREVO_API_KEY or SMTP_PASSWORD) missing in environment.")
+        raise EmailSendError("Brevo API Key (BREVO_API_KEY) missing in environment.")
 
     url = "https://api.brevo.com/v3/smtp/email"
     headers = {
