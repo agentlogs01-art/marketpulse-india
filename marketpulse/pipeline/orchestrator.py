@@ -134,24 +134,43 @@ def run_full_pipeline(prev_nifty_close: float, run_date_ist: Optional[str] = Non
     record.jargon_injections = jargon_injections
     record.entity_violations = entity_violations
 
+    # Test
+    print("[DEBUG] Running AI analysis Completed...", file=sys.stderr)
+    
     if entity_scanner.should_suppress_run(entity_violations):
         record.suppressed = True
         record.suppression_reason = "Entity violation count exceeded safety threshold (FR-02.4.2)"
         return {"record": record, "suppressed": True}
 
+    # Test
+    print("[DEBUG] Fetching aggregate sector scores...", file=sys.stderr)
+    
     sector_scorecards = aggregate_sector_scores(analyses, events_by_id)
+
+    # Test
+    print("[DEBUG] Detect domestic override...", file=sys.stderr)
+    
     override = detect_domestic_override(events_by_id, analyses)
     record.domestic_override_active = override.active
 
+    # Test
+    print("[DEBUG] Reconcile the bias...", file=sys.stderr)
+    
     reconciliation = reconcile_bias(gift_nifty, analyses, override)
     record.divergence_flag = reconciliation.divergence_flag
     record.flat_override_triggered = reconciliation.flat_override_triggered
 
+    # Test
+    print("[DEBUG] Resolve Paragraph 4...", file=sys.stderr)
+    
     paragraph_4_text = resolve_paragraph_4(
         reconciliation.paragraph_4_token,
         bias_label_plain=BIAS_PLAIN_ENGLISH[reconciliation.bias_label],
         top_signal_plain_english=reconciliation.top_signal_plain_english,
     )
+
+    # Test
+    print("[DEBUG] About to return the record...", file=sys.stderr)   
 
     return {
         "record": record,
