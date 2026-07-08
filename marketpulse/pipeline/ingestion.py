@@ -109,9 +109,21 @@ def fetch_raw_feed_items(source: dict) -> list[dict]:
     mock in tests without hitting the network.
     """
     import feedparser  # local import: optional dependency, not needed for unit tests
+    import socket
 
-    parsed = feedparser.parse(source["url"])
-    return list(parsed.entries)
+    # Set a strict 10-second ceiling for all network socket operations
+    # to protect against unresponsive remote RSS servers hanging the pipeline.
+    original_timeout = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(10.0)
+
+    try:
+        parsed = feedparser.parse(source["url"])
+        return list(parsed.entries)
+    finally:
+        # Always restore the original global socket timeout so downstream 
+        # database or AI steps are unaffected by this strict limit.
+        socket.setdefaulttimeout(original_timeout)
+        
 
 
 def normalize_entry(entry: dict, source: dict) -> NewsEvent:
