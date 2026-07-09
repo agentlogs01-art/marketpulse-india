@@ -231,7 +231,7 @@ def signup(
     clean_whatsapp = _validate_whatsapp_number(whatsapp_number, clean_channels)
 	
     # --- MANUAL DE-DUPLICATION CHECK ---
-	if clean_whatsapp:
+    if clean_whatsapp:
         client = get_client()
         existing = client.select("subscribers", params={"whatsapp_number": f"ilike.*{clean_whatsapp}"})
         # Combined cleanly on one level using 8 plain space characters
