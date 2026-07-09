@@ -243,7 +243,7 @@ def signup(
                 "error": error_msg,
 				"reason": error_msg,
                 "data": {"ok": False,"error": error_msg, "reason": error_msg}
-            }, 200
+            }, 400
 
     # --- TRY/EXCEPT BLOCK TO CATCH DB UNIQUE CONSTRAINT VALUE_ERRORS ---
     try:
