@@ -236,17 +236,18 @@ def signup(
         # Check if any subscriber row already uses this whatsapp number
         #existing = client.select("subscribers", params={"whatsapp_number": f"eq.{clean_whatsapp}"})
         existing = client.select("subscribers", params={"whatsapp_number": f"ilike.*{clean_whatsapp}"})
-		if existing and len(existing) > 0:
-			raise ValidationError("Duplicate WhatsApp Number")
+        print(f"WhatsApp Number {clean_whatsapp}")
+    	if existing and len(existing) > 0:
+    		raise ValidationError("Duplicate WhatsApp Number")
             error_msg = "This WhatsApp number is already linked to another account."
             return {
-                "ok": False,
-                "error": error_msg,
-				"reason": error_msg,
-				"status": "error",
-                "data": {"ok": False,"error": error_msg, "reason": error_msg,"status": "error",}
-            }, 400
-
+                    "ok": False,
+                    "error": error_msg,
+    				"reason": error_msg,
+    				"status": "error",
+                    "data": {"ok": False,"error": error_msg, "reason": error_msg,"status": "error",}
+                }, 400
+        
     # --- TRY/EXCEPT BLOCK TO CATCH DB UNIQUE CONSTRAINT VALUE_ERRORS ---
     try:
         subscriber_row = create_pending_subscriber( 
