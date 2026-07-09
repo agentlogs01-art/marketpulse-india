@@ -229,12 +229,11 @@ def signup(
     clean_password = _validate_password(password)
     clean_channels = _validate_channels(channels)
     clean_whatsapp = _validate_whatsapp_number(whatsapp_number, clean_channels)
-
+	
     # --- MANUAL DE-DUPLICATION CHECK ---
 	if clean_whatsapp:
         client = get_client()
         existing = client.select("subscribers", params={"whatsapp_number": f"ilike.*{clean_whatsapp}"})
-        
         # Combined cleanly on one level using 8 plain space characters
         if existing and isinstance(existing, list) and len(existing) > 0:
             error_msg = "This WhatsApp number is already linked to another account."
