@@ -236,7 +236,6 @@ def signup(
         existing = client.select("subscribers", params={"whatsapp_number": f"ilike.*{clean_whatsapp}"})
         # Combined cleanly on one level using 8 plain space characters
         if existing and isinstance(existing, list) and len(existing) > 0:
-			raise ValidationError("Duplicate WhatsApp Number")
             error_msg = "This WhatsApp number is already linked to another account."
             return {
                 "ok": False,
