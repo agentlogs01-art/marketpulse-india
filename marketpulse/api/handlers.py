@@ -249,7 +249,7 @@ def signup(
 
     # --- TRY/EXCEPT BLOCK TO CATCH DB UNIQUE CONSTRAINT VALUE_ERRORS ---
     try:
-        subscriber_row = create_pending_subscriber(
+        subscriber_row = create_pending_subscriber( 
             clean_password,
             email=clean_email,
             mobile_number=clean_mobile,
