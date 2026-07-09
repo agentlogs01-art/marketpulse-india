@@ -235,14 +235,16 @@ def signup(
         client = get_client()
         # Check if any subscriber row already uses this whatsapp number
         existing = client.select("subscribers", params={"whatsapp_number": f"eq.{clean_whatsapp}"})
+		print(f"DEBUG WHATSAPP CHECK: {existing}")
         if existing:
             error_msg = "This WhatsApp number is already linked to another account."
             return {
                 "ok": False,
                 "error": error_msg,
 				"reason": error_msg,
-                "data": {"ok": False,"error": error_msg, "reason": error_msg}
-            }, 400
+				"status": "error",
+                "data": {"ok": False,"error": error_msg, "reason": error_msg,"status": "error",}
+            }, 200
 
     # --- TRY/EXCEPT BLOCK TO CATCH DB UNIQUE CONSTRAINT VALUE_ERRORS ---
     try:
