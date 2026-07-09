@@ -235,7 +235,7 @@ def signup(
         client = get_client()
         # Check if any subscriber row already uses this whatsapp number
         existing = client.select("subscribers", params={"whatsapp_number": f"eq.{clean_whatsapp}"})
-        if existing.data:
+        if existing and existing[0].data:
             error_msg = "This WhatsApp number is already linked to another account."
             return {
                 "ok": False,
