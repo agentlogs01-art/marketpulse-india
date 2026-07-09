@@ -238,16 +238,11 @@ def signup(
         existing = client.select("subscribers", params={"whatsapp_number": f"ilike.*{clean_whatsapp}"})
 		if existing and len(existing) > 0:
 			raise ValidationError("Enter an email address or a mobile number to sign up.")
-			
-    	if existing and len(existing) > 0:
-            error_msg = "This WhatsApp number is already linked to another account."
-            return {
-                    "ok": False,
-                    "error": error_msg,
-    				"reason": error_msg,
-    				"status": "error",
-                    "data": {"ok": False,"error": error_msg, "reason": error_msg,"status": "error",}
-                }, 400
+		if existing and len(existing) > 0:
+			error_msg = "This WhatsApp number is already linked to another account."
+			return {"ok": False,"error": error_msg,"reason": error_msg,"status": "error",
+					"data": {"ok": False,"error": error_msg, "reason": error_msg,"status": "error",}
+				   }, 400
         
     # --- TRY/EXCEPT BLOCK TO CATCH DB UNIQUE CONSTRAINT VALUE_ERRORS ---
     try:
