@@ -232,7 +232,7 @@ def signup(
 
     # --- MANUAL DE-DUPLICATION CHECK ---
     if clean_whatsapp:
-        client = client or get_client()
+        client = get_client()
         # Check if any subscriber row already uses this whatsapp number
         existing = client.select("subscribers", params={"whatsapp_number": f"eq.{clean_whatsapp}"})
         if existing.data:
