@@ -707,7 +707,7 @@ function drawQR(canvas, uri) {
 
     btn.disabled = false; btn.textContent = "Create account";
 
-    if (ok) {
+    if (ok && data && data.status !== "error") {
       if (data.warning) {
         setStatus(E("signup-status"), "Account created, but we couldn't send the confirmation email right now. Please try again shortly.", "error");
       } else if (data.status === "active") {
