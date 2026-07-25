@@ -1,0 +1,14 @@
+{
+  "builds": [
+    {
+      "src": "marketpulse/api/app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "marketpulse/api/app.py"
+    }
+  ]
+}
