@@ -1,2 +1,0 @@
-[tool.vercel]
-entrypoint = "marketpulse.api.app:app"
