@@ -58,7 +58,7 @@ def run_ai_analysis_stage(
     analyses: list = []
     all_jargon_injections: list = []
     all_entity_violations: list = []
-
+    
     for event in events:
         try:
             analysis = analyze_event(event)
@@ -88,7 +88,6 @@ def run_ai_analysis_stage(
             all_entity_violations.extend(eviol)
 
         analyses.append(analysis)
-
     return analyses, all_jargon_injections, all_entity_violations
 
 
@@ -101,77 +100,45 @@ def run_full_pipeline(prev_nifty_close: float, run_date_ist: Optional[str] = Non
     Returns a dict bundling everything email_system/render.py needs, plus
     the PipelineRunRecord for QA/audit logging.
     """
-
-    # Test
-    print("[DEBUG] Started PipelineRunRecord...", file=sys.stderr)
     
     run_date_ist = run_date_ist or datetime.now().strftime("%Y-%m-%d")
     record = PipelineRunRecord(run_date_ist=run_date_ist)
-
-    # Test
-    print("[DEBUG] Fetching GIFT Nifty snapshot...", file=sys.stderr)
     
     # --- 06:45 IST: Snapshot stage -----------------------------------
     gift_nifty = fetch_gift_nifty_snapshot(prev_nifty_close)
-
-    # Test
-    print("[DEBUG] Fetching all instrument snapshots...", file=sys.stderr)
     
     instrument_snapshots = flag_stale_snapshots(fetch_all_instrument_snapshots())
-
-    # Test
-    print("[DEBUG] Ingesting all sources...", file=sys.stderr)
 
     # --- Ingestion (can run any time before assembly) -----------------
     events = ingest_all_sources()
     events_by_id = {e.event_id: e for e in events}
 
-    # Test
-    print("[DEBUG] Running AI analysis stage...", file=sys.stderr)
 
     # --- 06:50 IST: Assembly stage --------------------------------------
     analyses, jargon_injections, entity_violations = run_ai_analysis_stage(events)
     record.jargon_injections = jargon_injections
     record.entity_violations = entity_violations
-
-    # Test
-    print("[DEBUG] Running AI analysis Completed...", file=sys.stderr)
     
     if entity_scanner.should_suppress_run(entity_violations):
         record.suppressed = True
         record.suppression_reason = "Entity violation count exceeded safety threshold (FR-02.4.2)"
         return {"record": record, "suppressed": True}
-
-    # Test
-    print("[DEBUG] Fetching aggregate sector scores...", file=sys.stderr)
     
     sector_scorecards = aggregate_sector_scores(analyses, events_by_id)
-
-    # Test
-    print("[DEBUG] Detect domestic override...", file=sys.stderr)
     
     override = detect_domestic_override(events_by_id, analyses)
     record.domestic_override_active = override.active
-
-    # Test
-    print("[DEBUG] Reconcile the bias...", file=sys.stderr)
     
     reconciliation = reconcile_bias(gift_nifty, analyses, override)
     record.divergence_flag = reconciliation.divergence_flag
     record.flat_override_triggered = reconciliation.flat_override_triggered
-
-    # Test
-    print("[DEBUG] Resolve Paragraph 4...", file=sys.stderr)
     
     paragraph_4_text = resolve_paragraph_4(
         reconciliation.paragraph_4_token,
         bias_label_plain=BIAS_PLAIN_ENGLISH[reconciliation.bias_label],
         top_signal_plain_english=reconciliation.top_signal_plain_english,
     )
-
-    # Test
-    print("[DEBUG] About to return the record...", file=sys.stderr)   
-
+ 
     return {
         "record": record,
         "suppressed": False,

@@ -19,6 +19,8 @@ from datetime import datetime, timedelta, timezone
 
 from marketpulse.models.schemas import EventType, GeographicOrigin, NewsEvent
 
+import sys
+
 # Curated RSS sources (FR-01.2). Each entry carries a static credibility
 # score and a default geographic_origin/event_type used when classification
 # heuristics below don't find a stronger signal.
@@ -110,6 +112,8 @@ def fetch_raw_feed_items(source: dict) -> list[dict]:
     """
     import feedparser  # local import: optional dependency, not needed for unit tests
     import socket
+    import sys
+    import requests
 
     # Set a strict 10-second ceiling for all network socket operations
     # to protect against unresponsive remote RSS servers hanging the pipeline.
@@ -117,8 +121,27 @@ def fetch_raw_feed_items(source: dict) -> list[dict]:
     socket.setdefaulttimeout(10.0)
 
     try:
-        parsed = feedparser.parse(source["url"])
+        #parsed = feedparser.parse(source["url"])
+        
+        # Silence the InsecureRequestWarning from urllib3
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+        # 1. Fetch the raw XML content using requests, bypassing SSL validation
+        # Adding a standard User-Agent header helps avoid 403 Forbidden errors from sites like NSE
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        response = requests.get(source["url"], headers=headers, verify=False, timeout=10)
+        # Ensure the request was successful (200 OK)
+        response.raise_for_status()
+        # 2. Feed the raw string data into feedparser instead of the URL
+        parsed = feedparser.parse(response.text)
         return list(parsed.entries)
+    except requests.exceptions.RequestException as req_err:
+        print(f"[ERROR]: Network or HTTP issue fetching feed: {req_err}", file=sys.stderr)
+        return []
+    except Exception as e:
+        print(f"[ERROR]: Unexpected parsing issue: {e}", file=sys.stderr)
+        return []
     finally:
         # Always restore the original global socket timeout so downstream 
         # database or AI steps are unaffected by this strict limit.

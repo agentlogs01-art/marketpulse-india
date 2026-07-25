@@ -130,7 +130,11 @@ def api_signup():
         channels=body.get("channels"),
         whatsapp_number=body.get("whatsapp_number"),
     )
-    return jsonify(result)
+    # If the dictionary payload indicates an error status, assign a 400 status code
+    if isinstance(result, dict) and result.get("status") == "error":
+        return jsonify(result), 400
+    else:
+        return jsonify(result)
 
 
 @app.route("/api/verify", methods=["POST"])

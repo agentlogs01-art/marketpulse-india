@@ -26,6 +26,7 @@ Security by design -- see schema.sql for the RLS posture.
 from __future__ import annotations
 
 import os
+from dotenv import load_dotenv
 from typing import Any, Optional
 
 
@@ -50,6 +51,8 @@ class SupabaseClient:
     """
 
     def __init__(self, url: Optional[str] = None, service_role_key: Optional[str] = None):
+        # Force load the .env file right now if it hasn't been loaded yet
+        load_dotenv()
         self.url = (url or os.environ.get("SUPABASE_URL", "")).rstrip("/")
         self.key = service_role_key or os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 

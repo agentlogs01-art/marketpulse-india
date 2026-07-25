@@ -57,6 +57,7 @@ import string
 from datetime import datetime, timezone
 from typing import Optional
 from zxcvbn import zxcvbn
+from flask import jsonify
 
 from marketpulse.models.schemas import DeliveryChannel
 from marketpulse.persistence.supabase_client import SupabaseRequestError
@@ -231,24 +232,41 @@ def signup(
     clean_whatsapp = _validate_whatsapp_number(whatsapp_number, clean_channels)
 	
     # --- MANUAL DE-DUPLICATION CHECK ---
+    if clean_email:
+        client = get_client()
+        existing = client.select("subscribers", params={"email": f"ilike.*{clean_email}"})
+        error_msg = "The same email ID is already linked to another account."
+
+    if clean_mobile:
+        client = get_client()
+        existing = client.select("subscribers", params={"mobile_number": f"ilike.*{clean_mobile}"})
+        error_msg = "The same mobile number is already linked to another account."
+        
     if clean_whatsapp:
         client = get_client()
         existing = client.select("subscribers", params={"whatsapp_number": f"ilike.*{clean_whatsapp}"})
-        # Combined cleanly on one level using 8 plain space characters
-        if existing and isinstance(existing, list) and len(existing) > 0:
-            error_msg = "This WhatsApp number is already linked to another account."
-            return {
+        error_msg = "The same WhatsApp number is already linked to another account."
+        
+    # Combined cleanly on one level using 8 plain space characters
+    if existing and isinstance(existing, list) and len(existing) > 0:
+        # Return a raw plain dictionary to satisfy the "-> dict" type hint
+        return {
+            "ok": False,
+            "success": False,
+            "error": error_msg,
+            "reason": error_msg,                
+            "status": "error",
+            "message": error_msg,
+             "data": {
                 "ok": False,
-                "error": error_msg,
+                "success": False,
+                 "error": error_msg,
                 "reason": error_msg,
                 "status": "error",
-                "data": {
-                    "ok": False,
-                    "error": error_msg,
-                    "reason": error_msg,
-                    "status": "error"
-                }
-            }, 400
+                "warning": "force_error_display"
+             }
+        } 
+
     # --- TRY/EXCEPT BLOCK TO CATCH DB UNIQUE CONSTRAINT VALUE_ERRORS ---
     try:
         subscriber_row = create_pending_subscriber( 
@@ -278,12 +296,19 @@ def signup(
 
         return {
             "ok": False,
+            "success": False,
             "error": error_msg,
+            "reason": error_msg,
+            "status": "error",
+            "message": error_msg,
             "data": {
                 "error": error_msg,
-                "reason": error_msg
+                "reason": error_msg,
+                "status": "error",
+                "message": error_msg,
+                 "warning": "force_error_display"
             }
-        }, 200
+        }
 
     if not clean_email:
         # No email to verify -- activate immediately (mobile-only account).

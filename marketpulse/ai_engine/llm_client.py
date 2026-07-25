@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from typing import Optional
 
 from marketpulse.constants.sebi_entity_rules import ENTITY_RULE_SYSTEM_PROMPT
@@ -122,6 +123,9 @@ def call_gemini(system_prompt: str, user_prompt: str, api_key: Optional[str] = N
     )
     resp.raise_for_status()
     data = resp.json()
+    print(f"[DEBUG]: Payload -> {payload}")
+    print('/n')
+    print(f"[DEBUG]: Gemini Response -> {data}")
     return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
@@ -132,6 +136,7 @@ def analyze_event(event: NewsEvent, api_key: Optional[str] = None) -> EventAnaly
     the orchestrator can decide whether to retry, skip the event, or fall
     back to a neutral/default analysis.
     """
+
     raw = call_gemini(SYSTEM_PROMPT, _build_user_prompt(event), api_key=api_key)
     parsed = _extract_json(raw)
 
