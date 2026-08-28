@@ -15,7 +15,9 @@ on:
 jobs:
   run-briefing:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # Cron fires ~06:03 IST; the script then sleeps until 07:00 IST (~57 min)
+    # plus LLM/RSS time. 45 minutes killed the job before send.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v6
 

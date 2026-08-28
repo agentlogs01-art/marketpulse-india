@@ -125,6 +125,11 @@ class NewsEvent:
     ingestion_timestamp: str = field(
         default_factory=lambda: datetime.utcnow().isoformat() + "Z"
     )
+    # RSS published/updated time when the feed provides one. Lookback
+    # filtering must use this, not ingestion_timestamp (which is always "now"
+    # and would otherwise keep every item — or, once dates are parsed, drop
+    # weekend news if the window stays a flat 16 hours).
+    published_at: Optional[str] = None
     source: str = ""
     source_url: str = ""
     headline: str = ""           # max 200 chars per PRD

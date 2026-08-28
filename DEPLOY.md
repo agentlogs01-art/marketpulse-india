@@ -54,10 +54,13 @@ project zip exactly as structured.
 5. **Environment variables**: open the service's Variables tab and add
    everything listed in `marketpulse/.env.example` — at minimum
    `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` for the app to boot
-   without errors when it touches the database, plus `SMTP_*` and
-   `WEBAPP_BASE_URL` for signup emails to work. The app will still start
-   without these, but `/api/signup`, `/api/login`, etc. will fail at
-   request time without a working Supabase connection.
+   without errors when it touches the database, plus `BREVO_API_KEY`,
+   `EMAIL_FROM_ADDRESS`, and `WEBAPP_BASE_URL` for signup emails.
+   For Telegram linking, set `TELEGRAM_BOT_TOKEN` and
+   `TELEGRAM_WEBHOOK_SECRET`, then register the webhook with that secret
+   (see `marketpulse/delivery/telegram_sender.py`). The app will still
+   start without these, but `/api/signup`, `/api/login`, etc. will fail
+   at request time without a working Supabase connection.
 6. **Generate a public domain**: Settings → Networking → Generate
    Domain. Confirm `GET /` returns the sign-up/sign-in page and
    `GET /api/me` returns a 401 (expected — you're not signed in yet).
@@ -84,8 +87,11 @@ The Railway web service above only serves the website/API
 (`scheduler/run_daily_briefing.py`) and the end-of-day close-recording
 job (`scheduler/record_daily_close.py`) run on their own schedule via
 **GitHub Actions**, not Railway — see
-`marketpulse/.github/workflows/daily_briefing.yml`. That workflow needs
-its own set of repo secrets configured in GitHub (Settings → Secrets and
-variables → Actions), independent of Railway's environment variables.
+`.github/workflows/daily_briefing.yml` and
+`.github/workflows/record-close.yml`. Those workflows need their own
+repo secrets (Settings → Secrets and variables → Actions), independent
+of Railway's environment variables.
 Railway hosts the website; GitHub Actions runs the pipeline. Both need
 the same Supabase credentials, configured separately in each platform.
+The morning job timeout is 90 minutes so the IST sleep until 07:00 cannot
+kill the send.

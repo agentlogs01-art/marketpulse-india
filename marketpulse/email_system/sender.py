@@ -14,7 +14,6 @@ never hardcoded.
 from __future__ import annotations
 
 import os
-import os
 import requests
 from typing import List, Dict, Any    
 from email.mime.multipart import MIMEMultipart

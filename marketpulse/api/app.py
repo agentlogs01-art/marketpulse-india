@@ -23,13 +23,8 @@ Deploy: Railway can run this directly via
 
 from __future__ import annotations
 
-import io
-import qrcode
-from flask import jsonify, send_file, request
-
-import os
-
 from flask import Flask, jsonify, request, send_from_directory
+import os
 
 from marketpulse.api.handlers import (
     AuthError,
@@ -285,20 +280,22 @@ def api_update_theme():
 def telegram_webhook():
     """
     Telegram POSTs every incoming message/update here once setWebhook has
-    been configured (see delivery/telegram_sender.py's module docstring).
-    Always returns 200 quickly -- Telegram retries aggressively on
-    non-200 responses, and a /start for an invalid/expired link_code is
-    an expected, not exceptional, case.
+    been configured with secret_token (see telegram_sender.register_webhook).
+    Always returns 200 for authorized, well-formed updates -- Telegram
+    retries aggressively on non-200, and an invalid/expired link_code is
+    an expected case. Unauthorized callers get 401.
     """
-    from marketpulse.delivery.telegram_sender import handle_start_command
+    from marketpulse.delivery.telegram_sender import (
+        TELEGRAM_WEBHOOK_HEADER,
+        handle_start_command,
+        telegram_webhook_authorized,
+    )
     from marketpulse.email_system.transactional import send_telegram_linked_confirmation
 
+    if not telegram_webhook_authorized(request.headers.get(TELEGRAM_WEBHOOK_HEADER)):
+        return jsonify({"ok": False, "error": "unauthorized"}), 401
 
-    from marketpulse.delivery.telegram_sender import handle_start_command
-    from marketpulse.email_system.transactional import send_telegram_linked_confirmation
-    
     update = request.get_json(force=True, silent=True) or {}
-    
     subscriber_dict = handle_start_command(update)
 
     if subscriber_dict and subscriber_dict.get("email"):
