@@ -95,3 +95,21 @@ Railway hosts the website; GitHub Actions runs the pipeline. Both need
 the same Supabase credentials, configured separately in each platform.
 The morning job timeout is 90 minutes so the IST sleep until 07:00 cannot
 kill the send.
+
+## Deploying to Vercel (alternative to Railway)
+
+Vercel's Python runtime only auto-detects Flask in default paths such as
+`api/index.py` — not inside `marketpulse/api/app.py`. This repo therefore
+ships:
+
+- `api/index.py` — thin shim: `from marketpulse.api.app import app`
+- `vercel.json` — routes all traffic to that entrypoint
+- `requirements.txt` at the repo root (Vercel installs from here)
+
+Steps:
+
+1. Import the GitHub repo in Vercel (root directory = repo root).
+2. Add the same environment variables as Railway (`SUPABASE_*`, `BREVO_API_KEY`, `WEBAPP_BASE_URL`, `TELEGRAM_*`, etc.) in Project Settings → Environment Variables.
+3. Deploy. `GET /` should return the sign-up page; `GET /api/me` should return 401.
+
+The daily briefing pipeline still runs on **GitHub Actions**, not Vercel.
