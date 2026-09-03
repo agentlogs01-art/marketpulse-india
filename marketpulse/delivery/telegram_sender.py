@@ -1,32 +1,39 @@
 """
 delivery/telegram_sender.py
 
-Telegram delivery channel. Uses the Telegram Bot API directly over HTTP
-(api.telegram.org) -- no SDK dependency, consistent with the project's
-"requests is the only HTTP dependency" approach. The Bot API is entirely
-free with no rate-limit cost concerns at MVP subscriber volumes (Telegram
-allows ~30 messages/second per bot).
+Telegram Bot API over HTTP (no SDK). Two jobs:
 
-Two responsibilities:
-  1. send_briefing_to_subscriber() -- push today's digest to a bound
-     chat_id (called by delivery/dispatcher.py during the 06:50-07:00
-     IST send step).
-  2. handle_start_command() -- process an incoming `/start <link_code>`
-     update from Telegram's webhook, binding chat_id to the right
-     subscriber via persistence/subscriber_repo.consume_telegram_link.
+  1. send_briefing_to_subscriber() -- 07:00 IST digest to a bound chat_id
+  2. handle_start_command() -- `/start <link_code>` from the webhook
 
-Webhook setup (one-time, manual step, not automated here): point
-Telegram at this bot's webhook URL via
-    https://api.telegram.org/bot<TOKEN>/setWebhook?url=<your-endpoint>
-where <your-endpoint> routes incoming updates to handle_start_command().
+Webhook registration must include a secret_token. Telegram then sends it
+on every update as X-Telegram-Bot-Api-Secret-Token. Without that check,
+anyone who knows the public URL can POST fake /start payloads.
+
+Register (once) after deploy:
+
+    python -c "from marketpulse.delivery.telegram_sender import register_webhook; print(register_webhook())"
+
+or:
+
+    curl -s "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook" \\
+      -d url="$WEBAPP_BASE_URL/api/telegram/webhook" \\
+      -d secret_token="$TELEGRAM_WEBHOOK_SECRET"
 """
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import logging
 import os
+from datetime import datetime, timezone
 from typing import Optional
 
+logger = logging.getLogger(__name__)
+
 TELEGRAM_API_BASE = "https://api.telegram.org"
+TELEGRAM_WEBHOOK_HEADER = "X-Telegram-Bot-Api-Secret-Token"
 
 
 class TelegramSendError(Exception):
@@ -40,24 +47,62 @@ def _bot_token() -> str:
     return token
 
 
+def expected_webhook_secret() -> str:
+    """
+    Prefer TELEGRAM_WEBHOOK_SECRET. If unset, derive a stable secret from
+    the bot token so production can register a webhook without a second
+    secret, while still rejecting unauthenticated POSTs.
+    """
+    explicit = (os.environ.get("TELEGRAM_WEBHOOK_SECRET") or "").strip()
+    if explicit:
+        return explicit
+    token = (os.environ.get("TELEGRAM_BOT_TOKEN") or "").strip()
+    if not token:
+        return ""
+    return hashlib.sha256(f"marketpulse-tg-webhook:{token}".encode("utf-8")).hexdigest()
+
+
+def telegram_webhook_authorized(header_value: Optional[str]) -> bool:
+    expected = expected_webhook_secret()
+    if not expected:
+        return False
+    provided = (header_value or "").strip()
+    if not provided:
+        return False
+    return hmac.compare_digest(provided, expected)
+
+
+def register_webhook(public_base_url: Optional[str] = None) -> dict:
+    """Point Telegram at this app's webhook with secret_token set."""
+    import requests
+
+    base = (public_base_url or os.environ.get("WEBAPP_BASE_URL") or "").rstrip("/")
+    if not base:
+        raise TelegramSendError("WEBAPP_BASE_URL is required to register the Telegram webhook")
+    secret = expected_webhook_secret()
+    if not secret:
+        raise TelegramSendError("Set TELEGRAM_BOT_TOKEN or TELEGRAM_WEBHOOK_SECRET first")
+    hook_url = f"{base}/api/telegram/webhook"
+    resp = requests.post(
+        f"{TELEGRAM_API_BASE}/bot{_bot_token()}/setWebhook",
+        json={
+            "url": hook_url,
+            "secret_token": secret,
+            "allowed_updates": ["message"],
+        },
+        timeout=15,
+    )
+    if resp.status_code != 200:
+        raise TelegramSendError(f"setWebhook failed ({resp.status_code}): {resp.text}")
+    return resp.json()
+
+
 def build_deep_link(link_code: str, bot_username: Optional[str] = None) -> str:
-    """
-    Builds the https://t.me/<bot>?start=<code> deep-link the web app
-    shows/emails to the person during signup. Tapping it opens Telegram
-    with the bot's chat pre-loaded and automatically sends
-    `/start <link_code>` once they hit "Start".
-    """
     bot_username = bot_username or os.environ.get("TELEGRAM_BOT_USERNAME", "MarketPulseIndiaBot")
     return f"https://t.me/{bot_username}?start={link_code}"
 
 
 def send_message(chat_id: str, text: str, parse_mode: Optional[str] = "MarkdownV2") -> dict:
-    """
-    Sends a single message via the Bot API's sendMessage method.
-    `parse_mode` should match how `text` was formatted -- pass None for
-    delivery/text_render.render_plain_text() output, "MarkdownV2" for
-    delivery/text_render.render_telegram_markdown() output.
-    """
     import requests
 
     url = f"{TELEGRAM_API_BASE}/bot{_bot_token()}/sendMessage"
@@ -72,113 +117,44 @@ def send_message(chat_id: str, text: str, parse_mode: Optional[str] = "MarkdownV
 
 
 def send_briefing_to_subscriber(chat_id: str, markdown_text: str) -> dict:
-    """
-    Sends the rendered briefing to one subscriber's bound Telegram chat.
-    Falls back to plain text (no parse_mode) if the MarkdownV2 send fails
-    -- a single unescaped character in upstream content could otherwise
-    cause Telegram to reject the whole message, and a malformed digest is
-    better than a missed one.
-    """
     try:
         return send_message(chat_id, markdown_text, parse_mode="MarkdownV2")
     except TelegramSendError:
         plain_fallback = markdown_text.replace("\\", "").replace("*", "").replace("_", "")
         return send_message(chat_id, plain_fallback, parse_mode=None)
 
-from typing import Optional
-from datetime import datetime, timezone
-import logging
-
-# Set up logging so you can see failures in your server console
-logger = logging.getLogger(__name__)
 
 def handle_start_command(update: dict) -> Optional[dict]:
     """
-    Processes a Telegram webhook `update` object for a `/start <code>`
-    message. Returns the bound Subscriber row (or None if the link_code
-    was invalid/expired/already used).
+    Processes a Telegram webhook `update` for `/start <code>`.
+    Returns the bound Subscriber as a dict, or None if the code is invalid.
     """
     from marketpulse.persistence.subscriber_repo import consume_telegram_link
 
-    # 1. Extract payload safely
-    message = update.get("message", {})
-    text = message.get("text", "")
-    chat = message.get("chat", {})
-    
-    # Check data type matching: keeps it as an integer if your DB expects a BIGINT number, 
-    # but change to str(chat.get("id", "")) if your DB column is explicitly a string text type.
-    chat_id = chat.get("id") 
+    message = update.get("message") or {}
+    text = (message.get("text") or "").strip()
+    chat = message.get("chat") or {}
+    chat_id = chat.get("id")
 
-    if not text.startswith("/start") or not chat_id:
+    if not text.startswith("/start") or chat_id is None:
         return None
 
-    # 2. Separate command from token code
     parts = text.split(maxsplit=1)
     if len(parts) < 2:
         return None
     link_code = parts[1].strip()
 
-    logger.info(f"Processing link verification: Code={link_code} for ChatID={chat_id}")
+    logger.info("Processing Telegram link code for chat_id=%s", chat_id)
 
     try:
-        # 3. Fire your repository state update
         subscriber = consume_telegram_link(
-            link_code, chat_id, datetime.now(timezone.utc).isoformat()
+            link_code, str(chat_id), datetime.now(timezone.utc).isoformat()
         )
-        
         if subscriber:
-            logger.info(f"Successfully linked Telegram account to subscriber: {subscriber.id}")
+            logger.info("Linked Telegram chat to subscriber %s", subscriber.id)
             return subscriber.__dict__
-        else:
-            logger.warning(f"Link failed: Code {link_code} may be expired, invalid, or already claimed.")
-            return None
-            
-    except Exception as e:
-        logger.error(f"Database constraint or execution error in consume_telegram_link: {str(e)}", exc_info=True)
+        logger.warning("Telegram link_code invalid, expired, or already used")
         return None
-
-def handle_start_command1(update):
-    """
-    Parses incoming Telegram webhook payloads for a /start command containing 
-    a subscriber deep-link token, saves the chat_id, and returns the updated record dict.
-    """
-    # 1. Safely navigate the structural Telegram payload nesting
-    message = update.get("message", {})
-    chat = message.get("chat", {})
-    chat_id = chat.get("id")
-    text = message.get("text", "").strip()
-
-    if not chat_id or not text.startswith("/start"):
+    except Exception as exc:
+        logger.error("consume_telegram_link failed: %s", exc, exc_info=True)
         return None
-
-    # 2. Extract the deep link token parameter string
-    # If text is "/start WDjh2LsoxmKycfu9PFcUHw", splitting by whitespace gives us the token
-    parts = text.split(maxsplit=1)
-    if len(parts) < 2:
-        return None  # Plain /start clicked without a linkage token
-        
-    link_code = parts[1].strip()
-
-    # 3. Connect to your database engine and execute the update query
-    # (Adapt the exact ORM/SQL execution framework used across your app)
-    from marketpulse.db import get_db_connection  # Example database connection import
-    
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            # Look up the profile matching the dynamic token link string
-            # and populate the respective telegram_chat_id parameter slot
-            cur.execute(
-                """
-                UPDATE subscribers 
-                SET telegram_chat_id = %s, updated_at = NOW() 
-                WHERE telegram_link_code = %s 
-                RETURNING id, email, telegram_chat_id;
-                """,
-                (chat_id, link_code)
-            )
-            updated_row = cur.fetchone()
-            if updated_row:
-                conn.commit()
-                return dict(updated_row)
-
-    return None

@@ -45,7 +45,16 @@ from marketpulse.utils.timeutils import seconds_until_checkpoint
 def wait_until(checkpoint: str) -> None:
     remaining = seconds_until_checkpoint(checkpoint)
     if remaining > 0:
+        print(
+            f"Waiting {int(remaining)}s until IST checkpoint '{checkpoint}'",
+            file=sys.stderr,
+        )
         time.sleep(remaining)
+    else:
+        print(
+            f"IST checkpoint '{checkpoint}' already passed; continuing immediately",
+            file=sys.stderr,
+        )
 
 
 def resolve_prev_close(cli_value: Optional[float]) -> Optional[float]:
@@ -63,46 +72,21 @@ def resolve_prev_close(cli_value: Optional[float]) -> Optional[float]:
     except Exception as exc:
         print(f"Could not reach Supabase for prev-close lookup: {exc}", file=sys.stderr)
         
-    # Standard desktop headers to prevent simple server-side filtering
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json, text/html, */*",
-    }
-
-    # 3. Emergency API Fallback: Yahoo Query2 Endpoint (Highly Stable Cloud Mirror)
-    print("[!] Supabase empty. Attempting emergency Yahoo V2 Cloud API lookup...", file=sys.stderr)
+    # 3. Emergency fallback: same Yahoo-then-Stooq path as the snapshot table
+    print("[!] Supabase empty. Attempting Yahoo/Stooq Nifty 50 close...", file=sys.stderr)
     try:
-        import requests
-        # query2 is routed through Yahoo's elastic backend system which bypasses cookie handshakes
-        yahoo_url = "https://query2.finance.yahoo.com/v8/finance/chart/%5ENSEI?interval=1d&range=1d"
-        resp = requests.get(yahoo_url, headers=headers, timeout=10)
-        resp.raise_for_status()
-        
-        data = resp.json()
-        meta = data["chart"]["result"][0]["meta"]
-        # Extract the official baseline closing metric safely
-        fallback_close = float(meta.get("previousClose") or meta.get("regularMarketPrice"))
-        print(f"[✓] Emergency baseline recovered via Yahoo Cloud Mirror: {fallback_close}", file=sys.stderr)
+        from marketpulse.pipeline.market_data import fetch_quote
+
+        quote = fetch_quote("^NSEI", "^nsei")
+        fallback_close = float(quote["previous_close"] or quote["price"])
+        print(
+            f"[✓] Emergency baseline recovered via {quote['source']}: {fallback_close}",
+            file=sys.stderr,
+        )
         return fallback_close
     except Exception as err:
-        print(f"[-] Yahoo V2 Cloud fallback failed: {err}. Trying backup Alpha Vantage proxy...", file=sys.stderr)
+        print(f"[-] Emergency Nifty close lookup failed: {err}", file=sys.stderr)
 
-    # 4. Secondary Emergency Fallback: Open Alpha Vantage Engine
-    try:
-        import requests
-        # Open global index tracker endpoint
-        av_url = "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=NSEI&apikey=demo"
-        resp = requests.get(av_url, headers=headers, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        
-        if "Global Quote" in data and "08. previous close" in data["Global Quote"]:
-            fallback_close = float(data["Global Quote"]["08. previous close"])
-            print(f"[✓] Emergency baseline recovered via Alpha Vantage: {fallback_close}", file=sys.stderr)
-            return fallback_close
-    except Exception as err:
-        print(f"[-] Critical: All emergency fallback endpoints exhausted: {err}", file=sys.stderr)
-        
     return None
 
 

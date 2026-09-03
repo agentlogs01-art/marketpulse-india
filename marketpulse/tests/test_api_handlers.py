@@ -169,7 +169,7 @@ class TestSignup(ApiHandlersTestCase):
         self._verify_email_patch.stop()
         with patch(
             "marketpulse.email_system.transactional.send_verification_email",
-            side_effect=TransactionalEmailError("SMTP credentials not fully configured in environment (missing: SMTP_HOST, SMTP_USER, SMTP_PASSWORD)"),
+            side_effect=TransactionalEmailError("Email credentials not fully configured in environment (missing: BREVO_API_KEY)"),
         ):
             result = handlers.signup(VALID_PASSWORD, email="bademail@example.com")
         self._verify_email_patch = patch(
@@ -187,37 +187,26 @@ class TestSignup(ApiHandlersTestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(result["status"], "pending_verification")
         self.assertIn("warning", result)
-        self.assertIn("SMTP_HOST", result["warning"])
+        self.assertIn("BREVO_API_KEY", result["warning"])
         rows = self.fake_client.select("subscribers")
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["status"], "pending_verification")
  
-    def test_real_smtp_auth_failure_is_wrapped_as_transactional_email_error(self):
-        # Exercises the actual transactional.py code path (not the
-        # handler-level mock) to confirm a real smtplib exception -- not
-        # just the custom TransactionalEmailError -- is caught and
-        # produces a clear, diagnosable message rather than an unhandled
-        # 500 or a silently-lost email.
-        import smtplib
- 
+    def test_real_brevo_auth_failure_is_wrapped_as_transactional_email_error(self):
         from marketpulse.email_system import transactional
- 
+
         self._verify_email_patch.stop()
- 
-        with patch.dict("os.environ", {
-            "SMTP_HOST": "smtp.example.com",
-            "SMTP_USER": "wrong-user",
-            "SMTP_PASSWORD": "wrong-password",
-        }):
-            with patch("smtplib.SMTP") as mock_smtp:
-                mock_server = mock_smtp.return_value.__enter__.return_value
-                mock_server.login.side_effect = smtplib.SMTPAuthenticationError(535, b"Authentication failed")
- 
+
+        class FakeResponse:
+            status_code = 401
+            text = "authentication failed"
+
+        with patch.dict("os.environ", {"BREVO_API_KEY": "wrong-key", "EMAIL_FROM_ADDRESS": "from@example.com"}):
+            with patch("marketpulse.email_system.transactional.requests.post", return_value=FakeResponse()):
                 with self.assertRaises(transactional.TransactionalEmailError) as ctx:
                     transactional.send_verification_email("someone@example.com", "https://example.com/verify?token=abc")
- 
                 self.assertIn("authentication failed", str(ctx.exception).lower())
- 
+
         self._verify_email_patch = patch(
             "marketpulse.email_system.transactional.send_verification_email",
             side_effect=lambda to_email, verify_url: self.sent_emails.append(
@@ -225,24 +214,17 @@ class TestSignup(ApiHandlersTestCase):
             ),
         )
         self._verify_email_patch.start()
- 
-    def test_missing_smtp_env_vars_names_each_missing_one(self):
+
+    def test_missing_brevo_env_vars_names_the_missing_key(self):
         from marketpulse.email_system import transactional
- 
+
         self._verify_email_patch.stop()
         try:
-            # Replace the environment entirely (clear=True) rather than
-            # trying to selectively pop keys -- this is the reliable way
-            # to simulate "these vars are simply not set" regardless of
-            # what's present in the actual process environment running
-            # the test.
             with patch.dict("os.environ", {}, clear=True):
                 with self.assertRaises(transactional.TransactionalEmailError) as ctx:
                     transactional.send_verification_email("someone@example.com", "https://example.com/verify?token=abc")
                 message = str(ctx.exception)
-                self.assertIn("SMTP_HOST", message)
-                self.assertIn("SMTP_USER", message)
-                self.assertIn("SMTP_PASSWORD", message)
+                self.assertIn("BREVO_API_KEY", message)
         finally:
             self._verify_email_patch = patch(
                 "marketpulse.email_system.transactional.send_verification_email",
@@ -480,7 +462,8 @@ class TestPasswordReset(ApiHandlersTestCase):
         handlers.signup(VALID_PASSWORD, email="stillpending@example.com")  # never verified
         result = handlers.request_password_reset("stillpending@example.com")
         self.assertTrue(result["ok"])  # same generic response either way
-        self.assertEqual(len(self.sent_emails), 0)
+        reset_emails = [e for e in self.sent_emails if e["type"] == "password_reset"]
+        self.assertEqual(len(reset_emails), 0)
  
     def test_reset_password_with_valid_token_succeeds(self):
         self._signup_and_verify("resetflow@example.com")

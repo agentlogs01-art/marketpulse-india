@@ -1,9 +1,14 @@
 requests>=2.31.0
 feedparser>=6.0.10
+zxcvbn==4.4.28
 
-# api/ web app server (signup, verification, Telegram webhook). Not
-# needed by the core pipeline/tests -- only by `python -m
-# marketpulse.api.app` or a `gunicorn marketpulse.api.app:app` deploy.
+# Keep this file identical to the repo-root requirements.txt. Railway and
+# GitHub Actions install from the root copy; local `cd marketpulse && pip
+# install -r requirements.txt` uses this one.
 flask>=3.0.0
 gunicorn>=21.2.0
 werkzeug>=3.0.0   # ships with Flask; pinned explicitly for password hashing (persistence/subscriber_repo.py)
+pyotp>=2.9.0      # TOTP-based MFA (persistence/mfa_repo.py) -- RFC 6238, no external service required
+Pillow>=10.4.0
+qrcode>=8.0
+python-dotenv>=1.0.0

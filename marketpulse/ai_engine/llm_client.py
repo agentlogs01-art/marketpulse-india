@@ -21,7 +21,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import sys
 from typing import Optional
 
 from marketpulse.constants.sebi_entity_rules import ENTITY_RULE_SYSTEM_PROMPT
@@ -72,15 +71,21 @@ markdown code fences, no preamble, no explanation outside the JSON:
 """
 
 
-def _build_user_prompt(event: NewsEvent) -> str:
+def _build_user_prompt(event: NewsEvent, market_context: str = "") -> str:
+    published = event.published_at or "unknown"
+    context_block = f"{market_context.strip()}\n\n" if market_context.strip() else ""
     return (
+        f"{context_block}"
         f"Headline: {event.headline}\n"
         f"Summary: {event.body_summary}\n"
         f"Event type: {event.event_type.value}\n"
         f"Geographic origin: {event.geographic_origin.value}\n"
+        f"Published at: {published}\n"
+        f"Source: {event.source}\n"
         f"Source credibility score: {event.credibility_score}\n\n"
-        "Analyze this event's likely impact on Indian equity markets "
-        "tomorrow morning, per the JSON schema in your system instructions."
+        "Analyze this overnight news event's likely impact on Indian equity "
+        "markets at the open, per the JSON schema in your system instructions. "
+        "Use the snapshot only as context; do not invent prices."
     )
 
 
@@ -123,13 +128,14 @@ def call_gemini(system_prompt: str, user_prompt: str, api_key: Optional[str] = N
     )
     resp.raise_for_status()
     data = resp.json()
-    print(f"[DEBUG]: Payload -> {payload}")
-    print('/n')
-    print(f"[DEBUG]: Gemini Response -> {data}")
     return data["candidates"][0]["content"]["parts"][0]["text"]
 
 
-def analyze_event(event: NewsEvent, api_key: Optional[str] = None) -> EventAnalysis:
+def analyze_event(
+    event: NewsEvent,
+    api_key: Optional[str] = None,
+    market_context: str = "",
+) -> EventAnalysis:
     """
     Run FR-02.2 sentiment + sector impact analysis on a single NewsEvent.
     Returns a populated EventAnalysis. Raises on malformed LLM output so
@@ -137,7 +143,11 @@ def analyze_event(event: NewsEvent, api_key: Optional[str] = None) -> EventAnaly
     back to a neutral/default analysis.
     """
 
-    raw = call_gemini(SYSTEM_PROMPT, _build_user_prompt(event), api_key=api_key)
+    raw = call_gemini(
+        SYSTEM_PROMPT,
+        _build_user_prompt(event, market_context=market_context),
+        api_key=api_key,
+    )
     parsed = _extract_json(raw)
 
     affected = [

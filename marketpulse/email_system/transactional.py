@@ -8,17 +8,15 @@ module sends ONE email to ONE address per call, which is the right shape
 for "click to verify your email" / "your Telegram is now linked" style
 notifications.
 
-Reuses the same SMTP_* environment variables as email_system/sender.py
-(same SMTP account is fine for both transactional and briefing mail at
-MVP volume) -- no new infra cost.
+Reuses BREVO_API_KEY (same account as the daily briefing). Missing or
+failed API calls raise TransactionalEmailError so signup can surface a
+warning instead of silently dropping the verification link.
 """
 
 from __future__ import annotations
 
 import os
 import requests
-import smtplib
-from email.mime.text import MIMEText
 
 
 class TransactionalEmailError(Exception):
@@ -48,45 +46,41 @@ def send_mfa_disabled_notification(to_email: str) -> None:
     _send_plain_text(to_email, subject, body)
 
 def _send_plain_text(to_email, subject, body):
-    # For the Web API, Brevo requires your master API Key (usually starts with xkeysib-)
-    # Store this in your Railway Variables as BREVO_API_KEY
-    #api_key = os.environ.get("BREVO_API_KEY") or os.environ.get("SMTP_PASSWORD")
-    api_key = os.environ.get("BREVO_API_KEY")
-    from_addr = os.environ.get("EMAIL_FROM_ADDRESS", "agentlogs01@gmail.com")
+    api_key = (os.environ.get("BREVO_API_KEY") or "").strip()
+    from_addr = os.environ.get("EMAIL_FROM_ADDRESS", "briefing@marketpulseindia.app")
 
     if not api_key:
-        print("[-] Brevo API Key missing. Skipping email signup dispatch.")
-        return False
+        raise TransactionalEmailError(
+            "Email credentials not fully configured in environment (missing: BREVO_API_KEY)"
+        )
+    if not from_addr:
+        raise TransactionalEmailError(
+            "Email credentials not fully configured in environment (missing: EMAIL_FROM_ADDRESS)"
+        )
 
     url = "https://api.brevo.com/v3/smtp/email"
-    
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "api-key": api_key
+        "api-key": api_key,
     }
-    
     payload = {
         "sender": {"email": from_addr, "name": "MarketPulse India"},
         "to": [{"email": to_email}],
         "subject": subject,
-        "textContent": body
+        "textContent": body,
     }
 
     try:
-        print(f"[~] Attempting outbound HTTP API email dispatch to {to_email}...")
-        response = requests.post(url, json=payload, headers=headers, timeout=5.0)
-        
-        if response.status_code in [200, 201, 202]:
-            print(f"[✓] Transactional API call successful! Message ID: {response.json().get('messageId')}")
-            return True
-        else:
-            print(f"[-] Brevo API rejected payload ({response.status_code}): {response.text}")
-            return False
-
+        response = requests.post(url, json=payload, headers=headers, timeout=10)
     except requests.exceptions.RequestException as exc:
-        print(f"[-] HTTP API connection failed: {exc}")
-        return False    
+        raise TransactionalEmailError(f"Brevo API connection failed: {exc}") from exc
+
+    if response.status_code not in (200, 201, 202):
+        raise TransactionalEmailError(
+            f"Brevo API rejected the send ({response.status_code}): {response.text}"
+        )
+    return True 
 
 
 def send_verification_email(to_email: str, verify_url: str) -> None:

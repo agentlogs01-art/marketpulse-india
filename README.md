@@ -1,6 +1,6 @@
 # MarketPulse India — Core Application Module
 
-**Version**: 1.6.0 | **Language**: Python (82.4%) | Built against PRD v1.6 (Critical Path De-Risk, SEBI Token Hardening & Override Extension)
+**Version**: 1.7.0 | **Language**: Python | Built against PRD v1.7 (multi-channel delivery, account/dashboard, MFA)
 
 ---
 
@@ -382,19 +382,17 @@ psql <supabase_connection_string> < marketpulse/persistence/schema.sql
 ```
 
 ### **Pipeline Scheduling (GitHub Actions)**
-- The repository includes workflow files in both `.github/workflows/` and `marketpulse/.github/workflows/`. The authoritative schedules and job definitions are the YAML files in those directories.
-- Notable schedule behaviour (current workflows):
-  - Morning pre-render / briefing entry: scheduled at 00:30 UTC (06:00 IST). The scheduler script contains internal checkpoints and may sleep until later IST checkpoints (06:45 / 06:50 / 07:00) to align market/time-sensitive stages.
-  - Record-close job: scheduled at 10:15 UTC (15:45 IST) to capture the official Nifty 50 close shortly after market close (15:30 IST).
-  - Both workflows support manual `workflow_dispatch` with an optional `prev_close` input. Passing `prev_close=record` triggers the record-close job via dispatch.
-
-See `.github/workflows/daily_briefing.yml` and `marketpulse/.github/workflows/daily_briefing.yml` for exact cron expressions and environment mappings.
+- Authoritative workflows live only at the **repo root** under `.github/workflows/`. Nested copies under `marketpulse/.github/` are not executed by GitHub.
+- Morning briefing: `.github/workflows/daily_briefing.yml` — `33 0 * * 1-5` (00:33 UTC / 06:03 IST). The script sleeps until 06:45 / 07:00 IST. **Job timeout is 90 minutes** so that wait cannot kill the send (a 45-minute timeout ended the run before 07:00).
+- Record close: `.github/workflows/record-close.yml` — `15 10 * * 1-5` (15:45 IST).
+- Unit tests: `.github/workflows/tests.yml` on push/PR.
+- Manual `workflow_dispatch` on the morning job accepts optional `prev_close` and skips the IST waits.
 
 ---
 
 ## 📦 Dependencies
 
-See `root/requirements.txt`:
+See `requirements.txt` at the repo root (kept in sync with `marketpulse/requirements.txt`):
 
 - **`requests`** ≥2.31.0 — HTTP client for RSS, APIs, market data
 - **`feedparser`** ≥6.0.10 — RSS feed parsing
@@ -410,17 +408,18 @@ See `root/requirements.txt`:
 
 ## 🧪 Testing
 
-Run unit tests:
+Run unit tests from the repo root (stdlib `unittest`, not pytest):
 ```bash
-python -m pytest marketpulse/tests/ -v
+python -m unittest discover -s marketpulse/tests -v
 ```
 
 Key test areas:
-- **Ingestion**: RSS feed parsing, event classification, time-window filtering
-- **Analysis**: LLM prompt construction, response parsing, fallback neutrals
+- **Ingestion**: published-date lookback, weekend window, LLM event ranking
+- **Market data**: Yahoo-then-Stooq quotes (no silent 0.00 / 0% on Yahoo 401)
 - **Bias**: Sector aggregation, reconciliation logic, divergence detection
 - **Persistence**: subscriber auth, session lookup, audit logging
-- **Delivery**: email/Telegram/WhatsApp dispatch logic, channel preferences
+- **API**: signup through MFA (handlers)
+- **Delivery**: text/Telegram render, dispatcher flatten, webhook secret
 
 ---
 
@@ -450,60 +449,52 @@ The workflows and code expect a combination of API keys and (optionally) SMTP co
 ```bash
 # Supabase Database
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key  # used by GitHub Actions and server-side services
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# LLM (primary used by workflows)
-GEMINI_API_KEY=your-gemini-key   # repository workflows use GEMINI_API_KEY; ai_engine may also accept OPENAI_API_KEY
-# Alternative: OPENAI_API_KEY=your-openai-key  # supported if configured in ai_engine/llm_client.py
+# LLM (Gemini only — there is no OpenAI client in ai_engine/llm_client.py)
+GEMINI_API_KEY=your-gemini-key
 
-# Email Delivery (either API or SMTP)
-# If using an API provider like SendGrid/Resend, set the corresponding API key (optional):
-SENDGRID_API_KEY=your-sendgrid-key
-RESEND_API_KEY=your-resend-key
-
-# If the workflows / email sender are configured to use SMTP, supply these instead:
-SMTP_HOST=smtp.example.com
-SMTP_PORT=587
-SMTP_USER=smtp-user
-SMTP_PASSWORD=smtp-password
+# Email — Brevo HTTP API (required for briefing + transactional mail)
+BREVO_API_KEY=your-brevo-api-key
 EMAIL_FROM_ADDRESS=alerts@yourdomain.com
 
 # Telegram Bot
 TELEGRAM_BOT_TOKEN=your-telegram-bot-token
 TELEGRAM_BOT_USERNAME=your-bot-username
+TELEGRAM_WEBHOOK_SECRET=choose-a-long-random-string
 
 # WhatsApp via Twilio
 TWILIO_ACCOUNT_SID=your-twilio-account-sid
 TWILIO_AUTH_TOKEN=your-twilio-auth-token
-TWILIO_WHATSAPP_FROM_NUMBER=+14155552671  # Twilio sandbox number
+TWILIO_WHATSAPP_FROM=whatsapp:+14155552671
 
-# Other runtime
+# Web
+WEBAPP_BASE_URL=https://marketpulseindia.app
 PORT=8000
-FLASK_ENV=production
-LOG_LEVEL=INFO
 
-# Optional: a comma-separated SUBSCRIBER_LIST (used by some workflows for small test deployments)
+# Optional: used only if Supabase is unreachable
 SUBSCRIBER_LIST="email1@example.com,email2@example.com"
 ```
 
 Notes:
-- The workflows reference `GEMINI_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` explicitly — ensure these are set in repository secrets for GitHub Actions runs.
-- The code may accept `OPENAI_API_KEY` if you prefer OpenAI; check `ai_engine/llm_client.py` for supported providers.
+- Configure the **same** `SUPABASE_*`, `GEMINI_API_KEY`, `BREVO_API_KEY`, and Twilio/Telegram values in **both** Railway and GitHub Actions secrets. They do not share env vars.
+- After deploying, register the Telegram webhook with `secret_token` (`register_webhook()` in `delivery/telegram_sender.py`). POSTs without `X-Telegram-Bot-Api-Secret-Token` are rejected.
 
-See `marketpulse/.env.example` for a full template.
+See `marketpulse/.env.example` for the template.
 
 ---
 
 ## 🛠️ Troubleshooting
 
 ### Pipeline hangs or times out
+- The morning GitHub Action must be allowed **90 minutes**. A 45-minute timeout dies during the sleep until 07:00 IST.
 - Check `pipeline/orchestrator.py` stage timing vs. IST clock
 - Verify RSS feeds are responding (common culprit: NSE maintenance windows)
 - Check LLM API availability and rate limits
 
 ### Briefing not sent
 - Verify `subscriber.status = 'active'` in database
-- Check email/Telegram/WhatsApp credentials in `.env` / repository secrets
+- Check `BREVO_API_KEY` / Telegram / WhatsApp credentials in `.env` / repository secrets
 - Review `send_log` table for delivery errors:
   ```sql
   SELECT * FROM send_log WHERE status = 'failed' ORDER BY sent_at DESC LIMIT 10;
@@ -511,8 +502,8 @@ See `marketpulse/.env.example` for a full template.
 - Check `pipeline_runs.suppressed` flag — run may have been suppressed due to safety thresholds
 
 ### Email not received (bounces)
-- Verify sender email domain is authenticated in SendGrid/Resend or SMTP provider
-- Check `send_log.error_message` for SMTP errors
+- Verify the sender domain is authenticated in Brevo
+- Check `send_log.error_message` for API errors
 - Ensure subscriber email is not in spam filter
 
 ### MFA enrollment fails
@@ -522,7 +513,7 @@ See `marketpulse/.env.example` for a full template.
 
 ### Telegram linking times out
 - Verify `TELEGRAM_BOT_TOKEN` is correct and bot is active
-- Check that `/start` command webhook is configured (`api.telegram.org/botXXX/setWebhook`)
+- Re-register the webhook **with secret_token** (`register_webhook()`); bare setWebhook URLs are now rejected with 401
 - Review `telegram_links` table for expired or consumed tokens
 
 ### Jargon/entity violations detected

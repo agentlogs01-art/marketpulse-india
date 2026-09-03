@@ -36,6 +36,7 @@ from marketpulse.pipeline.market_data import (
     fetch_all_instrument_snapshots,
     fetch_gift_nifty_snapshot,
     flag_stale_snapshots,
+    format_market_context_for_llm,
 )
 
 import sys
@@ -49,6 +50,7 @@ NARRATIVE_FIELDS_TO_ENFORCE = [
 
 def run_ai_analysis_stage(
     events: list,
+    market_context: str = "",
 ) -> tuple:
     """
     FR-02.2 + FR-02.4.1 + FR-02.4.2: run sentiment analysis for every
@@ -58,11 +60,20 @@ def run_ai_analysis_stage(
     analyses: list = []
     all_jargon_injections: list = []
     all_entity_violations: list = []
+
+    print(
+        f"[orchestrator] sending {len(events)} overnight events to the LLM",
+        file=sys.stderr,
+    )
     
     for event in events:
         try:
-            analysis = analyze_event(event)
-        except Exception:
+            analysis = analyze_event(event, market_context=market_context)
+        except Exception as exc:
+            print(
+                f"[orchestrator] LLM failed for '{event.headline[:80]}': {exc}",
+                file=sys.stderr,
+            )
             analysis = fallback_neutral_analysis(event)
 
         # Enforce on the top-level beginner summary.
@@ -108,14 +119,16 @@ def run_full_pipeline(prev_nifty_close: float, run_date_ist: Optional[str] = Non
     gift_nifty = fetch_gift_nifty_snapshot(prev_nifty_close)
     
     instrument_snapshots = flag_stale_snapshots(fetch_all_instrument_snapshots())
+    market_context = format_market_context_for_llm(gift_nifty, instrument_snapshots)
 
     # --- Ingestion (can run any time before assembly) -----------------
     events = ingest_all_sources()
     events_by_id = {e.event_id: e for e in events}
 
-
     # --- 06:50 IST: Assembly stage --------------------------------------
-    analyses, jargon_injections, entity_violations = run_ai_analysis_stage(events)
+    analyses, jargon_injections, entity_violations = run_ai_analysis_stage(
+        events, market_context=market_context
+    )
     record.jargon_injections = jargon_injections
     record.entity_violations = entity_violations
     
