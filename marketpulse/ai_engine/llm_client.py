@@ -22,6 +22,9 @@ import json
 import os
 import re
 from typing import Optional
+import logging
+import time
+import requests
 
 from marketpulse.constants.sebi_entity_rules import ENTITY_RULE_SYSTEM_PROMPT
 from marketpulse.models.schemas import (
@@ -114,14 +117,9 @@ def _extract_json(raw_text: str) -> dict:
 
 def call_gemini(system_prompt: str, user_prompt: str, api_key: Optional[str] = None) -> str:
     """
-    Minimal HTTP call to Gemini 1.5 Flash. Uses `requests` (already a
-    transitive dependency of most Python data stacks; declared explicitly
-    in requirements.txt). Raises on non-200 so the pipeline can fall back
-    (FR-02.2 / overall pipeline resilience: AI engine failure must not
-    crash the 06:50 send).
+    HTTP call to Gemini API with exponential retries and relaxed timeout settings
+    to prevent pipeline crashes on large prompts or transient API slowness.
     """
-    import requests  # local import keeps module importable without network deps in tests
-
     key = api_key or os.environ.get("GEMINI_API_KEY")
     if not key:
         raise RuntimeError("GEMINI_API_KEY not set in environment")
@@ -134,16 +132,36 @@ def call_gemini(system_prompt: str, user_prompt: str, api_key: Optional[str] = N
             "response_mime_type": "application/json",
         },
     }
-    resp = requests.post(
-        GEMINI_API_URL,
-        params={"key": key},
-        json=payload,
-        timeout=20,
-    )
-    resp.raise_for_status()
-    data = resp.json()
-    return data["candidates"][0]["content"]["parts"][0]["text"]
 
+    # (Connect timeout, Read timeout)
+    # 5 seconds to establish connection, 60 seconds to process & stream response
+    timeout_config = (5, 60)
+    max_retries = 3
+
+    for attempt in range(1, max_retries + 1):
+        try:
+            resp = requests.post(
+                GEMINI_API_URL,
+                params={"key": key},
+                json=payload,
+                timeout=timeout_config,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+            # Safely extract text from candidate payload
+            candidate = data["candidates"][0]
+            text_response = candidate["content"]["parts"][0]["text"]
+            return text_response
+
+        except (requests.exceptions.Timeout, requests.exceptions.HTTPError) as exc:
+            if attempt == max_retries:
+                logger.error("Gemini API call failed after %d attempts: %s", max_retries, exc)
+                raise exc
+
+            sleep_time = attempt * 2  # Exponential backoff (2s, 4s)
+            logger.warning("Gemini API call failed (attempt %d/%d): %s. Retrying in %ds...", attempt, max_retries, exc, sleep_time)
+            time.sleep(sleep_time)
 
 def analyze_event(
     event: NewsEvent,
