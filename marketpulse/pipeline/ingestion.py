@@ -12,14 +12,13 @@ filter). A ranked subset of those events is what the LLM actually sees.
 from __future__ import annotations
 
 import re
+import sys
 from datetime import datetime, timedelta, timezone
 from time import struct_time
 from typing import Optional
 
 from marketpulse.models.schemas import EventType, GeographicOrigin, NewsEvent
 from marketpulse.utils.timeutils import IST, now_ist
-
-import sys
 
 # Cap how many stories hit Gemini so NSE corporate spam cannot drown the
 # overnight macro tape — and so a failed ranking still leaves a digest.
@@ -70,19 +69,19 @@ RSS_SOURCES = [
     },
     {
         "name": "Moneycontrol Markets",
-        "url": "https://www.moneycontrol.com/rss/marketreports.xml",
+        "url": "https://www.moneycontrol.com/rss/latestnews.xml",
         "credibility_score": 0.80,
         "default_origin": GeographicOrigin.INDIA,
     },
     {
-        "name": "Reuters Business",
-        "url": "https://feeds.reuters.com/reuters/businessNews",
+        "name": "Reuters Business (Google News Topic Feed)",
+        "url": "https://news.google.com/rss/search?q=when:24h+allinurl:reuters.com&hl=en-US&gl=US&ceid=US:en",
         "credibility_score": 0.95,
         "default_origin": GeographicOrigin.GLOBAL,
     },
     {
         "name": "MarketWatch Top Stories",
-        "url": "https://www.marketwatch.com/rss/topstories",
+        "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories",
         "credibility_score": 0.90,
         "default_origin": GeographicOrigin.GLOBAL,
     },
@@ -191,8 +190,8 @@ def fetch_raw_feed_items(source: dict) -> list:
     Fetch and parse a single RSS source. Returns a list of raw entries.
     Isolated so tests can mock without hitting the network.
     """
-    import feedparser
     import socket
+    import feedparser
     import requests
     import urllib3
 
