@@ -90,12 +90,26 @@ def _build_user_prompt(event: NewsEvent, market_context: str = "") -> str:
 
 
 def _extract_json(raw_text: str) -> dict:
-    cleaned = re.sub(r"^```(json)?|```$", "", raw_text.strip(), flags=re.MULTILINE).strip()
+    text = raw_text.strip()
+    
+    # 1. Remove markdown code fences if present (e.g. ```json ... ```)
+    match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+    if match:
+        text = match.group(1).strip()
+    
+    # 2. Extract first `{` to last `}` boundary
+    start_idx = text.find("{")
+    end_idx = text.rfind("}")
+    
+    if start_idx != -1 and end_idx != -1 and start_idx < end_idx:
+        text = text[start_idx:end_idx + 1]
+
     try:
-        return json.loads(cleaned)
+        return json.loads(text)
     except json.JSONDecodeError as e:
-        # Log the error safely according to your framework, or attempt partial fix
-        raise ValueError(f"Failed to parse LLM response as JSON: {raw_text}") from e
+        # Log snippet instead of full text to prevent giant log outputs on fail
+        snippet = raw_text[:200] + "..." if len(raw_text) > 200 else raw_text
+        raise ValueError(f"Failed to parse LLM response as JSON. Snippet: {snippet}") from e
 
 
 def call_gemini(system_prompt: str, user_prompt: str, api_key: Optional[str] = None) -> str:
