@@ -3,319 +3,262 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MarketPulse India — Daily Pre-Market Briefing</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+<title>MarketPulse India</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <style>
   :root {
-    --dawn:            #FBF7EE;
-    --paper:           #FFFFFF;
-    --ink:             #1A1F1C;
-    --graphite:        #4B5550;
-    --line:            #DDD6C4;
-    --line-soft:       #EAE4D4;
-    --green:           #1F7A4D;
-    --green-bg:        #E9F3EC;
-    --red:             #B23A2E;
-    --red-bg:          #FBEDEA;
-    --amber:           #C98A2C;
-    --amber-focus:     #9C6A1C;
-    --amber-bg:        #FBF1E3;
-    --amber-ink:       #8a611f;
-    --ink-hover:       #2c342f;
-    --ink-disabled:    #a9a89c;
-    --line-hover:      #c4bb9f;
-    --email-icon-bg:   #E8F0FE;
-    --email-icon-fg:   #1A56C4;
-    --telegram-icon-bg:#E6F3FB;
-    --telegram-icon-fg:#1A85C9;
-    --shadow-soft:     0 1px 2px rgba(26,31,28,0.06);
-    --radius:          10px;
+    --bg: #f3f3f1;
+    --surface: #ffffff;
+    --ink: #141414;
+    --muted: #5c5c57;
+    --line: #d8d8d2;
+    --fill: #ecece8;
+    --accent: #0b3d2e;
+    --accent-soft: #e4efe9;
+    --green: #1f7a4d;
+    --green-bg: #e9f3ec;
+    --red: #b23a2e;
+    --red-bg: #fbedea;
+    --warn: #8a611f;
+    --warn-bg: #f6eedc;
+    --ink-hover: #2a2a2a;
+    --ink-disabled: #9a9a94;
+    --radius: 8px;
   }
   [data-theme="dark"] {
-    --dawn:            #15140F;
-    --paper:           #1D1B15;
-    --ink:             #F3EFE4;
-    --graphite:        #A8A096;
-    --line:            #3A3628;
-    --line-soft:       #2A271D;
-    --green:           #4FBF82;
-    --green-bg:        #16291E;
-    --red:             #E36B5C;
-    --red-bg:          #2E1714;
-    --amber:           #E0A847;
-    --amber-focus:     #F0C46B;
-    --amber-bg:        #2E2410;
-    --amber-ink:       #E0C383;
-    --ink-hover:       #3a4239;
-    --ink-disabled:    #4a473d;
-    --line-hover:      #4d4836;
-    --email-icon-bg:   #16213A;
-    --email-icon-fg:   #6FA0E8;
-    --telegram-icon-bg:#122A38;
-    --telegram-icon-fg:#5FBEE8;
-    --shadow-soft:     0 1px 3px rgba(0,0,0,0.4);
+    --bg: #101010;
+    --surface: #1a1a1a;
+    --ink: #f1f1ee;
+    --muted: #a3a39b;
+    --line: #33332e;
+    --fill: #242422;
+    --accent: #8fbfa8;
+    --accent-soft: #1a2a23;
+    --green: #4fbf82;
+    --green-bg: #16291e;
+    --red: #e36b5c;
+    --red-bg: #2e1714;
+    --warn: #e0c383;
+    --warn-bg: #2e2410;
+    --ink-hover: #3a3a38;
+    --ink-disabled: #4a4a46;
+    color-scheme: dark;
   }
-  [data-theme="dark"] { color-scheme: dark; }
   [data-theme="light"] { color-scheme: light; }
   * { box-sizing: border-box; }
   @media (prefers-reduced-motion: reduce) {
-    * { animation-duration:.001ms!important; transition-duration:.001ms!important; }
+    * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
   }
-  html { background: var(--dawn); }
+  html, body { background: var(--bg); }
   body {
     margin: 0;
-    background: var(--dawn);
     color: var(--ink);
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
-    transition: background-color 0.15s ease, color 0.15s ease;
   }
-  .mono { font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-feature-settings:"tnum"; }
-  .wrap { max-width: 560px; margin: 0 auto; padding: 0 20px 80px; }
-  .wrap.dashboard { max-width: 680px; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-feature-settings: "tnum"; }
+  .page { max-width: 920px; margin: 0 auto; padding: 0 20px 72px; }
+  .page.cover-mode { max-width: 560px; }
 
-  /* -- Masthead -- */
-  .masthead { padding: 34px 0 18px; border-bottom: 1px solid var(--line); margin-bottom: 28px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-  .masthead-main { flex: 1; min-width: 0; }
-  .masthead .edition-line { display: flex; justify-content: space-between; align-items: baseline; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--graphite); margin-bottom: 10px; gap: 10px; }
-  .masthead h1 { font-family: "Source Serif 4", Georgia, "Times New Roman", serif; font-size: 33px; font-weight: 600; letter-spacing: -.01em; margin: 0 0 6px; }
-  .masthead .tagline { font-size: 14.5px; color: var(--graphite); margin: 0; max-width: 38ch; }
-  .masthead .account-box { flex: none; display: flex; align-items: flex-start; gap: 12px; padding-top: 6px; }
-  .account-meta { text-align: right; }
-  .account-meta .who { font-size: 12.5px; color: var(--graphite); margin-bottom: 6px; max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .signout-link { background: none; border: none; color: var(--ink); font-size: 12.5px; font-weight: 600; text-decoration: underline; text-decoration-color: var(--line); cursor: pointer; padding: 0; font-family: inherit; }
-  .signout-link:hover { text-decoration-color: var(--ink); }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--line); margin-bottom: 28px;
+  }
+  .brand { font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .who { font-size: 13px; color: var(--muted); max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .text-btn {
+    background: none; border: none; color: var(--ink); font-size: 13px; font-weight: 600;
+    text-decoration: underline; text-decoration-color: var(--line); cursor: pointer;
+    padding: 0; font-family: inherit;
+  }
+  .text-btn:hover { text-decoration-color: var(--ink); }
+  .dot-sep { color: var(--line); margin: 0 2px; }
 
-  /* -- Theme toggle pill -- */
-  .theme-toggle { display: inline-flex; align-items: center; gap: 2px; background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
-  .theme-toggle button { border: none; background: transparent; color: var(--graphite); width: 28px; height: 28px; border-radius: 999px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; line-height: 1; transition: background 0.1s; }
-  .theme-toggle button.active { background: var(--amber-bg); color: var(--amber-ink); }
-  .theme-toggle button:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
+  .theme-toggle { display: inline-flex; gap: 2px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 2px; }
+  .theme-toggle button {
+    border: none; background: transparent; color: var(--muted); width: 28px; height: 28px;
+    border-radius: 999px; cursor: pointer; font-size: 11px; font-weight: 700; font-family: inherit;
+  }
+  .theme-toggle button.active { background: var(--fill); color: var(--ink); }
+  .theme-toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  /* -- Countdown -- */
-  .countdown { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 22px 22px 18px; margin-bottom: 22px; }
-  .countdown .label { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--graphite); margin-bottom: 4px; }
-  .countdown .next-checkpoint { display: flex; align-items: baseline; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
-  .countdown .clock { font-size: 30px; font-weight: 600; letter-spacing: .01em; }
-  .countdown .clock .amber-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--amber); margin-right: 9px; position: relative; top: -2px; animation: pulse 2.2s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
-  .countdown .next-label { font-size: 13.5px; color: var(--graphite); }
-  .timeline { display: flex; justify-content: space-between; position: relative; padding-top: 14px; }
-  .timeline::before { content:""; position:absolute; top:18px; left:4px; right:4px; height:1px; background:var(--line); }
-  .timeline .point { display: flex; flex-direction: column; align-items: center; gap: 7px; flex: 1; position: relative; }
-  .timeline .point .mark { width: 8px; height: 8px; border-radius: 50%; background: var(--line); border: 2px solid var(--dawn); z-index: 1; }
-  .timeline .point.done .mark { background: var(--graphite); }
-  .timeline .point.active .mark { background: var(--amber); box-shadow: 0 0 0 3px var(--amber-bg); }
-  .timeline .point .time { font-size: 11px; color: var(--graphite); }
-  .timeline .point .what { font-size: 10.5px; color: var(--graphite); opacity: .75; text-align: center; max-width: 64px; }
-  .timeline .point.active .time { color: var(--ink); font-weight: 600; }
+  .cover-hero { padding: 24px 0 8px; }
+  .cover-hero .kicker { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .cover-hero h1 { font-size: 32px; font-weight: 650; letter-spacing: -.02em; line-height: 1.15; margin: 0 0 12px; }
+  .cover-hero .lede { font-size: 16px; color: var(--muted); margin: 0 0 28px; max-width: 38ch; }
+  .cover-meta { font-size: 13px; color: var(--muted); margin-top: 18px; }
 
-  /* -- Cards -- */
-  .card { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 26px; margin-bottom: 16px; }
-  .card h2 { font-family: "Source Serif 4", Georgia, serif; font-size: 19px; font-weight: 600; margin: 0 0 16px; }
-  .section-label { font-size: 12.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--graphite); margin: 20px 0 12px; }
-  .divider { border: none; border-top: 1px solid var(--line); margin: 20px 0; }
+  .sheet { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+  .sheet h2 { font-size: 18px; font-weight: 650; margin: 0 0 16px; }
 
-  /* -- Auth tabs -- */
-  .auth-tabs { display: flex; gap: 4px; background: var(--dawn); border: 1px solid var(--line); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
-  .auth-tabs button { flex: 1; padding: 9px 10px; border: none; border-radius: 6px; background: transparent; color: var(--graphite); font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
-  .auth-tabs button.active { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.06); }
-  .auth-tabs button:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
+  .auth-tabs { display: flex; gap: 4px; background: var(--fill); border: 1px solid var(--line); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
+  .auth-tabs button {
+    flex: 1; padding: 9px 10px; border: none; border-radius: 6px; background: transparent;
+    color: var(--muted); font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .auth-tabs button.active { background: var(--surface); color: var(--ink); }
+  .auth-tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
   .identity-toggle { display: flex; gap: 14px; margin-bottom: 14px; font-size: 13px; }
-  .identity-toggle label { display: flex; align-items: center; gap: 6px; font-weight: 500; color: var(--graphite); margin: 0; }
-  .identity-toggle input[type="radio"] { accent-color: var(--amber); margin: 0; }
+  .identity-toggle label { display: flex; align-items: center; gap: 6px; font-weight: 500; color: var(--muted); margin: 0; }
+  .identity-toggle input[type="radio"] { accent-color: var(--accent); margin: 0; }
 
-  /* -- Form controls -- */
-  label { display: block; font-size: 12.5px; font-weight: 600; color: var(--graphite); margin-bottom: 6px; letter-spacing: .01em; }
+  label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
   input[type="email"], input[type="tel"], input[type="password"], input[type="text"] {
     width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 7px; font-size: 15px;
-    color: var(--ink); margin-bottom: 16px; font-family: inherit; background: var(--dawn);
+    color: var(--ink); margin-bottom: 16px; font-family: inherit; background: var(--bg);
   }
-  input:focus { outline: 2px solid var(--amber-focus); outline-offset: 1px; border-color: var(--amber-focus); }
-  .password-hint { font-size: 11.5px; color: var(--graphite); margin: -10px 0 16px; }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  .password-hint { font-size: 11.5px; color: var(--muted); margin: -10px 0 16px; }
+  .step-note { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+
   .channels { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
-  .channel-option { display: flex; align-items: center; gap: 11px; padding: 12px 13px; border: 1px solid var(--line); border-radius: 7px; cursor: pointer; transition: border-color .12s, background .12s; }
-  .channel-option:hover { border-color: var(--line-hover); }
-  .channel-option.checked { border-color: var(--amber); background: var(--amber-bg); }
-  .channel-option:focus-within { outline: 2px solid var(--amber-focus); outline-offset: 1px; }
-  .channel-option input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--amber); margin: 0; }
+  .channel-option {
+    display: flex; align-items: center; gap: 11px; padding: 12px 13px;
+    border: 1px solid var(--line); border-radius: 7px; cursor: pointer;
+  }
+  .channel-option:hover { border-color: var(--ink); }
+  .channel-option.checked { border-color: var(--accent); background: var(--accent-soft); }
+  .channel-option:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .channel-option input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); margin: 0; }
   .channel-option .meta { flex: 1; }
   .channel-option .meta .name { font-size: 14.5px; font-weight: 600; }
-  .channel-option .meta .note { font-size: 12.5px; color: var(--graphite); }
-  
-  #whatsapp-field, #telegram-field, #signup-mobile-field { display: none; }
-  #whatsapp-field.visible, #telegram-field.visible, #signup-mobile-field.visible { display: block; }
+  .channel-option .meta .note { font-size: 12.5px; color: var(--muted); }
 
-  button.primary { width: 100%; padding: 13px; border: none; border-radius: 7px; background: var(--ink); color: var(--dawn); font-size: 15px; font-weight: 600; cursor: pointer; transition: background .12s; font-family: inherit; }
+  #whatsapp-field { display: none; }
+  #whatsapp-field.visible { display: block; }
+
+  button.primary {
+    width: 100%; padding: 13px; border: none; border-radius: 7px; background: var(--ink);
+    color: var(--bg); font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
   button.primary:hover { background: var(--ink-hover); }
   button.primary:disabled { background: var(--ink-disabled); cursor: default; }
-  button.primary:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
-  button.ghost { width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--ink); font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 8px; font-family: inherit; }
-  button.ghost:hover { background: var(--line-soft); }
-  button.ghost:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
-  button.ghost:focus-visible { outline: 2px solid var(--amber-focus); outline-offset: 2px; }
+  button.primary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.ghost {
+    width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 7px;
+    background: transparent; color: var(--ink); font-size: 14px; font-weight: 600;
+    cursor: pointer; margin-top: 8px; font-family: inherit;
+  }
+  button.ghost:hover { background: var(--fill); }
+  button.ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   button.danger { border-color: var(--red); color: var(--red); }
   button.danger:hover { background: var(--red-bg); }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-row button { flex: 1; margin-top: 0; }
 
   .status { font-size: 13.5px; border-radius: 7px; padding: 11px 13px; margin-bottom: 16px; display: none; }
   .status.visible { display: block; }
   .status.error { background: var(--red-bg); color: var(--red); }
   .status.success { background: var(--green-bg); color: var(--green); }
-  .status.info { background: var(--amber-bg); color: var(--amber-ink); }
+  .status.info { background: var(--warn-bg); color: var(--warn); }
 
-  .fine-print { font-size: 12px; color: var(--graphite); margin-top: 16px; line-height: 1.6; }
-  .fine-print a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); cursor: pointer; }
-  .fine-print a:hover { text-decoration-color: var(--ink); }
-  .link-btn { background: none; border: none; color: var(--ink); font-size: inherit; font-family: inherit; cursor: pointer; text-decoration: underline; text-decoration-color: var(--line); padding: 0; }
-  .link-btn:hover { text-decoration-color: var(--ink); }
-
-  .icon { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; border-radius: 5px; font-size: 12px; flex: none; }
-  .icon.email { background: var(--email-icon-bg); color: var(--email-icon-fg); }
-  .icon.whatsapp { background: var(--green-bg); color: var(--green); }
-  .icon.telegram { background: var(--telegram-icon-bg); color: var(--telegram-icon-fg); }
+  .fine-print { font-size: 12px; color: var(--muted); margin-top: 16px; line-height: 1.6; }
+  .fine-print a, .link-btn {
+    color: var(--ink); text-decoration: underline; text-decoration-color: var(--line); cursor: pointer;
+  }
+  .link-btn { background: none; border: none; font-size: inherit; font-family: inherit; padding: 0; }
+  .fine-print a:hover, .link-btn:hover { text-decoration-color: var(--ink); }
 
   .hidden { display: none !important; }
 
-  .deep-link-box { border: 1px dashed var(--line); border-radius: 7px; padding: 14px; font-size: 13.5px; word-break: break-all; margin-bottom: 12px; background: var(--dawn); }
+  .deep-link-box {
+    border: 1px dashed var(--line); border-radius: 7px; padding: 14px; font-size: 13.5px;
+    word-break: break-all; margin-bottom: 12px; background: var(--bg);
+  }
   .deep-link-box a { color: var(--ink); font-weight: 600; }
 
-  /* -- Backup codes grid -- */
   .backup-codes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
-  .backup-code { font-family: "IBM Plex Mono", monospace; font-size: 14px; background: var(--dawn); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; letter-spacing: .08em; }
+  .backup-code {
+    font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; letter-spacing: .08em;
+  }
 
-  /* -- Dashboard -- */
-  .dashboard-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 10px; }
-  .dashboard-toolbar .run-date { font-size: 12.5px; color: var(--graphite); }
-  .briefing-frame { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); padding: 4px; margin-bottom: 16px; overflow: hidden; }
-  .briefing-frame iframe { width: 100%; min-height: 640px; border: none; display: block; }
-  .dashboard-empty { text-align: center; padding: 48px 20px; color: var(--graphite); font-size: 14.5px; }
-  .dashboard-settings summary { cursor: pointer; font-weight: 600; font-size: 14px; padding: 4px 0; }
-  .dashboard-settings[open] summary { margin-bottom: 14px; }
+  .edition { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 28px; align-items: start; }
+  .edition-rail { position: sticky; top: 16px; }
+  .edition-date { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+  .bias-badge {
+    display: inline-block; font-size: 13px; font-weight: 650; line-height: 1.35;
+    padding: 8px 10px; border-radius: 6px; background: var(--fill); margin-bottom: 14px;
+  }
+  .bias-badge.up { background: var(--green-bg); color: var(--green); }
+  .bias-badge.down { background: var(--red-bg); color: var(--red); }
+  .bias-badge.flat { background: var(--warn-bg); color: var(--warn); }
+  .edition-article {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 4px;
+    overflow: auto;
+  }
+  .edition-empty { padding: 48px 20px; color: var(--muted); font-size: 15px; }
 
-  /* -- MFA status indicator -- */
+  .conn-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    padding: 14px 0; border-bottom: 1px solid var(--line);
+  }
+  .conn-row:last-of-type { border-bottom: none; }
+  .conn-name { font-weight: 650; font-size: 14.5px; }
+  .conn-detail { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+  .badge {
+    font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; letter-spacing: .04em;
+    background: var(--fill); color: var(--muted); white-space: nowrap;
+  }
+  .badge.on { background: var(--green); color: #fff; }
   .mfa-status { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 7px; border: 1px solid var(--line); margin-bottom: 16px; font-size: 14px; }
-  .mfa-status .badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 99px; letter-spacing: .04em; }
   .mfa-status.on { border-color: var(--green); background: var(--green-bg); }
-  .mfa-status.on .badge { background: var(--green); color: #fff; }
-  .mfa-status.off .badge { background: var(--line); color: var(--graphite); }
+  .section-label { font-size: 12.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); margin: 20px 0 12px; }
+  .divider { border: none; border-top: 1px solid var(--line); margin: 20px 0; }
 
-  footer.colophon { text-align: center; font-size: 11px; color: var(--graphite); opacity: .7; margin-top: 36px; letter-spacing: .03em; }
+  footer.colophon { text-align: center; font-size: 11px; color: var(--muted); margin-top: 36px; }
 
-  @media (max-width: 420px) {
-    .masthead { flex-direction: column; }
-    .masthead .account-box { padding-top: 0; }
-    .account-meta { text-align: left; }
-    .masthead h1 { font-size: 27px; }
-    .timeline .what { display: none; }
-    .countdown .clock { font-size: 24px; }
+  @media (max-width: 720px) {
+    .edition { grid-template-columns: 1fr; }
+    .edition-rail { position: static; }
+    .cover-hero h1 { font-size: 26px; }
     .backup-codes { grid-template-columns: 1fr; }
+    .topbar { flex-wrap: wrap; }
   }
 </style>
 </head>
 <body>
-<div class="wrap" id="page-wrap">
+<div class="page cover-mode" id="page-wrap">
 
-  <div class="masthead">
-    <div class="masthead-main">
-      <div class="edition-line">
-        <span>MarketPulse India</span>
-        <span id="edition-date" class="mono">—</span>
-      </div>
-      <h1 id="masthead-title">Tomorrow's open, before it opens.</h1>
-      <p class="tagline" id="masthead-tagline">A plain-English briefing for first-time investors, written before NSE rings the bell at 9:15&nbsp;AM&nbsp;IST.</p>
-    </div>
-    <div class="account-box">
+  <header class="topbar">
+    <div class="brand">MarketPulse India</div>
+    <div class="topbar-right">
+      <span id="edition-date" class="mono" style="font-size:12px;color:var(--muted)">—</span>
       <div class="theme-toggle" role="group" aria-label="Colour theme">
-        <button type="button" id="theme-btn-light" class="active" title="Light theme" aria-pressed="true">&#9728;</button>
-        <button type="button" id="theme-btn-dark" title="Dark theme" aria-pressed="false">&#9790;</button>
+        <button type="button" id="theme-btn-light" class="active" title="Light theme" aria-pressed="true">Lt</button>
+        <button type="button" id="theme-btn-dark" title="Dark theme" aria-pressed="false">Dk</button>
       </div>
       <div class="account-meta hidden" id="account-meta">
-        <div class="who" id="account-who">—</div>
-        <button class="signout-link" id="profile-btn">Profile</button>
-        <span style="color:var(--line);margin:0 4px">&middot;</span>
-        <button class="signout-link" id="signout-btn">Sign out</button>
+        <span class="who" id="account-who">—</span>
+        <button class="text-btn" id="profile-btn">Account</button>
+        <span class="dot-sep">&middot;</span>
+        <button class="text-btn" id="signout-btn">Sign out</button>
       </div>
     </div>
-  </div>
+  </header>
 
-  <div class="countdown" aria-live="off">
-    <div class="label">Today's briefing cycle</div>
-    <div class="next-checkpoint">
-      <span class="clock mono" id="countdown-clock"><span class="amber-dot" aria-hidden="true"></span>—:—:—</span>
-      <span class="next-label" id="countdown-next-label">until next checkpoint</span>
-    </div>
-    <div class="timeline" id="timeline" role="list" aria-label="Daily briefing checkpoints, India Standard Time">
-      <div class="point" data-hhmm="06:00" role="listitem"><span class="mark"></span><span class="time mono">06:00</span><span class="what">Pre&#8209;render</span></div>
-      <div class="point" data-hhmm="06:45" role="listitem"><span class="mark"></span><span class="time mono">06:45</span><span class="what">GIFT Nifty snapshot</span></div>
-      <div class="point" data-hhmm="06:50" role="listitem"><span class="mark"></span><span class="time mono">06:50</span><span class="what">Assembled</span></div>
-      <div class="point" data-hhmm="07:00" role="listitem"><span class="mark"></span><span class="time mono">07:00</span><span class="what">Sent to you</span></div>
-      <div class="point" data-hhmm="09:15" role="listitem"><span class="mark"></span><span class="time mono">09:15</span><span class="what">NSE opens</span></div>
+  <div id="view-cover">
+    <div class="cover-hero" id="cover-intro">
+      <div class="kicker" id="cover-kicker">Weekday edition · IST</div>
+      <h1>Today’s briefing, before the open.</h1>
+      <p class="lede">Plain English for the morning of an NSE session. No jargon without a translation. Not a trading terminal.</p>
+      <button type="button" class="primary" id="cover-read-btn">Read today’s briefing</button>
+      <button type="button" class="ghost" id="cover-signup-btn">Create an account</button>
+      <p class="cover-meta mono" id="cover-clock">Next send 07:00 IST · NSE opens 09:15</p>
     </div>
   </div>
 
-  <div id="view-auth" class="card">
+  <div id="view-auth" class="sheet hidden">
     <div class="auth-tabs" role="tablist">
-      <button type="button" id="tab-signup" class="active" role="tab" aria-selected="true">Sign up</button>
-      <button type="button" id="tab-signin" role="tab" aria-selected="false">Sign in</button>
+      <button type="button" id="tab-signin" class="active" role="tab" aria-selected="true">Sign in</button>
+      <button type="button" id="tab-signup" role="tab" aria-selected="false">Create account</button>
     </div>
 
-    <div id="panel-signup">
-      <div id="signup-status" class="status" role="status"></div>
-      <form id="signup-form">
-        <div class="identity-toggle">
-          <label><input type="radio" name="signup-identity" value="email" checked> Email</label>
-          <label><input type="radio" name="signup-identity" value="mobile"> Mobile number</label>
-        </div>
-        <div id="signup-email-field">
-          <label for="signup-email">Email address</label>
-          <input type="email" id="signup-email" placeholder="you@example.com">
-        </div>
-        <div id="signup-mobile-field">
-          <label for="signup-mobile">Mobile number (with country code)</label>
-          <input type="tel" id="signup-mobile" placeholder="+919876543210">
-        </div>
-        <label for="signup-password">Create a password</label>
-        <input type="password" id="signup-password" placeholder="At least 12 characters" autocomplete="new-password">
-        <p class="password-hint">You'll use this to sign in and view your briefing on the website.</p>
-        <label>How should we reach you?</label>
-        <div class="channels">
-          <label class="channel-option checked" data-channel="email">
-            <input type="checkbox" value="email" checked>
-            <span class="icon email">&#9993;</span>
-            <span class="meta"><span class="name">Email</span><br><span class="note">The full briefing, every weekday morning</span></span>
-          </label>
-          <label class="channel-option" data-channel="whatsapp">
-            <input type="checkbox" value="whatsapp">
-            <span class="icon whatsapp">&#9679;</span>
-            <span class="meta"><span class="name">WhatsApp</span><br><span class="note">A condensed text version</span></span>
-          </label>
-          <label class="channel-option" data-channel="telegram">
-            <input type="checkbox" value="telegram">
-            <span class="icon telegram">&#9992;</span>
-            <span class="meta"><span class="name">Telegram</span><br><span class="note">A condensed, formatted version</span></span>
-          </label>
-        </div>
-        <div id="whatsapp-field">
-          <label for="whatsapp_number">WhatsApp number (with country code)</label>
-          <input type="tel" id="whatsapp_number" placeholder="+919876543210">
-        </div>
-        <div id="telegram-field">
-          <label for="telegram_chat_id">Telegram Chat ID / Username</label>
-          <input type="text" id="telegram_chat_id" placeholder="@username or Chat ID">
-        </div>
-        <button type="submit" class="primary" id="signup-submit">Create account</button>
-      </form>
-      <p class="fine-print">
-        Email is required to verify your subscription if you sign up with one, even if you choose
-        WhatsApp or Telegram for daily delivery. Educational content only — not investment advice.
-        <a id="manage-link-toggle">Manage an existing subscription</a>
-      </p>
-    </div>
-
-    <div id="panel-signin" class="hidden">
+    <div id="panel-signin">
       <div id="signin-status" class="status" role="status"></div>
-
       <form id="signin-form">
         <label for="signin-id">Email or mobile number</label>
         <input type="text" id="signin-id" placeholder="you@example.com or +919876543210" autocomplete="username">
@@ -325,9 +268,7 @@
       </form>
 
       <div id="mfa-challenge-panel" class="hidden">
-        <p style="font-size:14.5px;margin-bottom:12px;color:var(--graphite);">
-          Enter the 6-digit code from your authenticator app, or one of your backup codes.
-        </p>
+        <p class="step-note">Enter the 6-digit code from your authenticator app, or one of your backup codes.</p>
         <label for="mfa-code-input">Authentication code</label>
         <input type="text" id="mfa-code-input" placeholder="123456" maxlength="20" autocomplete="one-time-code">
         <button type="button" class="primary" id="mfa-submit-btn">Verify</button>
@@ -335,9 +276,7 @@
       </div>
 
       <div id="forgot-panel" class="hidden">
-        <p style="font-size:14.5px;margin-bottom:12px;color:var(--graphite);">
-          Enter your email or mobile number and we'll send a reset link if an account exists.
-        </p>
+        <p class="step-note">Enter your email or mobile number. If an account exists, we send a reset link.</p>
         <label for="forgot-id">Email or mobile number</label>
         <input type="text" id="forgot-id" placeholder="you@example.com or +919876543210">
         <button type="button" class="primary" id="forgot-submit-btn">Send reset link</button>
@@ -347,112 +286,173 @@
       <p class="fine-print" id="signin-fine-print">
         <button class="link-btn" id="forgot-password-link">Forgot your password?</button>
         &nbsp;&middot;&nbsp;
-        <a id="manage-link-toggle-2">Manage an existing subscription</a>
+        <a id="manage-link-toggle-2">Unsubscribe with email</a>
+      </p>
+    </div>
+
+    <div id="panel-signup" class="hidden">
+      <div id="signup-status" class="status" role="status"></div>
+      <form id="signup-form">
+        <div id="signup-step-1">
+          <p class="step-note">Step 1 of 2 — how you sign in.</p>
+          <div class="identity-toggle">
+            <label><input type="radio" name="signup-identity" value="email" checked> Email</label>
+            <label><input type="radio" name="signup-identity" value="mobile"> Mobile number</label>
+          </div>
+          <div id="signup-email-field">
+            <label for="signup-email">Email address</label>
+            <input type="email" id="signup-email" placeholder="you@example.com">
+          </div>
+          <div id="signup-mobile-field" class="hidden">
+            <label for="signup-mobile">Mobile number (with country code)</label>
+            <input type="tel" id="signup-mobile" placeholder="+919876543210">
+          </div>
+          <label for="signup-password">Create a password</label>
+          <input type="password" id="signup-password" placeholder="At least 12 characters" autocomplete="new-password">
+          <p class="password-hint">You’ll use this to sign in and read the briefing here.</p>
+          <button type="button" class="primary" id="signup-next-btn">Continue</button>
+        </div>
+
+        <div id="signup-step-2" class="hidden">
+          <p class="step-note">Step 2 of 2 — where the weekday briefing should arrive. Telegram is connected after you sign in, not by typing a chat id.</p>
+          <label>Delivery</label>
+          <div class="channels">
+            <label class="channel-option checked" data-channel="email">
+              <input type="checkbox" value="email" checked>
+              <span class="meta"><span class="name">Email</span><br><span class="note">The full briefing, weekday mornings</span></span>
+            </label>
+            <label class="channel-option" data-channel="whatsapp">
+              <input type="checkbox" value="whatsapp">
+              <span class="meta"><span class="name">WhatsApp</span><br><span class="note">A condensed text version</span></span>
+            </label>
+            <label class="channel-option" data-channel="telegram">
+              <input type="checkbox" value="telegram">
+              <span class="meta"><span class="name">Telegram</span><br><span class="note">Connect the bot after you sign in</span></span>
+            </label>
+          </div>
+          <div id="whatsapp-field">
+            <label for="whatsapp_number">WhatsApp number (with country code)</label>
+            <input type="tel" id="whatsapp_number" placeholder="+919876543210">
+          </div>
+          <div class="btn-row">
+            <button type="button" class="ghost" id="signup-back-btn">Back</button>
+            <button type="submit" class="primary" id="signup-submit">Create account</button>
+          </div>
+        </div>
+      </form>
+      <p class="fine-print">
+        Email is required to verify if you sign up with one. Educational content only — not investment advice.
+        <a id="manage-link-toggle">Unsubscribe with email</a>
       </p>
     </div>
   </div>
 
-  <div id="view-verify" class="card hidden">
-    <h2>Confirming your email&hellip;</h2>
+  <div id="view-verify" class="sheet hidden">
+    <h2>Confirming your email…</h2>
     <div id="verify-status" class="status" role="status"></div>
     <div id="verify-telegram-prompt" class="hidden">
-      <p style="font-size:14.5px;margin-bottom:14px;color:var(--graphite);">
-        Want today's briefing on Telegram too? Sign in, then connect it from your dashboard.
-      </p>
+      <p class="step-note">Want today’s briefing on Telegram too? Sign in, then connect it from Account.</p>
       <button class="ghost" id="verify-go-to-signin">Go to sign in</button>
     </div>
   </div>
 
-  <div id="view-reset-password" class="card hidden">
+  <div id="view-reset-password" class="sheet hidden">
     <h2>Choose a new password</h2>
     <div id="reset-status" class="status" role="status"></div>
     <div id="reset-form-wrap">
       <label for="reset-new-password">New password</label>
-      <input type="password" id="reset-new-password" placeholder="At least 8 characters" autocomplete="new-password">
+      <input type="password" id="reset-new-password" placeholder="At least 12 characters" autocomplete="new-password">
       <label for="reset-confirm-password">Confirm new password</label>
       <input type="password" id="reset-confirm-password" placeholder="Same as above" autocomplete="new-password">
       <button type="button" class="primary" id="reset-submit-btn">Set new password</button>
     </div>
   </div>
 
-  <div id="view-telegram-link" class="card hidden">
-    <h2>One more step</h2>
-    <p style="font-size:14.5px;margin-bottom:14px;color:var(--graphite);">
-      Open the link below, then press <strong>Start</strong> in Telegram. Nothing else to type.
-    </p>
+  <div id="view-telegram-link" class="sheet hidden">
+    <h2>Open Telegram</h2>
+    <p class="step-note">Open the link below, then press <strong>Start</strong> in Telegram. Nothing else to type.</p>
     <div class="deep-link-box">
-      <a id="telegram-deep-link" href="#" target="_blank" rel="noopener">Open Telegram to finish connecting &#8594;</a>
+      <a id="telegram-deep-link" href="#" target="_blank" rel="noopener">Open Telegram to finish connecting →</a>
     </div>
-    <button class="ghost" id="telegram-link-done-btn">Back to dashboard</button>
+    <button class="ghost" id="telegram-link-done-btn">Back to today’s edition</button>
   </div>
 
-  <div id="view-manage" class="card hidden">
-    <h2>Manage your subscription</h2>
+  <div id="view-manage" class="sheet hidden">
+    <h2>Stop email delivery</h2>
     <div id="manage-status" class="status" role="status"></div>
     <label for="manage-email">Email address</label>
     <input type="email" id="manage-email" placeholder="you@example.com">
     <button class="ghost" id="manage-unsubscribe-btn">Unsubscribe this email</button>
     <p class="fine-print">
       Unsubscribing stops delivery on every channel linked to this email.
-      <a id="back-to-auth">&#8592; Back</a>
+      <a id="back-to-auth">← Back</a>
     </p>
   </div>
 
   <div id="view-dashboard" class="hidden">
-    <div class="card">
-      <div class="dashboard-toolbar">
-        <h2 style="margin:0">Today's briefing</h2>
-        <span class="run-date mono" id="briefing-run-date"></span>
-      </div>
-      <div id="dashboard-status" class="status" role="status"></div>
-      <div id="briefing-available" class="hidden">
-        <div class="briefing-frame">
-          <iframe id="briefing-iframe" title="MarketPulse India daily briefing" sandbox="allow-same-origin"></iframe>
+    <div class="edition">
+      <aside class="edition-rail">
+        <div class="edition-date mono" id="briefing-run-date"></div>
+        <div class="bias-badge hidden" id="bias-badge"></div>
+        <p class="conn-detail" id="edition-rail-note">Your weekday edition. Same briefing as email, WhatsApp, and Telegram.</p>
+      </aside>
+      <div>
+        <div id="dashboard-status" class="status" role="status"></div>
+        <div id="briefing-available" class="hidden">
+          <div class="edition-article" id="briefing-article"></div>
+        </div>
+        <div id="briefing-unavailable" class="edition-empty hidden">
+          No edition has been printed yet. The first one is sent by 07:00 AM IST on the next trading day.
         </div>
       </div>
-      <div id="briefing-unavailable" class="dashboard-empty hidden">
-        No briefing has been published yet. Your first one arrives by 07:00&nbsp;AM&nbsp;IST on the next trading day.
-      </div>
-    </div>
-
-    <div class="card">
-      <details class="dashboard-settings">
-        <summary>Delivery settings</summary>
-        <div id="settings-status" class="status" role="status"></div>
-        <label>Channels</label>
-        <div class="channels" id="dashboard-channels">
-          <label class="channel-option" data-channel="email">
-            <input type="checkbox" value="email">
-            <span class="icon email">&#9993;</span>
-            <span class="meta"><span class="name">Email</span></span>
-          </label>
-          <label class="channel-option" data-channel="whatsapp">
-            <input type="checkbox" value="whatsapp">
-            <span class="icon whatsapp">&#9679;</span>
-            <span class="meta"><span class="name">WhatsApp</span></span>
-          </label>
-          <label class="channel-option" data-channel="telegram">
-            <input type="checkbox" value="telegram">
-            <span class="icon telegram">&#9992;</span>
-            <span class="meta"><span class="name">Telegram</span></span>
-          </label>
-        </div>
-        <button class="ghost" id="save-channels-btn">Save channels</button>
-        <button class="ghost" id="dashboard-telegram-link-btn">Connect Telegram</button>
-      </details>
     </div>
   </div>
 
   <div id="view-profile" class="hidden">
-    <div class="card">
-      <h2>Profile &amp; Settings</h2>
+    <div class="sheet">
+      <h2>Account</h2>
+
+      <p class="section-label">Delivery</p>
+      <div id="settings-status" class="status" role="status"></div>
+      <div id="conn-email" class="conn-row">
+        <div>
+          <div class="conn-name">Email</div>
+          <div class="conn-detail" id="conn-email-detail">—</div>
+        </div>
+        <label class="channel-option" data-channel="email" style="padding:8px 10px;margin:0">
+          <input type="checkbox" value="email">
+          <span class="badge" id="conn-email-badge">Off</span>
+        </label>
+      </div>
+      <div id="conn-whatsapp" class="conn-row">
+        <div>
+          <div class="conn-name">WhatsApp</div>
+          <div class="conn-detail" id="conn-whatsapp-detail">Number is captured at sign-up and shown here.</div>
+        </div>
+        <label class="channel-option" data-channel="whatsapp" style="padding:8px 10px;margin:0">
+          <input type="checkbox" value="whatsapp">
+          <span class="badge" id="conn-whatsapp-badge">Off</span>
+        </label>
+      </div>
+      <div id="conn-telegram" class="conn-row">
+        <div>
+          <div class="conn-name">Telegram</div>
+          <div class="conn-detail" id="conn-telegram-detail">Connect with the official deep link. Do not type a chat id.</div>
+        </div>
+        <label class="channel-option" data-channel="telegram" style="padding:8px 10px;margin:0">
+          <input type="checkbox" value="telegram">
+          <span class="badge" id="conn-telegram-badge">Off</span>
+        </label>
+      </div>
+      <button class="ghost" id="save-channels-btn">Save delivery</button>
+      <button class="ghost" id="dashboard-telegram-link-btn">Connect Telegram</button>
 
       <p class="section-label">Change password</p>
       <div id="changepw-status" class="status" role="status"></div>
       <label for="changepw-current">Current password</label>
       <input type="password" id="changepw-current" placeholder="Your current password" autocomplete="current-password">
       <label for="changepw-new">New password</label>
-      <input type="password" id="changepw-new" placeholder="At least 8 characters" autocomplete="new-password">
+      <input type="password" id="changepw-new" placeholder="At least 12 characters" autocomplete="new-password">
       <label for="changepw-confirm">Confirm new password</label>
       <input type="password" id="changepw-confirm" placeholder="Same as above" autocomplete="new-password">
       <button type="button" class="ghost" id="changepw-btn">Update password</button>
@@ -470,13 +470,11 @@
         <button type="button" class="ghost" id="mfa-enroll-btn">Set up 2FA</button>
 
         <div id="mfa-enroll-step1" class="hidden">
-          <p style="font-size:14px;color:var(--graphite);margin:16px 0 8px">
-            Scan this QR code with Google Authenticator, Authy, or any TOTP app. If you can't scan, enter the code manually.
-          </p>
+          <p class="step-note">Scan this QR code with Google Authenticator, Authy, or any TOTP app. If you can’t scan, enter the code manually.</p>
           <div style="text-align:center;margin:12px 0"><canvas id="mfa-qr-canvas" width="180" height="180" style="border-radius:8px;border:1px solid var(--line)"></canvas></div>
           <details style="margin-bottom:12px">
-            <summary style="font-size:13px;cursor:pointer;color:var(--graphite)">Can't scan? Show manual code</summary>
-            <code id="mfa-secret-text" style="font-size:13px;word-break:break-all;display:block;margin-top:8px;background:var(--dawn);padding:8px;border-radius:6px;border:1px solid var(--line)"></code>
+            <summary style="font-size:13px;cursor:pointer;color:var(--muted)">Can’t scan? Show manual code</summary>
+            <code id="mfa-secret-text" style="font-size:13px;word-break:break-all;display:block;margin-top:8px;background:var(--bg);padding:8px;border-radius:6px;border:1px solid var(--line)"></code>
           </details>
           <label for="mfa-enroll-code">Enter the 6-digit code shown in your app</label>
           <input type="text" id="mfa-enroll-code" placeholder="123456" maxlength="6" autocomplete="one-time-code">
@@ -485,16 +483,16 @@
         </div>
 
         <div id="mfa-backup-codes-display" class="hidden">
-          <div class="status visible success">2FA enabled! Save these backup codes somewhere safe — each works once if you lose your phone.</div>
+          <div class="status visible success">2FA enabled. Save these backup codes somewhere safe — each works once if you lose your phone.</div>
           <div class="backup-codes" id="mfa-backup-codes-list"></div>
-          <button type="button" class="ghost" id="mfa-backup-codes-done-btn">I've saved my codes</button>
+          <button type="button" class="ghost" id="mfa-backup-codes-done-btn">I’ve saved my codes</button>
         </div>
       </div>
 
       <div id="mfa-on-section" class="hidden">
         <div class="mfa-status on">
-          <span class="badge">ON</span>
-          <span>Your account is protected with 2FA. You'll need your authenticator app each time you sign in.</span>
+          <span class="badge on">ON</span>
+          <span>Your account is protected with 2FA. You’ll need your authenticator app each time you sign in.</span>
         </div>
         <button type="button" class="ghost" id="mfa-regen-btn">Regenerate backup codes</button>
         <div id="mfa-regen-codes-display" class="hidden">
@@ -514,11 +512,11 @@
       </div>
 
       <hr class="divider">
-      <button type="button" class="ghost" id="profile-back-btn">&#8592; Back to dashboard</button>
+      <button type="button" class="ghost" id="profile-back-btn">← Back to today’s edition</button>
     </div>
   </div>
 
-  <footer class="colophon">Educational content, not investment advice &middot; Indian Standard Time throughout</footer>
+  <footer class="colophon">Educational content, not investment advice · Indian Standard Time throughout</footer>
 </div>
 
 <script>
@@ -528,10 +526,14 @@
   const API_BASE = window.location.origin + "/api";
   const SESSION_KEY = "marketpulse_session_token";
   const THEME_KEY = "marketpulse_theme";
+  const BIAS_COPY = {
+    GAP_UP_STRONG: "Market likely to open higher (>1%)",
+    GAP_UP_MILD: "Market may open slightly higher",
+    FLAT: "Market likely to open flat",
+    GAP_DOWN_MILD: "Market may open slightly lower",
+    GAP_DOWN_STRONG: "Market likely to open lower (>1%)",
+  };
 
-  // -------------------------------------------------------------------------
-  // Theme management (works pre-login via localStorage, persisted to server after login)
-  // -------------------------------------------------------------------------
   function applyTheme(theme, silent) {
     document.documentElement.setAttribute("data-theme", theme);
     document.getElementById("theme-btn-light").classList.toggle("active", theme === "light");
@@ -540,36 +542,33 @@
     document.getElementById("theme-btn-dark").setAttribute("aria-pressed", String(theme === "dark"));
     localStorage.setItem(THEME_KEY, theme);
     if (!silent && sessionToken) {
-      apiRequest("POST", "/theme", { theme }).catch(() => {});
+      apiRequest("POST", "/theme", { theme }).catch(function () {});
     }
   }
 
   (function initTheme() {
-    const saved = localStorage.getItem(THEME_KEY) || "light";
-    applyTheme(saved, true);
+    applyTheme(localStorage.getItem(THEME_KEY) || "light", true);
   })();
 
   document.getElementById("theme-btn-light").addEventListener("click", function () { applyTheme("light"); });
   document.getElementById("theme-btn-dark").addEventListener("click", function () { applyTheme("dark"); });
 
-  // -------------------------------------------------------------------------
-  // State
-  // -------------------------------------------------------------------------
   let sessionToken = localStorage.getItem(SESSION_KEY) || null;
   let currentSubscriber = null;
   let pendingMfaChallenge = null;
 
-  // -------------------------------------------------------------------------
-  // Element refs
-  // -------------------------------------------------------------------------
-  const E = (id) => document.getElementById(id);
+  const E = function (id) { return document.getElementById(id); };
+  const VIEWS = ["view-cover","view-auth","view-verify","view-reset-password","view-telegram-link","view-manage","view-dashboard","view-profile"];
 
-  // -------------------------------------------------------------------------
-  // Utilities
-  // -------------------------------------------------------------------------
   function showView(id) {
-    ["view-auth","view-verify","view-reset-password","view-telegram-link","view-manage","view-dashboard","view-profile"]
-      .forEach((v) => E(v).classList.add("hidden"));
+    VIEWS.forEach(function (v) { E(v).classList.add("hidden"); });
+    if (id === "view-auth") {
+      E("view-cover").classList.remove("hidden");
+      E("cover-intro").classList.add("hidden");
+    }
+    if (id === "view-cover") {
+      E("cover-intro").classList.remove("hidden");
+    }
     E(id).classList.remove("hidden");
   }
 
@@ -580,11 +579,12 @@
     const headers = { "Content-Type": "application/json" };
     if (sessionToken) headers["Authorization"] = "Bearer " + sessionToken;
     const resp = await fetch(API_BASE + path, {
-      method, headers,
+      method: method,
+      headers: headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-    const data = await resp.json().catch(() => ({}));
-    return { ok: resp.ok && data.ok !== false, status: resp.status, data };
+    const data = await resp.json().catch(function () { return {}; });
+    return { ok: resp.ok && data.ok !== false, status: resp.status, data: data };
   }
 
   function POST(path, body) { return apiRequest("POST", path, body); }
@@ -592,41 +592,23 @@
 
   function setSession(token) {
     sessionToken = token;
-    token ? localStorage.setItem(SESSION_KEY, token) : localStorage.removeItem(SESSION_KEY);
+    if (token) localStorage.setItem(SESSION_KEY, token);
+    else localStorage.removeItem(SESSION_KEY);
   }
 
-  // -------------------------------------------------------------------------
-  // QR code drawing (tiny pure-JS TOTP QR via Google Chart API fallback,
-  // no external lib needed in production -- uses the provisioning URI)
-  // -------------------------------------------------------------------------
-function drawQR(canvas, uri) {
-  try {
-    // QRious directly hooks onto the canvas element and paints the pixels locally
-    new QRious({
-      element: canvas,
-      value: uri,
-      size: 180,
-      background: '#ffffff',
-      foreground: '#000000'
-    });
-  } catch (err) {
-    console.error("Local QR generation failed:", err);
-    // Fallback if something goes wrong structurally
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#f3efe4";
-    ctx.fillRect(0, 0, 180, 180);
-    ctx.fillStyle = "#4b5550";
-    ctx.font = "12px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText("Use the manual code below", 90, 90);
+  function drawQR(canvas, uri) {
+    try {
+      new QRious({ element: canvas, value: uri, size: 180, background: "#ffffff", foreground: "#000000" });
+    } catch (err) {
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#ecece8";
+      ctx.fillRect(0, 0, 180, 180);
+      ctx.fillStyle = "#5c5c57";
+      ctx.font = "12px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("Use the manual code below", 90, 90);
+    }
   }
-}
-  
-  // -------------------------------------------------------------------------
-  // Auth tabs
-  // -------------------------------------------------------------------------
-  E("tab-signup").addEventListener("click", () => switchTab("signup"));
-  E("tab-signin").addEventListener("click", () => switchTab("signin"));
 
   function switchTab(which) {
     const su = which === "signup";
@@ -636,56 +618,83 @@ function drawQR(canvas, uri) {
     E("tab-signin").setAttribute("aria-selected", String(!su));
     E("panel-signup").classList.toggle("hidden", !su);
     E("panel-signin").classList.toggle("hidden", su);
-    // Reset sub-panels when switching tabs
     E("mfa-challenge-panel").classList.add("hidden");
     E("forgot-panel").classList.add("hidden");
     E("signin-form").classList.remove("hidden");
     E("signin-fine-print").classList.remove("hidden");
+    if (su) showSignupStep(1);
   }
 
-  // -------------------------------------------------------------------------
-  // Signup identity toggle
-  // -------------------------------------------------------------------------
-  document.querySelectorAll('input[name="signup-identity"]').forEach((radio) => {
+  E("tab-signup").addEventListener("click", function () { switchTab("signup"); });
+  E("tab-signin").addEventListener("click", function () { switchTab("signin"); });
+
+  E("cover-read-btn").addEventListener("click", function () {
+    showView("view-auth");
+    switchTab("signin");
+  });
+  E("cover-signup-btn").addEventListener("click", function () {
+    showView("view-auth");
+    switchTab("signup");
+  });
+
+  document.querySelectorAll('input[name="signup-identity"]').forEach(function (radio) {
     radio.addEventListener("change", function () {
       const mob = document.querySelector('input[name="signup-identity"]:checked').value === "mobile";
       E("signup-email-field").classList.toggle("hidden", mob);
-      E("signup-mobile-field").classList.toggle("visible", mob);
+      E("signup-mobile-field").classList.toggle("hidden", !mob);
     });
   });
 
-  // -------------------------------------------------------------------------
-  // Channel checkbox wiring
-  // -------------------------------------------------------------------------
+  function showSignupStep(n) {
+    E("signup-step-1").classList.toggle("hidden", n !== 1);
+    E("signup-step-2").classList.toggle("hidden", n !== 2);
+  }
+
+  E("signup-next-btn").addEventListener("click", function () {
+    clearStatus(E("signup-status"));
+    const useMobile = document.querySelector('input[name="signup-identity"]:checked').value === "mobile";
+    const idVal = useMobile ? E("signup-mobile").value.trim() : E("signup-email").value.trim();
+    if (!idVal) {
+      setStatus(E("signup-status"), useMobile ? "Enter a mobile number." : "Enter an email address.", "error");
+      return;
+    }
+    if (!E("signup-password").value) {
+      setStatus(E("signup-status"), "Create a password.", "error");
+      return;
+    }
+    showSignupStep(2);
+  });
+  E("signup-back-btn").addEventListener("click", function () { showSignupStep(1); });
+
   function wireChannelOptions(container, onChannelToggle) {
-    container.querySelectorAll(".channel-option").forEach((opt) => {
-      opt.addEventListener("click", function (e) {
-        if (e.target.tagName !== "INPUT") {
-          const cb = opt.querySelector("input");
-          cb.checked = !cb.checked;
-        }
-        opt.classList.toggle("checked", opt.querySelector("input").checked);
+    container.querySelectorAll(".channel-option").forEach(function (opt) {
+      const cb = opt.querySelector("input");
+      const sync = function () {
+        opt.classList.toggle("checked", cb.checked);
         if (onChannelToggle) onChannelToggle();
-      });
+      };
+      cb.addEventListener("change", sync);
+      sync();
     });
   }
 
   wireChannelOptions(E("signup-form"), function () {
     const whatsappChecked = document.querySelector('#signup-form .channel-option[data-channel="whatsapp"] input').checked;
-    const telegramChecked = document.querySelector('#signup-form .channel-option[data-channel="telegram"] input').checked;
     E("whatsapp-field").classList.toggle("visible", whatsappChecked);
-    E("telegram-field").classList.toggle("visible", telegramChecked);
   });
-  wireChannelOptions(E("dashboard-channels"));
+  wireChannelOptions(E("view-profile"), function () {
+    document.querySelectorAll("#view-profile .conn-row .channel-option").forEach(function (opt) {
+      const on = opt.querySelector("input").checked;
+      const v = opt.querySelector("input").value;
+      setConnBadge("conn-" + v + "-badge", on);
+    });
+  });
 
-  // -------------------------------------------------------------------------
-  // Signup
-  // -------------------------------------------------------------------------
   E("signup-form").addEventListener("submit", async function (e) {
     e.preventDefault();
     clearStatus(E("signup-status"));
     const useMobile = document.querySelector('input[name="signup-identity"]:checked').value === "mobile";
-    const channels = Array.from(E("signup-form").querySelectorAll(".channel-option input:checked")).map((c) => c.value);
+    const channels = Array.from(E("signup-form").querySelectorAll(".channel-option input:checked")).map(function (c) { return c.value; });
     if (!channels.length) { setStatus(E("signup-status"), "Choose at least one delivery channel.", "error"); return; }
 
     const btn = E("signup-submit");
@@ -693,50 +702,46 @@ function drawQR(canvas, uri) {
 
     const rawMobile = E("signup-mobile").value.trim();
     const rawWhatsApp = E("whatsapp_number").value.trim();
-    
+
     const { ok, data } = await POST("/signup", {
       password: E("signup-password").value,
       email: useMobile ? undefined : E("signup-email").value.trim(),
-  
-      //Fallback to the WhatsApp field if the primary mobile field is blank
       mobile_number: useMobile ? rawMobile : (rawWhatsApp || undefined),
-      channels,
+      channels: channels,
       whatsapp_number: channels.includes("whatsapp") ? rawWhatsApp : undefined,
-      telegram_chat_id: channels.includes("telegram") ? E("telegram_chat_id").value.trim() : undefined,
     });
 
     btn.disabled = false; btn.textContent = "Create account";
 
     if (ok && data && data.status !== "error") {
       if (data.warning) {
-        setStatus(E("signup-status"), "Account created, but we couldn't send the confirmation email right now. Please try again shortly.", "error");
+        setStatus(E("signup-status"), "Account created, but we couldn’t send the confirmation email right now. Please try again shortly.", "error");
       } else if (data.status === "active") {
-        setStatus(E("signup-status"), "Account created! Sign in below.", "success");
+        setStatus(E("signup-status"), "Account created. Sign in below.", "success");
       } else {
-        setStatus(E("signup-status"), "Check your inbox — we've sent a confirmation link. Once verified, sign in below.", "success");
+        setStatus(E("signup-status"), "Check your inbox — we’ve sent a confirmation link. Once verified, sign in below.", "success");
       }
       E("signup-form").reset();
-      document.querySelectorAll("#signup-form .channel-option").forEach((o) => o.classList.remove("checked"));
+      document.querySelectorAll("#signup-form .channel-option").forEach(function (o) { o.classList.remove("checked"); });
       document.querySelector('#signup-form .channel-option[data-channel="email"] input').checked = true;
       document.querySelector('#signup-form .channel-option[data-channel="email"]').classList.add("checked");
       E("whatsapp-field").classList.remove("visible");
-      E("telegram-field").classList.remove("visible");
+      E("signup-mobile-field").classList.add("hidden");
+      E("signup-email-field").classList.remove("hidden");
+      showSignupStep(1);
       switchTab("signin");
     } else {
       setStatus(E("signup-status"), data.error || data.reason || "Something went wrong. Please try again.", "error");
     }
   });
 
-  // -------------------------------------------------------------------------
-  // Sign in
-  // -------------------------------------------------------------------------
   E("signin-form").addEventListener("submit", async function (e) {
     e.preventDefault();
     clearStatus(E("signin-status"));
     const btn = E("signin-submit");
     btn.disabled = true; btn.textContent = "Signing in…";
 
-    const { ok, status, data } = await POST("/login", {
+    const { ok, data } = await POST("/login", {
       login_id: E("signin-id").value.trim(),
       password: E("signin-password").value,
     });
@@ -761,9 +766,6 @@ function drawQR(canvas, uri) {
     }
   });
 
-  // -------------------------------------------------------------------------
-  // MFA challenge (second step after password-correct for MFA accounts)
-  // -------------------------------------------------------------------------
   E("mfa-submit-btn").addEventListener("click", async function () {
     clearStatus(E("signin-status"));
     const { ok, data } = await POST("/login/mfa", {
@@ -795,9 +797,6 @@ function drawQR(canvas, uri) {
     E("signin-fine-print").classList.remove("hidden");
   });
 
-  // -------------------------------------------------------------------------
-  // Forgot password flow
-  // -------------------------------------------------------------------------
   E("forgot-password-link").addEventListener("click", function () {
     E("signin-form").classList.add("hidden");
     E("signin-fine-print").classList.add("hidden");
@@ -826,62 +825,50 @@ function drawQR(canvas, uri) {
     E("forgot-id").value = "";
   });
 
-  // -------------------------------------------------------------------------
-  // Password reset landing page (/reset-password?token=...)
-  // -------------------------------------------------------------------------
-async function handlePasswordReset() {
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get("token");
-  const action = params.get("action");
-  
-  // Only intercept if token exists AND the path contains reset OR an action query parameter is explicit
-  if (!token || (!window.location.pathname.includes("reset-password") && action !== "reset")) {
-    return false; 
+  async function handlePasswordReset() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+    const action = params.get("action");
+    if (!token || (!window.location.pathname.includes("reset-password") && action !== "reset")) {
+      return false;
+    }
+    showView("view-reset-password");
+    return true;
   }
-  
-  showView("view-reset-password");
-  return true;
-}
 
   E("reset-submit-btn").addEventListener("click", async function () {
     clearStatus(E("reset-status"));
     const newPw = E("reset-new-password").value;
     const confirmPw = E("reset-confirm-password").value;
-    if (newPw.length < 8) { setStatus(E("reset-status"), "Password must be at least 8 characters.", "error"); return; }
-    if (newPw !== confirmPw) { setStatus(E("reset-status"), "Passwords don't match.", "error"); return; }
+    if (newPw.length < 12) { setStatus(E("reset-status"), "Password must be at least 12 characters.", "error"); return; }
+    if (newPw !== confirmPw) { setStatus(E("reset-status"), "Passwords don’t match.", "error"); return; }
 
     const btn = E("reset-submit-btn");
     btn.disabled = true; btn.textContent = "Setting password…";
     const token = new URLSearchParams(window.location.search).get("token");
-    const { ok, data } = await POST("/password/reset", { token, new_password: newPw });
+    const { ok, data } = await POST("/password/reset", { token: token, new_password: newPw });
     btn.disabled = false; btn.textContent = "Set new password";
 
     if (ok) {
-      setStatus(E("reset-status"), "Password updated! You can now sign in with your new password.", "success");
+      setStatus(E("reset-status"), "Password updated. You can now sign in with your new password.", "success");
       E("reset-form-wrap").classList.add("hidden");
-      setTimeout(() => { window.history.replaceState({}, "", "/"); showLandingState(); }, 2500);
+      setTimeout(function () { window.history.replaceState({}, "", "/"); showLandingState(); }, 2500);
     } else {
       setStatus(E("reset-status"), data.reason || "This reset link is invalid or has expired.", "error");
     }
   });
 
-  // -------------------------------------------------------------------------
-  // Email verification
-  // -------------------------------------------------------------------------
   async function handleEmailVerification() {
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     const action = params.get("action");
-  
-    // Guard clause: skip if it's explicitly a password reset context
     if (!token || window.location.pathname.includes("reset-password") || action === "reset") {
       return false;
     }
-  
     showView("view-verify");
-    const { ok, data } = await POST("/verify", { token });
+    const { ok, data } = await POST("/verify", { token: token });
     if (ok) {
-      setStatus(E("verify-status"), "Email confirmed! Sign in to view your briefing.", "success");
+      setStatus(E("verify-status"), "Email confirmed. Sign in to view your briefing.", "success");
       E("verify-telegram-prompt").classList.remove("hidden");
     } else {
       setStatus(E("verify-status"), data.reason || "This verification link is invalid or expired.", "error");
@@ -891,9 +878,6 @@ async function handlePasswordReset() {
 
   E("verify-go-to-signin").addEventListener("click", function () { showView("view-auth"); switchTab("signin"); });
 
-  // -------------------------------------------------------------------------
-  // Telegram linking (from dashboard)
-  // -------------------------------------------------------------------------
   E("dashboard-telegram-link-btn").addEventListener("click", async function () {
     const { ok, data } = await POST("/telegram/link", {});
     if (ok) { E("telegram-deep-link").href = data.deep_link; showView("view-telegram-link"); }
@@ -905,9 +889,6 @@ async function handlePasswordReset() {
     refreshChannelCheckboxes();
   });
 
-  // -------------------------------------------------------------------------
-  // Manage / unsubscribe
-  // -------------------------------------------------------------------------
   function openManage(e) { if (e) e.preventDefault(); showView("view-manage"); }
   E("manage-link-toggle").addEventListener("click", openManage);
   E("manage-link-toggle-2").addEventListener("click", openManage);
@@ -918,57 +899,107 @@ async function handlePasswordReset() {
     const email = E("manage-email").value.trim();
     if (!email) { setStatus(E("manage-status"), "Enter the email address you subscribed with.", "error"); return; }
     E("manage-unsubscribe-btn").disabled = true;
-    const { ok, data } = await POST("/unsubscribe", { email });
+    const { ok, data } = await POST("/unsubscribe", { email: email });
     E("manage-unsubscribe-btn").disabled = false;
-    setStatus(E("manage-status"), ok ? "You've been unsubscribed from all channels." : (data.error || "Something went wrong."), ok ? "success" : "error");
+    setStatus(E("manage-status"), ok ? "You’ve been unsubscribed from all channels." : (data.error || "Something went wrong."), ok ? "success" : "error");
   });
 
-  // -------------------------------------------------------------------------
-  // Dashboard: briefing + channels
-  // -------------------------------------------------------------------------
+  function biasClass(label) {
+    if (!label) return "flat";
+    if (String(label).indexOf("GAP_UP") === 0) return "up";
+    if (String(label).indexOf("GAP_DOWN") === 0) return "down";
+    return "flat";
+  }
+
+  function setBriefingBody(html, text) {
+    const el = E("briefing-article");
+    el.replaceChildren();
+    if (html) {
+      if (/<html[\s>]/i.test(html)) {
+        const frame = document.createElement("iframe");
+        frame.title = "MarketPulse India daily briefing";
+        frame.setAttribute("sandbox", "allow-same-origin");
+        frame.style.width = "100%";
+        frame.style.minHeight = "640px";
+        frame.style.border = "none";
+        frame.srcdoc = html;
+        el.appendChild(frame);
+      } else {
+        el.innerHTML = html;
+      }
+    } else {
+      const p = document.createElement("p");
+      p.className = "edition-empty";
+      p.textContent = text || "No content available.";
+      el.appendChild(p);
+    }
+  }
+
   async function loadBriefing() {
     clearStatus(E("dashboard-status"));
     E("briefing-available").classList.add("hidden");
     E("briefing-unavailable").classList.add("hidden");
+    E("bias-badge").classList.add("hidden");
     const { ok, data } = await GET("/briefing/latest");
     if (!ok) { setStatus(E("dashboard-status"), data.error || "Could not load your briefing right now.", "error"); return; }
     if (!data.available) { E("briefing-unavailable").classList.remove("hidden"); return; }
     E("briefing-run-date").textContent = data.run_date || "";
-    E("briefing-iframe").srcdoc = data.html || "<p>No content available.</p>";
+    if (data.bias_label) {
+      const badge = E("bias-badge");
+      badge.textContent = BIAS_COPY[data.bias_label] || data.bias_label;
+      badge.className = "bias-badge " + biasClass(data.bias_label);
+      badge.classList.remove("hidden");
+    }
+    setBriefingBody(data.html, data.text);
     E("briefing-available").classList.remove("hidden");
-    if (data.suppressed) setStatus(E("dashboard-status"), "Today's briefing was withheld by an automated compliance check; showing the most recent available edition.", "info");
+    if (data.suppressed) setStatus(E("dashboard-status"), "Today’s briefing was withheld by an automated compliance check; showing the most recent available edition.", "info");
+  }
+
+  function setConnBadge(id, on) {
+    const el = E(id);
+    el.textContent = on ? "On" : "Off";
+    el.className = on ? "badge on" : "badge";
   }
 
   function refreshChannelCheckboxes() {
     if (!currentSubscriber) return;
     const active = new Set(currentSubscriber.channels || []);
-    E("dashboard-channels").querySelectorAll(".channel-option").forEach((opt) => {
+    document.querySelectorAll("#view-profile .channel-option").forEach(function (opt) {
       const v = opt.querySelector("input").value;
       const checked = active.has(v);
       opt.querySelector("input").checked = checked;
       opt.classList.toggle("checked", checked);
     });
+    E("conn-email-detail").textContent = currentSubscriber.email
+      ? (currentSubscriber.verified_at ? currentSubscriber.email : currentSubscriber.email + " (unverified)")
+      : "No email on this account";
+    E("conn-whatsapp-detail").textContent = currentSubscriber.whatsapp_number
+      ? currentSubscriber.whatsapp_number
+      : "No WhatsApp number on file. Capture one at sign-up.";
+    E("conn-telegram-detail").textContent = currentSubscriber.telegram_chat_id
+      ? "Connected"
+      : "Connect with the official deep link. Do not type a chat id.";
+    setConnBadge("conn-email-badge", active.has("email"));
+    setConnBadge("conn-whatsapp-badge", active.has("whatsapp"));
+    setConnBadge("conn-telegram-badge", active.has("telegram"));
   }
 
   E("save-channels-btn").addEventListener("click", async function () {
     clearStatus(E("settings-status"));
-    const channels = Array.from(E("dashboard-channels").querySelectorAll(".channel-option input:checked")).map((c) => c.value);
+    const channels = Array.from(E("view-profile").querySelectorAll(".conn-row .channel-option input:checked")).map(function (c) { return c.value; });
     if (!channels.length) { setStatus(E("settings-status"), "Choose at least one delivery channel.", "error"); return; }
-    const { ok, data } = await POST("/channels", { channels });
-    if (ok) { currentSubscriber.channels = data.channels; setStatus(E("settings-status"), "Saved.", "success"); }
+    const { ok, data } = await POST("/channels", { channels: channels });
+    if (ok) { currentSubscriber.channels = data.channels; refreshChannelCheckboxes(); setStatus(E("settings-status"), "Saved.", "success"); }
     else { setStatus(E("settings-status"), data.error || "Could not save channels.", "error"); }
   });
 
-  // -------------------------------------------------------------------------
-  // Profile page: password change
-  // -------------------------------------------------------------------------
   E("changepw-btn").addEventListener("click", async function () {
     clearStatus(E("changepw-status"));
     const cur = E("changepw-current").value;
     const nw = E("changepw-new").value;
     const cf = E("changepw-confirm").value;
-    if (nw.length < 8) { setStatus(E("changepw-status"), "New password must be at least 8 characters.", "error"); return; }
-    if (nw !== cf) { setStatus(E("changepw-status"), "Passwords don't match.", "error"); return; }
+    if (nw.length < 12) { setStatus(E("changepw-status"), "New password must be at least 12 characters.", "error"); return; }
+    if (nw !== cf) { setStatus(E("changepw-status"), "Passwords don’t match.", "error"); return; }
     const btn = E("changepw-btn");
     btn.disabled = true; btn.textContent = "Updating…";
     const { ok, data } = await POST("/password/change", { current_password: cur, new_password: nw });
@@ -981,9 +1012,6 @@ async function handlePasswordReset() {
     }
   });
 
-  // -------------------------------------------------------------------------
-  // Profile page: MFA
-  // -------------------------------------------------------------------------
   function refreshMfaSection() {
     const on = currentSubscriber && currentSubscriber.mfa_enabled;
     E("mfa-off-section").classList.toggle("hidden", !!on);
@@ -1019,7 +1047,7 @@ async function handlePasswordReset() {
     if (ok) {
       E("mfa-enroll-step1").classList.add("hidden");
       const list = E("mfa-backup-codes-list");
-      list.innerHTML = data.backup_codes.map((c) => `<div class="backup-code">${c}</div>`).join("");
+      list.innerHTML = data.backup_codes.map(function (c) { return '<div class="backup-code">' + c + "</div>"; }).join("");
       E("mfa-backup-codes-display").classList.remove("hidden");
     } else {
       setStatus(E("mfa-status"), data.reason || "Incorrect code. Please try again.", "error");
@@ -1028,7 +1056,6 @@ async function handlePasswordReset() {
 
   E("mfa-backup-codes-done-btn").addEventListener("click", async function () {
     E("mfa-backup-codes-display").classList.add("hidden");
-    // Re-fetch subscriber so mfa_enabled is accurate before refreshing the section
     const { ok, data } = await GET("/me");
     if (ok) currentSubscriber = data.subscriber;
     refreshMfaSection();
@@ -1039,7 +1066,7 @@ async function handlePasswordReset() {
     const { ok, data } = await POST("/mfa/backup-codes/regenerate", {});
     if (ok) {
       const list = E("mfa-regen-codes-list");
-      list.innerHTML = data.backup_codes.map((c) => `<div class="backup-code">${c}</div>`).join("");
+      list.innerHTML = data.backup_codes.map(function (c) { return '<div class="backup-code">' + c + "</div>"; }).join("");
       E("mfa-regen-codes-display").classList.remove("hidden");
     } else {
       setStatus(E("mfa-status"), data.error || "Could not regenerate backup codes.", "error");
@@ -1072,32 +1099,26 @@ async function handlePasswordReset() {
     }
   });
 
-  // -------------------------------------------------------------------------
-  // View transitions
-  // -------------------------------------------------------------------------
   function showLandingState() {
     E("account-meta").classList.add("hidden");
-    E("masthead-title").textContent = "Tomorrow's open, before it opens.";
-    E("masthead-tagline").innerHTML = "A plain-English briefing for first-time investors, written before NSE rings the bell at 9:15&nbsp;AM&nbsp;IST.";
+    E("page-wrap").classList.add("cover-mode");
     E("page-wrap").classList.remove("dashboard");
-    showView("view-auth");
-    switchTab("signin");
+    showView("view-cover");
   }
 
   function enterDashboard() {
     E("account-meta").classList.remove("hidden");
     E("account-who").textContent = currentSubscriber.email || currentSubscriber.mobile_number || "Signed in";
-    E("masthead-title").textContent = "Today's open, decoded.";
-    E("masthead-tagline").textContent = "Your briefing, ready whenever you are.";
+    E("page-wrap").classList.remove("cover-mode");
     E("page-wrap").classList.add("dashboard");
     showView("view-dashboard");
     refreshChannelCheckboxes();
     loadBriefing();
   }
 
-  // Profile page open/close
   E("profile-btn").addEventListener("click", function () {
     refreshMfaSection();
+    refreshChannelCheckboxes();
     clearStatus(E("changepw-status"));
     E("changepw-current").value = ""; E("changepw-new").value = ""; E("changepw-confirm").value = "";
     showView("view-profile");
@@ -1105,7 +1126,6 @@ async function handlePasswordReset() {
 
   E("profile-back-btn").addEventListener("click", function () { showView("view-dashboard"); });
 
-  // Sign out
   E("signout-btn").addEventListener("click", async function () {
     await POST("/logout", {});
     setSession(null);
@@ -1113,9 +1133,6 @@ async function handlePasswordReset() {
     showLandingState();
   });
 
-  // -------------------------------------------------------------------------
-  // Session restore on page reload
-  // -------------------------------------------------------------------------
   async function restoreSession() {
     if (!sessionToken) return false;
     const { ok, data } = await GET("/me");
@@ -1129,51 +1146,26 @@ async function handlePasswordReset() {
     return false;
   }
 
-  // -------------------------------------------------------------------------
-  // IST countdown clock
-  // -------------------------------------------------------------------------
   const IST_OFFSET_MINUTES = 5 * 60 + 30;
-  const CHECKPOINTS = [
-    { hhmm: "06:00", minutes: 360 },
-    { hhmm: "06:45", minutes: 405 },
-    { hhmm: "06:50", minutes: 410 },
-    { hhmm: "07:00", minutes: 420 },
-    { hhmm: "09:15", minutes: 555 },
-  ];
-  const CP_NAMES = { "06:00":"pre-render begins","06:45":"GIFT Nifty snapshot","06:50":"today's briefing assembled","07:00":"delivery to your inbox","09:15":"NSE opens" };
-  const timelinePoints = Array.from(document.querySelectorAll(".timeline .point"));
+  const SEND_MINUTES = 7 * 60;
 
   function updateCountdown() {
     const now = new Date();
     const nowMin = (now.getUTCHours() * 60 + now.getUTCMinutes() + now.getUTCSeconds() / 60 + IST_OFFSET_MINUTES) % (24 * 60);
-    const nowSec = nowMin * 60;
-    try { E("edition-date").textContent = new Intl.DateTimeFormat("en-IN",{day:"2-digit",month:"short",timeZone:"Asia/Kolkata"}).format(now) + " · IST"; } catch (e) {}
-
-    let next = CHECKPOINTS.find((cp) => cp.minutes * 60 > nowSec) || CHECKPOINTS[0];
-    let sUntil = next === CHECKPOINTS[0] && nowSec >= CHECKPOINTS[CHECKPOINTS.length-1].minutes*60
-      ? 86400 - nowSec + next.minutes * 60
-      : next.minutes * 60 - nowSec;
-
-    const pad = (n) => String(Math.floor(n)).padStart(2, "0");
-    const h = Math.floor(sUntil/3600), m = Math.floor((sUntil%3600)/60), s = Math.floor(sUntil%60);
-    E("countdown-clock").innerHTML = '<span class="amber-dot" aria-hidden="true"></span>' + (h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`);
-    E("countdown-next-label").textContent = "until " + (CP_NAMES[next.hhmm] || "next checkpoint");
-
-    timelinePoints.forEach((pt) => {
-      const hhmm = pt.getAttribute("data-hhmm");
-      const cpMin = CHECKPOINTS.find((c) => c.hhmm === hhmm).minutes;
-      pt.classList.remove("done","active");
-      if (hhmm === next.hhmm) pt.classList.add("active");
-      else if (cpMin * 60 < nowSec) pt.classList.add("done");
-    });
+    try {
+      E("edition-date").textContent = new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", timeZone: "Asia/Kolkata" }).format(now) + " · IST";
+    } catch (e) {}
+    let sUntil = SEND_MINUTES * 60 - nowMin * 60;
+    if (sUntil <= 0) sUntil += 86400;
+    const pad = function (n) { return String(Math.floor(n)).padStart(2, "0"); };
+    const h = Math.floor(sUntil / 3600), m = Math.floor((sUntil % 3600) / 60), s = Math.floor(sUntil % 60);
+    const clock = h > 0 ? pad(h) + ":" + pad(m) + ":" + pad(s) : pad(m) + ":" + pad(s);
+    E("cover-clock").textContent = clock + " until 07:00 IST send · NSE opens 09:15";
   }
 
   updateCountdown();
   setInterval(updateCountdown, 1000);
 
-  // -------------------------------------------------------------------------
-  // Entry point
-  // -------------------------------------------------------------------------
   (async function init() {
     if (await handlePasswordReset()) return;
     if (await handleEmailVerification()) return;
