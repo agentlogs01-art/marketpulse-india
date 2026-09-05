@@ -775,6 +775,7 @@
   const API_BASE = window.location.origin + "/api";
   const SESSION_KEY = "marketpulse_session_token";
   const THEME_KEY = "marketpulse_theme";
+  const E = function (id) { return document.getElementById(id); };
   const BIAS_COPY = {
     GAP_UP_STRONG: "Market likely to open higher (>1%)",
     GAP_UP_MILD: "Market may open slightly higher",
@@ -782,6 +783,36 @@
     GAP_DOWN_MILD: "Market may open slightly lower",
     GAP_DOWN_STRONG: "Market likely to open lower (>1%)",
   };
+
+  let sessionToken = localStorage.getItem(SESSION_KEY) || null;
+  let currentSubscriber = null;
+  let pendingMfaChallenge = null;
+  let lastBriefingHtml = null;
+  let lastBriefingText = null;
+  let lastBackupCodes = [];
+
+  function restyleBriefingFrame() {
+    const article = E("briefing-article");
+    if (!article) return;
+    const frame = article.querySelector("iframe");
+    if (!frame) return;
+    try {
+      const doc = frame.contentDocument;
+      if (!doc) return;
+      let tag = doc.getElementById("mp-theme");
+      if (!tag) {
+        tag = doc.createElement("style");
+        tag.id = "mp-theme";
+        (doc.head || doc.documentElement).appendChild(tag);
+      }
+      tag.textContent = briefingThemeCss();
+      const dark = document.documentElement.getAttribute("data-theme") === "dark";
+      if (doc.body) {
+        doc.body.style.background = dark ? "#0B0E14" : "#F3EBE0";
+        doc.body.style.color = dark ? "#E8EEF8" : "#0B0E14";
+      }
+    } catch (err) {}
+  }
 
   function applyTheme(theme, silent) {
     document.documentElement.setAttribute("data-theme", theme);
@@ -802,13 +833,6 @@
 
   document.getElementById("theme-btn-light").addEventListener("click", function () { applyTheme("light"); });
   document.getElementById("theme-btn-dark").addEventListener("click", function () { applyTheme("dark"); });
-
-  let sessionToken = localStorage.getItem(SESSION_KEY) || null;
-  let currentSubscriber = null;
-  let pendingMfaChallenge = null;
-  let lastBriefingHtml = null;
-  let lastBriefingText = null;
-  let lastBackupCodes = [];
 
   function displayName(sub) {
     if (!sub) return "Signed in";
@@ -843,26 +867,6 @@
       ".muted,{color:" + muted + " !important;}";
   }
 
-  function restyleBriefingFrame() {
-    const frame = E("briefing-article") && E("briefing-article").querySelector("iframe");
-    if (!frame) return;
-    try {
-      const doc = frame.contentDocument;
-      if (!doc) return;
-      let tag = doc.getElementById("mp-theme");
-      if (!tag) {
-        tag = doc.createElement("style");
-        tag.id = "mp-theme";
-        (doc.head || doc.documentElement).appendChild(tag);
-      }
-      tag.textContent = briefingThemeCss();
-      if (doc.body) {
-        doc.body.style.background = document.documentElement.getAttribute("data-theme") === "dark" ? "#0B0E14" : "#F3EBE0";
-        doc.body.style.color = document.documentElement.getAttribute("data-theme") === "dark" ? "#E8EEF8" : "#0B0E14";
-      }
-    } catch (err) {}
-  }
-
   function downloadBackupCodes(codes) {
     const lines = (codes || []).join("\n");
     const blob = new Blob(["MarketPulse India 2FA backup codes\nEach code works once.\n\n" + lines + "\n"], { type: "text/plain" });
@@ -874,7 +878,6 @@
     URL.revokeObjectURL(url);
   }
 
-  const E = function (id) { return document.getElementById(id); };
   const VIEWS = ["view-cover","view-auth","view-verify","view-reset-password","view-telegram-link","view-manage","view-dashboard","view-profile"];
 
   function showView(id) {
