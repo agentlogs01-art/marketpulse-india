@@ -1579,16 +1579,29 @@
     searchTimer = setTimeout(async function () {
       const { ok, data } = await GET("/v1/stocks/search?q=" + encodeURIComponent(q));
       const box = E("stock-search-hits");
-      if (!ok || !data.results.length) { box.classList.add("hidden"); return; }
-      box.innerHTML = data.results.map(function (r) {
+      if (!ok) { box.classList.add("hidden"); return; }
+      const rows = data.results || [];
+      if (!rows.length) {
+        box.innerHTML = "<button type='button' disabled>No matching NSE/BSE name or ticker</button>";
+        box.classList.remove("hidden");
+        return;
+      }
+      box.innerHTML = rows.map(function (r) {
         return "<button type='button' data-symbol='" + r.symbol + "'>" + r.company_name +
           " <span class='mono'>· " + r.nse_symbol + "</span></button>";
       }).join("");
       box.classList.remove("hidden");
-      box.querySelectorAll("button").forEach(function (b) {
+      box.querySelectorAll("button[data-symbol]").forEach(function (b) {
         b.addEventListener("click", function () { renderStockDetail(b.getAttribute("data-symbol")); });
       });
     }, 180);
+  });
+
+  E("stock-search").addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter") return;
+    ev.preventDefault();
+    const first = E("stock-search-hits").querySelector("button[data-symbol]");
+    if (first) renderStockDetail(first.getAttribute("data-symbol"));
   });
 
   async function postPortfolio(form) {
@@ -1763,7 +1776,11 @@
     const now = new Date();
     const nowMin = (now.getUTCHours() * 60 + now.getUTCMinutes() + now.getUTCSeconds() / 60 + IST_OFFSET_MINUTES) % (24 * 60);
     try {
-      E("edition-date").textContent = new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", timeZone: "Asia/Kolkata" }).format(now) + " · IST";
+      E("edition-date").textContent = new Intl.DateTimeFormat("en-IN", {
+        weekday: "short", day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hour12: false, timeZone: "Asia/Kolkata"
+      }).format(now) + " IST";
     } catch (e) {}
     let sUntil = SEND_MINUTES * 60 - nowMin * 60;
     if (sUntil <= 0) sUntil += 86400;
