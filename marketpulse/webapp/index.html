@@ -793,6 +793,7 @@
     if (!silent && sessionToken) {
       apiRequest("POST", "/theme", { theme }).catch(function () {});
     }
+    restyleBriefingFrame();
   }
 
   (function initTheme() {
@@ -805,6 +806,73 @@
   let sessionToken = localStorage.getItem(SESSION_KEY) || null;
   let currentSubscriber = null;
   let pendingMfaChallenge = null;
+  let lastBriefingHtml = null;
+  let lastBriefingText = null;
+  let lastBackupCodes = [];
+
+  function displayName(sub) {
+    if (!sub) return "Signed in";
+    const n = [sub.first_name, sub.last_name].filter(Boolean).join(" ").trim();
+    return n || sub.email || sub.mobile_number || "Signed in";
+  }
+
+  function displayInitials(sub) {
+    if (!sub) return "MP";
+    const f = (sub.first_name || "").trim();
+    const l = (sub.last_name || "").trim();
+    if (f && l) return (f.charAt(0) + l.charAt(0)).toUpperCase();
+    if (f) return f.slice(0, 2).toUpperCase();
+    const src = (sub.email || sub.mobile_number || "MP").replace(/^\+/, "");
+    return src.slice(0, 2).toUpperCase();
+  }
+
+  function refreshHeaderIdentity() {
+    E("account-who").textContent = displayName(currentSubscriber);
+    E("account-initials").textContent = displayInitials(currentSubscriber);
+  }
+
+  function briefingThemeCss() {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    const bg = dark ? "#0B0E14" : "#F3EBE0";
+    const ink = dark ? "#E8EEF8" : "#0B0E14";
+    const muted = dark ? "#9AA6BA" : "#5C5348";
+    const line = dark ? "#232D3F" : "#D9CFC0";
+    return "html,body{background:" + bg + " !important;color:" + ink + " !important;}" +
+      "body,p,td,th,li,div,span,h1,h2,h3,h4,table{color:" + ink + " !important;}" +
+      "a{color:" + ink + " !important;} td,th,tr{border-color:" + line + " !important;}" +
+      ".muted,{color:" + muted + " !important;}";
+  }
+
+  function restyleBriefingFrame() {
+    const frame = E("briefing-article") && E("briefing-article").querySelector("iframe");
+    if (!frame) return;
+    try {
+      const doc = frame.contentDocument;
+      if (!doc) return;
+      let tag = doc.getElementById("mp-theme");
+      if (!tag) {
+        tag = doc.createElement("style");
+        tag.id = "mp-theme";
+        (doc.head || doc.documentElement).appendChild(tag);
+      }
+      tag.textContent = briefingThemeCss();
+      if (doc.body) {
+        doc.body.style.background = document.documentElement.getAttribute("data-theme") === "dark" ? "#0B0E14" : "#F3EBE0";
+        doc.body.style.color = document.documentElement.getAttribute("data-theme") === "dark" ? "#E8EEF8" : "#0B0E14";
+      }
+    } catch (err) {}
+  }
+
+  function downloadBackupCodes(codes) {
+    const lines = (codes || []).join("\n");
+    const blob = new Blob(["MarketPulse India 2FA backup codes\nEach code works once.\n\n" + lines + "\n"], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "marketpulse-2fa-backup-codes.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   const E = function (id) { return document.getElementById(id); };
   const VIEWS = ["view-cover","view-auth","view-verify","view-reset-password","view-telegram-link","view-manage","view-dashboard","view-profile"];
@@ -958,6 +1026,8 @@
       mobile_number: useMobile ? rawMobile : (rawWhatsApp || undefined),
       channels: channels,
       whatsapp_number: channels.includes("whatsapp") ? rawWhatsApp : undefined,
+      first_name: E("signup-first-name").value.trim() || undefined,
+      last_name: E("signup-last-name").value.trim() || undefined,
     });
 
     btn.disabled = false; btn.textContent = "Create account";
@@ -1165,6 +1235,8 @@
   }
 
   function setBriefingBody(html, text) {
+    lastBriefingHtml = html || null;
+    lastBriefingText = text || null;
     const el = E("briefing-article");
     el.replaceChildren();
     if (html) {
@@ -1175,10 +1247,16 @@
         frame.style.width = "100%";
         frame.style.minHeight = "640px";
         frame.style.border = "none";
-        frame.srcdoc = html;
+        frame.style.background = "transparent";
+        const css = "<style id=\"mp-theme\">" + briefingThemeCss() + "</style>";
+        frame.srcdoc = /<head>/i.test(html) ? html.replace(/<head>/i, "<head>" + css) : css + html;
+        frame.addEventListener("load", restyleBriefingFrame);
         el.appendChild(frame);
       } else {
-        el.innerHTML = html;
+        const wrap = document.createElement("div");
+        wrap.className = "briefing-html";
+        wrap.innerHTML = html;
+        el.appendChild(wrap);
       }
     } else {
       const p = document.createElement("p");
