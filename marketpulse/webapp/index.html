@@ -345,11 +345,12 @@
   .bar { height: 8px; border-radius: 99px; background: var(--fill); overflow: hidden; border: 1px solid var(--line); }
   .bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--amethyst)); }
   .search-box { position: relative; }
+  .search-wrap { position: relative; }
   .search-box input { margin-bottom: 0; }
   .search-hits {
-    position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 5;
+    position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
     background: var(--obsidian); color: #e8eef8; border: 1px solid #232d3f; border-radius: 12px;
-    overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.35);
+    overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.35); max-height: 280px; overflow-y: auto;
   }
   [data-theme="light"] .search-hits { background: #fffaf3; color: var(--ink); border-color: var(--line); }
   .search-hits button {
@@ -357,6 +358,29 @@
     color: inherit; padding: 10px 12px; font-family: inherit; cursor: pointer; font-size: 13px;
   }
   .search-hits button:hover { background: rgba(99,102,241,.18); }
+  .ticker-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .ticker-chip {
+    display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line);
+    background: var(--fill); color: var(--ink); border-radius: 999px; padding: 5px 10px;
+    font-size: 12px; font-weight: 650; cursor: pointer; font-family: inherit;
+  }
+  .ticker-chip:hover { border-color: var(--accent); }
+  .ticker-chip .star { color: var(--gold); }
+  .delta { font-size: 12px; font-weight: 700; margin-top: 4px; }
+  .delta.up { color: var(--green); }
+  .delta.down { color: var(--red); }
+  .delta.flat { color: var(--muted); }
+  .fav-btn {
+    border: 1px solid var(--line); background: var(--fill); color: var(--muted);
+    border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .fav-btn.on { color: var(--gold); border-color: var(--gold); }
+  .bond-table-wrap { overflow-x: auto; margin-top: 8px; }
+  .bond-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .bond-table th, .bond-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .bond-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+  .stock-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
   .chip { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; }
   .chip.gold { background: rgba(245,158,11,.16); color: var(--gold); }
   .chip.jade { background: var(--accent-soft); color: var(--green); }
@@ -624,9 +648,12 @@
         <div class="kicker-sm">Stock &amp; asset lookup</div>
         <h3>NSE / BSE fundamentals</h3>
         <label for="stock-search">Company or ticker</label>
-        <input type="text" id="stock-search" placeholder="INFY, TCS, Hindustan Unilever…" autocomplete="off">
-        <div id="stock-search-hits" class="search-hits hidden"></div>
-        <p class="fine-print">Long-term health metrics only — no candles, order books, or F&amp;O chains.</p>
+        <div class="search-wrap">
+          <input type="text" id="stock-search" placeholder="INFY, TCS, Hindustan Unilever…" autocomplete="off">
+          <div id="stock-search-hits" class="search-hits hidden"></div>
+        </div>
+        <div id="ticker-watch" class="ticker-chips"></div>
+        <p class="fine-print">Long-term health metrics only — no candles, order books, or F&amp;O chains. Star a ticker to keep it in Favourites; recent lookups stay listed so you can open the next name.</p>
       </article>
       <div id="stock-detail-card" class="hidden"></div>
     </div>
@@ -684,7 +711,26 @@
 
     <div id="hub-passive" class="hidden">
       <article class="glass-card sgb-box" id="sgb-highlight"></article>
+      <h3 class="section-label">Index sleeves</h3>
       <div class="card-grid" id="passive-cards"></div>
+      <h3 class="section-label">Secured bonds</h3>
+      <p class="conn-detail">RBI, state government, and AAA/AA+ secured corporate issues used in a long-term debt sleeve. Educational sample — not a live book of every ISIN.</p>
+      <div class="bond-table-wrap">
+        <table class="bond-table">
+          <thead>
+            <tr>
+              <th>Issue</th>
+              <th>Type</th>
+              <th>Coupon</th>
+              <th>Tenure</th>
+              <th>YTM</th>
+              <th>Issued</th>
+              <th>Rating</th>
+            </tr>
+          </thead>
+          <tbody id="bond-rows"></tbody>
+        </table>
+      </div>
     </div>
 
     <div id="hub-alerts" class="hidden">
@@ -1576,6 +1622,8 @@
 
   const HUBS = ["overview", "briefing", "portfolio", "passive", "alerts"];
   let searchTimer = null;
+  let searchSeq = 0;
+  let tickerWatch = { recents: [], favorites: [] };
 
   function showHub(name) {
     HUBS.forEach(function (h) {
@@ -1623,6 +1671,20 @@
     return Number(n).toLocaleString("en-IN", { maximumFractionDigits: d || 2 });
   }
 
+  function fmtSignedPct(n, digits) {
+    if (n === null || n === undefined || n === "") return "—";
+    const num = Number(n);
+    const d = digits == null ? 1 : digits;
+    const sign = num > 0 ? "+" : "";
+    return sign + num.toFixed(d) + "%";
+  }
+
+  function deltaClass(direction) {
+    if (direction === "up") return "delta up";
+    if (direction === "down") return "delta down";
+    return "delta flat";
+  }
+
   async function loadInvestorOverview() {
     const zoneRes = await GET("/v1/investor/valuation-zone");
     if (zoneRes.ok) {
@@ -1652,6 +1714,7 @@
       E("health-ratio").textContent = "Equity-to-debt —";
       E("health-warnings").innerHTML = "";
     }
+    refreshTickerWatch();
   }
 
   async function loadPortfolioHub() {
@@ -1717,6 +1780,15 @@
         "</p><p>YTM <strong>" + ytm + "</strong> · ER <strong>" + er + "</strong></p>" +
         "<p class='fine-print'>" + (it.tax_rules || "") + "</p><p class='conn-detail'>" + (it.notes || "") + "</p></article>";
     }).join("");
+    const bonds = data.secured_bonds || [];
+    E("bond-rows").innerHTML = bonds.map(function (b) {
+      return "<tr><td><strong>" + (b.name || "") + "</strong><div class='conn-detail'>" + (b.notes || "") +
+        "</div></td><td>" + (b.issuer_type || "") + "</td><td>" +
+        (b.coupon_pct == null ? "—" : Number(b.coupon_pct).toFixed(2) + "%") + "</td><td>" +
+        (b.tenure_years == null ? "—" : b.tenure_years + "y") + "</td><td>" +
+        (b.ytm == null ? "—" : Number(b.ytm).toFixed(2) + "%") + "</td><td class='mono'>" +
+        (b.issued_on || "—") + "</td><td>" + (b.rating || "—") + "</td></tr>";
+    }).join("") || "<tr><td colspan='7'>No secured-bond sample loaded.</td></tr>";
   }
 
   async function loadAlertsHub() {
@@ -1733,68 +1805,150 @@
     }).join("");
   }
 
+  async function refreshTickerWatch() {
+    const { ok, data } = await GET("/v1/investor/tickers");
+    if (ok) {
+      tickerWatch.recents = data.recents || [];
+      tickerWatch.favorites = data.favorites || [];
+    }
+    renderTickerWatch();
+  }
+
+  function renderTickerWatch() {
+    const box = E("ticker-watch");
+    if (!box) return;
+    const favIds = {};
+    (tickerWatch.favorites || []).forEach(function (t) { favIds[t.symbol] = true; });
+    const seen = {};
+    const chips = [];
+    function addChip(t, starred) {
+      if (!t || !t.symbol || seen[t.symbol]) return;
+      seen[t.symbol] = true;
+      chips.push(
+        "<button type='button' class='ticker-chip' data-symbol='" + t.symbol + "'>" +
+        (starred ? "<span class='star' aria-hidden='true'>★</span>" : "") +
+        "<span class='mono'>" + (t.nse_symbol || t.symbol) + "</span></button>"
+      );
+    }
+    (tickerWatch.favorites || []).forEach(function (t) { addChip(t, true); });
+    (tickerWatch.recents || []).forEach(function (t) { addChip(t, !!favIds[t.symbol]); });
+    box.innerHTML = chips.join("") || "<span class='conn-detail'>Look up a ticker, then star it to pin it here.</span>";
+    box.querySelectorAll("button[data-symbol]").forEach(function (b) {
+      b.addEventListener("click", function () { pickStock(b.getAttribute("data-symbol")); });
+    });
+  }
+
+  function wireHitButtons(box) {
+    box.querySelectorAll("button[data-symbol]").forEach(function (b) {
+      b.addEventListener("mousedown", function (ev) { ev.preventDefault(); });
+      b.addEventListener("click", function () { pickStock(b.getAttribute("data-symbol")); });
+    });
+  }
+
+  async function runStockSearch(q) {
+    const seq = ++searchSeq;
+    const box = E("stock-search-hits");
+    const { ok, data } = await GET("/v1/stocks/search?q=" + encodeURIComponent(q));
+    if (seq !== searchSeq) return;
+    if (!ok) { box.classList.add("hidden"); return; }
+    const rows = data.results || [];
+    if (!rows.length) {
+      box.innerHTML = "<button type='button' disabled>No matching NSE/BSE name or ticker</button>";
+      box.classList.remove("hidden");
+      return;
+    }
+    box.innerHTML = rows.map(function (r) {
+      return "<button type='button' data-symbol='" + r.symbol + "'>" + r.company_name +
+        " <span class='mono'>· " + r.nse_symbol + "</span></button>";
+    }).join("");
+    box.classList.remove("hidden");
+    wireHitButtons(box);
+  }
+
+  function pickStock(symbol) {
+    E("stock-search").value = "";
+    E("stock-search-hits").classList.add("hidden");
+    renderStockDetail(symbol);
+  }
+
   async function renderStockDetail(symbol) {
     const { ok, data } = await GET("/v1/stocks/" + encodeURIComponent(symbol));
     if (!ok) return;
     const s = data.stock;
-    const lo = Number(s.week52_low || 0), hi = Number(s.week52_high || 0), px = Number(s.current_price || 0);
-    const pct = hi > lo ? ((px - lo) / (hi - lo)) * 100 : 50;
-    const metrics = [
-      ["P/E vs 5-yr median", (s.pe || "—") + " / " + (s.pe_5yr_median || "—"), "am"],
-      ["ROE", (s.roe || "—") + "%", "jade"],
-      ["ROCE", (s.roce || "—") + "%", "jade"],
-      ["Debt / equity", s.debt_to_equity, ""],
-      ["FCF (₹ cr)", fmtNum(s.fcf_crore, 0), ""],
-      ["Dividend yield", (s.dividend_yield || "—") + "%", "gold"]
-    ];
+    const w52 = s.week52 || {};
+    const lo = Number(w52.low || s.week52_low || 0);
+    const hi = Number(w52.high || s.week52_high || 0);
+    const px = Number(w52.price || s.current_price || 0);
+    const pct = w52.range_pct != null ? Number(w52.range_pct) : (hi > lo ? ((px - lo) / (hi - lo)) * 100 : 50);
+    const peDelta = s.valuation_vs_median;
+    const peLine = (s.pe || "—") + " / " + (s.pe_5yr_median || "—");
+    let metricHtml = "<div class='metric'><div class='lbl'>P/E vs 5-yr median</div><div class='val'>" + peLine +
+      "</div><div class='" + deltaClass(peDelta > 0 ? "down" : peDelta < 0 ? "up" : "flat") + "'>" +
+      (peDelta == null ? "—" : fmtSignedPct(peDelta, 2) + " vs median") + "</div></div>";
+    (s.metric_deltas || []).forEach(function (m) {
+      const unit = m.unit || "";
+      const shown = m.value == null ? "—" : (m.key === "fcf_crore" ? fmtNum(m.value, 0) : m.value + unit);
+      metricHtml += "<div class='metric'><div class='lbl'>" + m.label + "</div><div class='val'>" + shown +
+        "</div><div class='" + deltaClass(m.direction) + "'>" + fmtSignedPct(m.delta_pct) +
+        " vs " + (s.sector || "sector") + " median " +
+        (m.sector_median == null ? "—" : (m.key === "fcf_crore" ? fmtNum(m.sector_median, 0) : m.sector_median + unit)) +
+        "</div></div>";
+    });
     const filings = (s.filings || []).map(function (f) {
       return "<div class='item'><div class='when'>" + (f.filed_at || "") + " · " + (f.source || "NSE") +
         "</div><strong>" + (f.headline || "") + "</strong><p class='conn-detail'>3–5 year takeaway: " +
         (f.summary_3_5yr || "") + "</p></div>";
     }).join("") || "<p class='conn-detail'>No recent exchange notes in the educational feed.</p>";
+    const favClass = s.is_favorite ? "fav-btn on" : "fav-btn";
+    const favLabel = s.is_favorite ? "★ Favourite" : "☆ Mark favourite";
     E("stock-detail-card").classList.remove("hidden");
     E("stock-detail-card").innerHTML =
-      "<article class='glass-card'><div class='kicker-sm'>" + (s.sector || "") + " · " + (s.market_cap_category || "") +
-      "</div><h3>" + s.company_name + "</h3><p class='mono'>" + s.nse_symbol + " · BSE " + s.bse_code +
-      " · ₹" + fmtNum(s.current_price, 2) + "</p><div class='range'><i style='left:" + Math.max(0, Math.min(pct, 100)) +
-      "%'></i></div><p class='conn-detail'>52-week ₹" + fmtNum(lo, 0) + " – ₹" + fmtNum(hi, 0) +
-      "</p><div class='metric-row'>" + metrics.map(function (m) {
-        return "<div class='metric'><div class='lbl'>" + m[0] + "</div><div class='val'>" + m[1] + "</div></div>";
-      }).join("") + "</div><div class='section-label'>Official announcements</div><div class='timeline'>" + filings +
-      "</div></article>";
+      "<article class='glass-card'><div class='stock-head'><div><div class='kicker-sm'>" + (s.sector || "") +
+      " · " + (s.market_cap_category || "") + "</div><h3>" + s.company_name + "</h3></div>" +
+      "<button type='button' class='" + favClass + "' id='ticker-fav-btn' data-symbol='" + s.symbol +
+      "' data-on='" + (s.is_favorite ? "1" : "0") + "'>" + favLabel + "</button></div>" +
+      "<p class='mono'>₹" + fmtNum(px, 2) + " · " + s.nse_symbol + " · BSE " + s.bse_code + "</p>" +
+      "<p class='" + deltaClass(w52.direction) + "'>52-week ₹" + fmtNum(lo, 0) + " – ₹" + fmtNum(hi, 0) +
+      " · " + fmtSignedPct(w52.from_low_pct) + " from low · " + fmtSignedPct(w52.from_high_pct) + " from high</p>" +
+      "<div class='range'><i style='left:" + Math.max(0, Math.min(pct, 100)) + "%'></i></div>" +
+      "<div class='metric-row'>" + metricHtml + "</div>" +
+      "<div class='section-label'>Official announcements</div><div class='timeline'>" + filings + "</div></article>";
     E("stock-search-hits").classList.add("hidden");
+    const favBtn = E("ticker-fav-btn");
+    if (favBtn) {
+      favBtn.addEventListener("click", async function () {
+        const on = favBtn.getAttribute("data-on") !== "1";
+        const res = await POST("/v1/investor/tickers", { symbol: s.symbol, is_favorite: on });
+        if (res.ok) {
+          tickerWatch.recents = res.data.recents || [];
+          tickerWatch.favorites = res.data.favorites || [];
+          renderTickerWatch();
+          favBtn.setAttribute("data-on", on ? "1" : "0");
+          favBtn.className = on ? "fav-btn on" : "fav-btn";
+          favBtn.textContent = on ? "★ Favourite" : "☆ Mark favourite";
+        }
+      });
+    }
+    refreshTickerWatch();
   }
 
   E("stock-search").addEventListener("input", function () {
     const q = E("stock-search").value.trim();
     clearTimeout(searchTimer);
     if (q.length < 1) { E("stock-search-hits").classList.add("hidden"); return; }
-    searchTimer = setTimeout(async function () {
-      const { ok, data } = await GET("/v1/stocks/search?q=" + encodeURIComponent(q));
-      const box = E("stock-search-hits");
-      if (!ok) { box.classList.add("hidden"); return; }
-      const rows = data.results || [];
-      if (!rows.length) {
-        box.innerHTML = "<button type='button' disabled>No matching NSE/BSE name or ticker</button>";
-        box.classList.remove("hidden");
-        return;
-      }
-      box.innerHTML = rows.map(function (r) {
-        return "<button type='button' data-symbol='" + r.symbol + "'>" + r.company_name +
-          " <span class='mono'>· " + r.nse_symbol + "</span></button>";
-      }).join("");
-      box.classList.remove("hidden");
-      box.querySelectorAll("button[data-symbol]").forEach(function (b) {
-        b.addEventListener("click", function () { renderStockDetail(b.getAttribute("data-symbol")); });
-      });
-    }, 180);
+    searchTimer = setTimeout(function () { runStockSearch(q); }, 160);
+  });
+
+  E("stock-search").addEventListener("focus", function () {
+    const q = E("stock-search").value.trim();
+    if (q.length >= 1) runStockSearch(q);
   });
 
   E("stock-search").addEventListener("keydown", function (ev) {
     if (ev.key !== "Enter") return;
     ev.preventDefault();
     const first = E("stock-search-hits").querySelector("button[data-symbol]");
-    if (first) renderStockDetail(first.getAttribute("data-symbol"));
+    if (first) pickStock(first.getAttribute("data-symbol"));
   });
 
   async function postPortfolio(form) {

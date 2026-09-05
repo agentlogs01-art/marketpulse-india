@@ -531,6 +531,176 @@ FIXED_INCOME = [
     },
 ]
 
+# Educational sample of sovereign and secured issues commonly used in a
+# long-term debt sleeve. Not a live exchange dump of every outstanding ISIN.
+SECURED_BONDS = [
+    {
+        "id": "rbi_frb_taxable",
+        "name": "RBI Floating Rate Savings Bonds 2020 (Taxable)",
+        "issuer_type": "RBI Bond",
+        "coupon_pct": 8.05,
+        "tenure_years": 7,
+        "ytm": 8.05,
+        "issued_on": "2020-07-01",
+        "rating": "Sovereign",
+        "notes": "Rate resets every 6 months. 7-year lock-in. Interest taxed at slab.",
+    },
+    {
+        "id": "goi_gsec_2034",
+        "name": "GOI 7.18% 2034 G-Sec",
+        "issuer_type": "Central government",
+        "coupon_pct": 7.18,
+        "tenure_years": 8,
+        "ytm": 6.92,
+        "issued_on": "2024-07-22",
+        "rating": "Sovereign",
+        "notes": "Benchmark sovereign. Hold via RBI Retail Direct or a gilt fund.",
+    },
+    {
+        "id": "goi_gsec_2064",
+        "name": "GOI 7.09% 2064 G-Sec",
+        "issuer_type": "Central government",
+        "coupon_pct": 7.09,
+        "tenure_years": 38,
+        "ytm": 7.04,
+        "issued_on": "2024-01-15",
+        "rating": "Sovereign",
+        "notes": "Ultra-long gilt. Duration risk is high; size modestly.",
+    },
+    {
+        "id": "sdl_mh_2034",
+        "name": "Maharashtra SDL 7.32% 2034",
+        "issuer_type": "State government",
+        "coupon_pct": 7.32,
+        "tenure_years": 10,
+        "ytm": 7.22,
+        "issued_on": "2024-03-12",
+        "rating": "Sovereign (state)",
+        "notes": "State development loan. Typically 20–40 bps over G-Sec of similar tenor.",
+    },
+    {
+        "id": "sdl_tn_2033",
+        "name": "Tamil Nadu SDL 7.41% 2033",
+        "issuer_type": "State government",
+        "coupon_pct": 7.41,
+        "tenure_years": 9,
+        "ytm": 7.28,
+        "issued_on": "2024-02-06",
+        "rating": "Sovereign (state)",
+        "notes": "SDL cash-flows are state-backed. Prefer a ladder of maturities.",
+    },
+    {
+        "id": "sdl_gj_2036",
+        "name": "Gujarat SDL 7.25% 2036",
+        "issuer_type": "State government",
+        "coupon_pct": 7.25,
+        "tenure_years": 12,
+        "ytm": 7.19,
+        "issued_on": "2024-05-21",
+        "rating": "Sovereign (state)",
+        "notes": "Stronger-state SDL. Still mark-to-market if not held to maturity.",
+    },
+    {
+        "id": "sdl_ka_2032",
+        "name": "Karnataka SDL 7.38% 2032",
+        "issuer_type": "State government",
+        "coupon_pct": 7.38,
+        "tenure_years": 8,
+        "ytm": 7.21,
+        "issued_on": "2024-04-16",
+        "rating": "Sovereign (state)",
+        "notes": "Use inside the secured-debt bucket, not as a trading sleeve.",
+    },
+    {
+        "id": "nhai_ncd_2029",
+        "name": "NHAI 7.60% Secured NCD 2029",
+        "issuer_type": "Corporate (AAA PSU)",
+        "coupon_pct": 7.60,
+        "tenure_years": 5,
+        "ytm": 7.35,
+        "issued_on": "2024-06-10",
+        "rating": "CRISIL AAA / ICRA AAA",
+        "notes": "Secured against NHAI assets. PSU infrastructure credit.",
+    },
+    {
+        "id": "rec_ncd_2031",
+        "name": "REC 7.72% Secured NCD 2031",
+        "issuer_type": "Corporate (AAA PSU)",
+        "coupon_pct": 7.72,
+        "tenure_years": 7,
+        "ytm": 7.48,
+        "issued_on": "2024-08-19",
+        "rating": "CRISIL AAA / CARE AAA",
+        "notes": "Power-sector PSU. Treat as AAA corporate, not G-Sec.",
+    },
+    {
+        "id": "pfc_ncd_2030",
+        "name": "PFC 7.68% Secured NCD 2030",
+        "issuer_type": "Corporate (AAA PSU)",
+        "coupon_pct": 7.68,
+        "tenure_years": 6,
+        "ytm": 7.44,
+        "issued_on": "2024-09-03",
+        "rating": "CRISIL AAA / ICRA AAA",
+        "notes": "Secured NCD. Liquidity is thinner than G-Sec; hold to cash-flow dates.",
+    },
+    {
+        "id": "irfc_ncd_2032",
+        "name": "IRFC 7.45% Secured NCD 2032",
+        "issuer_type": "Corporate (AAA PSU)",
+        "coupon_pct": 7.45,
+        "tenure_years": 8,
+        "ytm": 7.30,
+        "issued_on": "2024-01-29",
+        "rating": "CRISIL AAA",
+        "notes": "Railway finance PSU. Coupon is taxable at slab unless held in a tax-free vintage.",
+    },
+    {
+        "id": "hudco_ncd_2028",
+        "name": "HUDCO 7.55% Secured NCD 2028",
+        "issuer_type": "Corporate (AAA PSU)",
+        "coupon_pct": 7.55,
+        "tenure_years": 4,
+        "ytm": 7.28,
+        "issued_on": "2024-11-12",
+        "rating": "ICRA AAA / CARE AAA",
+        "notes": "Housing PSU secured paper. Keep issuer concentration low.",
+    },
+    {
+        "id": "hdfc_ncd_2029",
+        "name": "HDFC Ltd 7.80% Secured NCD 2029",
+        "issuer_type": "Corporate (AAA)",
+        "coupon_pct": 7.80,
+        "tenure_years": 5,
+        "ytm": 7.52,
+        "issued_on": "2023-12-18",
+        "rating": "CRISIL AAA / ICRA AAA",
+        "notes": "Housing-finance secured NCD. Credit is strong; still not sovereign.",
+    },
+    {
+        "id": "lt_ncd_2030",
+        "name": "L&T 7.70% Secured NCD 2030",
+        "issuer_type": "Corporate (AAA)",
+        "coupon_pct": 7.70,
+        "tenure_years": 6,
+        "ytm": 7.40,
+        "issued_on": "2024-02-28",
+        "rating": "CRISIL AAA",
+        "notes": "Industrial conglomerate secured NCD. Check remaining face value on NSE/BSE.",
+    },
+    {
+        "id": "bajaj_ncd_2027",
+        "name": "Bajaj Finance 8.05% Secured NCD 2027",
+        "issuer_type": "Corporate (AAA)",
+        "coupon_pct": 8.05,
+        "tenure_years": 3,
+        "ytm": 7.62,
+        "issued_on": "2024-10-07",
+        "rating": "CRISIL AAA / ICRA AAA",
+        "notes": "NBFC secured NCD. Higher coupon vs G-Sec compensates for credit and liquidity.",
+    },
+]
+
 SGB_SERIES = [
     {
         "series": "SGBNOV27",
@@ -662,7 +832,7 @@ def enrich_holding(row: dict) -> dict:
     return out
 
 
-def search_stocks(query: str, limit: int = 8) -> list:
+def search_stocks(query: str, limit: int = 10) -> list:
     q = (query or "").strip().lower()
     q = q.replace(".ns", "").replace(".bo", "").replace(" nse", "").replace(" bse", "")
     if not q:
@@ -670,6 +840,8 @@ def search_stocks(query: str, limit: int = 8) -> list:
     tokens = [t for t in re.split(r"[\s,]+", q) if t]
     scored = []
     for row in STOCKS:
+        symbol = (row.get("symbol") or "").lower()
+        nse = (row.get("nse_symbol") or "").lower()
         hay = " ".join(
             [
                 row.get("symbol") or "",
@@ -680,8 +852,11 @@ def search_stocks(query: str, limit: int = 8) -> list:
             ]
         ).lower()
         if q in hay or all(t in hay for t in tokens):
-            scored.append(row)
-    return scored[:limit]
+            exact = 0 if q in {symbol, nse} else 1
+            prefix = 0 if symbol.startswith(q) or nse.startswith(q) else 1
+            scored.append((exact, prefix, row))
+    scored.sort(key=lambda item: (item[0], item[1]))
+    return [item[2] for item in scored[:limit]]
 
 
 def get_stock(symbol: str) -> Optional[dict]:
@@ -712,3 +887,91 @@ def scheme_key_from_name(name: str) -> Optional[str]:
     if "flexi" in n:
         return "flexi_cap_regular"
     return None
+
+
+def _median(values: list) -> Optional[float]:
+    vals = sorted(float(v) for v in values if v is not None)
+    if not vals:
+        return None
+    mid = len(vals) // 2
+    if len(vals) % 2:
+        return round(vals[mid], 2)
+    return round((vals[mid - 1] + vals[mid]) / 2, 2)
+
+
+def week52_context(stock: dict) -> dict:
+    lo = float(stock.get("week52_low") or 0)
+    hi = float(stock.get("week52_high") or 0)
+    px = float(stock.get("current_price") or 0)
+    span = hi - lo
+    from_low_pct = round(((px - lo) / lo) * 100, 2) if lo else None
+    from_high_pct = round(((px - hi) / hi) * 100, 2) if hi else None
+    range_pct = round(((px - lo) / span) * 100, 1) if span else None
+    if range_pct is None:
+        direction = "flat"
+    elif range_pct >= 55:
+        direction = "up"
+    elif range_pct <= 45:
+        direction = "down"
+    else:
+        direction = "flat"
+    return {
+        "low": lo,
+        "high": hi,
+        "price": px,
+        "from_low_pct": from_low_pct,
+        "from_high_pct": from_high_pct,
+        "range_pct": range_pct,
+        "direction": direction,
+    }
+
+
+def _sector_metric_keys(sector: str) -> list:
+    s = (sector or "").lower()
+    if s in {"banking", "financials", "nbfc"}:
+        return [
+            ("roe", "ROE", "%"),
+            ("dividend_yield", "Dividend yield", "%"),
+        ]
+    if s in {"it", "fmcg", "consumer", "pharma", "auto"}:
+        return [
+            ("roe", "ROE", "%"),
+            ("roce", "ROCE", "%"),
+            ("fcf_crore", "FCF (₹ cr)", ""),
+            ("dividend_yield", "Dividend yield", "%"),
+        ]
+    return [
+        ("roe", "ROE", "%"),
+        ("roce", "ROCE", "%"),
+        ("fcf_crore", "FCF (₹ cr)", ""),
+        ("dividend_yield", "Dividend yield", "%"),
+    ]
+
+
+def sector_metric_deltas(stock: dict) -> list:
+    sector = stock.get("sector") or ""
+    peers = [row for row in STOCKS if (row.get("sector") or "") == sector]
+    out = []
+    for key, label, unit in _sector_metric_keys(sector):
+        value = stock.get(key)
+        median = _median([p.get(key) for p in peers])
+        delta_pct = None
+        if value is not None and median not in (None, 0):
+            delta_pct = round(((float(value) - float(median)) / abs(float(median))) * 100, 1)
+        direction = "flat"
+        if delta_pct is not None and delta_pct > 0.5:
+            direction = "up"
+        elif delta_pct is not None and delta_pct < -0.5:
+            direction = "down"
+        out.append(
+            {
+                "key": key,
+                "label": label,
+                "unit": unit,
+                "value": value,
+                "sector_median": median,
+                "delta_pct": delta_pct,
+                "direction": direction,
+            }
+        )
+    return out

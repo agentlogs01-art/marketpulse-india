@@ -136,9 +136,17 @@ class TestInvestorApi(ApiHandlersTestCase):
         with patch("marketpulse.pipeline.market_data.fetch_quote", side_effect=RuntimeError("offline")):
             detail = investor_handlers.get_stock_detail(token, "INFY")
             hul_detail = investor_handlers.get_stock_detail(token, "HUL")
+            tcs = investor_handlers.get_stock_detail(token, "TCS")
         self.assertEqual(detail["stock"]["nse_symbol"], "INFY")
         self.assertEqual(hul_detail["stock"]["symbol"], "HINDUNILVR")
         self.assertIn("filings", detail["stock"])
+        self.assertIn("from_low_pct", detail["stock"]["week52"])
+        self.assertTrue(detail["stock"]["metric_deltas"])
+        self.assertEqual(tcs["stock"]["symbol"], "TCS")
+        fav = investor_handlers.set_ticker_favorite(token, "INFY", True)
+        self.assertTrue(any(r["symbol"] == "INFY" for r in fav["favorites"]))
+        watch = investor_handlers.get_ticker_watchlist(token)
+        self.assertTrue(any(r["symbol"] == "TCS" for r in watch["recents"]))
 
     def test_valuation_and_fixed_income(self):
         token = self._signup_verify_and_login("zone@example.com")
@@ -148,6 +156,11 @@ class TestInvestorApi(ApiHandlersTestCase):
         fi = investor_handlers.get_secured_fixed_income(token)
         self.assertTrue(fi["instruments"])
         self.assertTrue(fi["sgb_discount_highlight"]["discount_pct"] > 0)
+        kinds = {b["issuer_type"] for b in fi["secured_bonds"]}
+        self.assertIn("RBI Bond", kinds)
+        self.assertIn("State government", kinds)
+        self.assertTrue(any("Corporate" in k for k in kinds))
+        self.assertTrue(all("coupon_pct" in b and "issued_on" in b and "rating" in b for b in fi["secured_bonds"]))
 
     def test_legacy_login_still_works(self):
         from marketpulse.api import handlers

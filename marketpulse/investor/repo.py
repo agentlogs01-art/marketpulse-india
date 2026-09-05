@@ -190,3 +190,48 @@ def seed_catalog_tables() -> None:
             client.upsert("sgb_series", item, on_conflict="series")
         except Exception:
             return
+
+
+_WATCHLIST = {}
+
+
+def _watch_key(subscriber_id: str, symbol: str) -> tuple:
+    return (subscriber_id, (symbol or "").upper().strip())
+
+
+def record_ticker_view(subscriber_id: str, symbol: str, is_favorite: Optional[bool] = None) -> dict:
+    symbol = (symbol or "").upper().strip()
+    key = _watch_key(subscriber_id, symbol)
+    row = dict(_WATCHLIST.get(key) or {
+        "subscriber_id": subscriber_id,
+        "symbol": symbol,
+        "is_favorite": False,
+    })
+    row["last_viewed_at"] = datetime.now(timezone.utc).isoformat()
+    if is_favorite is not None:
+        row["is_favorite"] = bool(is_favorite)
+    _WATCHLIST[key] = row
+    try:
+        client = _client()
+        client.upsert("ticker_watchlist", row, on_conflict="subscriber_id,symbol")
+    except Exception:
+        pass
+    return row
+
+
+def list_ticker_watchlist(subscriber_id: str) -> list:
+    mem = [row for key, row in _WATCHLIST.items() if key[0] == subscriber_id]
+    mem.sort(key=lambda r: r.get("last_viewed_at") or "", reverse=True)
+    if mem:
+        return mem[:20]
+    try:
+        client = _client()
+        rows = client.select(
+            "ticker_watchlist",
+            params={"subscriber_id": f"eq.{subscriber_id}", "order": "last_viewed_at.desc", "limit": "20"},
+        )
+        if rows:
+            return rows
+    except Exception:
+        pass
+    return []

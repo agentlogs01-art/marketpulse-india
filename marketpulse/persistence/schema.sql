@@ -387,6 +387,19 @@ create table if not exists investor_notifications (
 create index if not exists idx_investor_notifications_subscriber
     on investor_notifications (subscriber_id, created_at desc);
 
+create table if not exists ticker_watchlist (
+    subscriber_id uuid not null references subscribers (id) on delete cascade,
+    symbol        text not null,
+    is_favorite   boolean not null default false,
+    last_viewed_at timestamptz not null default now(),
+    primary key (subscriber_id, symbol)
+);
+
+create index if not exists idx_ticker_watchlist_viewed
+    on ticker_watchlist (subscriber_id, last_viewed_at desc);
+
+alter table ticker_watchlist enable row level security;
+
 alter table portfolios enable row level security;
 alter table portfolio_holdings enable row level security;
 alter table valuation_snapshots enable row level security;

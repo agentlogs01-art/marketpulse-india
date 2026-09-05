@@ -378,6 +378,23 @@ def api_v1_fixed_income_secured():
     return jsonify(investor_handlers.get_secured_fixed_income(_session_token_from_request()))
 
 
+@app.route("/api/v1/investor/tickers", methods=["GET"])
+def api_v1_investor_tickers_get():
+    return jsonify(investor_handlers.get_ticker_watchlist(_session_token_from_request()))
+
+
+@app.route("/api/v1/investor/tickers", methods=["POST"])
+def api_v1_investor_tickers_post():
+    body = request.get_json(force=True, silent=True) or {}
+    return jsonify(
+        investor_handlers.set_ticker_favorite(
+            _session_token_from_request(),
+            body.get("symbol") or "",
+            bool(body.get("is_favorite")),
+        )
+    )
+
+
 @app.route("/api/v1/investor/notifications", methods=["GET"])
 def api_v1_investor_notifications():
     return jsonify(investor_handlers.get_investor_notifications(_session_token_from_request()))
