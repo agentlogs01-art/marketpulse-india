@@ -88,14 +88,46 @@
     gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--line); margin-bottom: 28px;
   }
   .brand { font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  button.brand {
+    background: none; border: none; color: inherit; cursor: pointer; padding: 0;
+    font-family: inherit; text-align: left;
+  }
+  button.brand:hover { color: var(--green); }
   .topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .who { font-size: 13px; color: var(--ink); max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
-  .who-block { display: flex; align-items: center; gap: 8px; }
+  .account-meta { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+  .who-block { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; }
+  .account-open-btn {
+    display: flex; align-items: center; gap: 8px; background: none; border: none;
+    color: inherit; cursor: pointer; padding: 4px 6px; border-radius: 999px; font-family: inherit;
+  }
+  .account-open-btn:hover { background: var(--fill); }
+  .icon-btn {
+    background: none; border: 1px solid transparent; color: var(--muted);
+    width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+    display: grid; place-items: center; padding: 0; flex-shrink: 0;
+  }
+  .icon-btn:hover, .icon-btn[aria-pressed="true"] { background: var(--fill); color: var(--ink); }
+  .icon-btn svg { width: 16px; height: 16px; display: block; }
   .avatar {
     width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
     background: var(--accent-soft); color: var(--green); font-size: 11px; font-weight: 800;
     font-family: var(--font-display); border: 1px solid var(--line);
   }
+  .field-edit-wrap { display: flex; align-items: flex-start; gap: 6px; }
+  .field-edit-wrap input { flex: 1; }
+  .field-edit-wrap .icon-btn { margin-top: 2px; margin-bottom: 16px; }
+  input.locked { background: var(--fill); cursor: default; }
+  .field-verify-hint { font-size: 11.5px; color: var(--muted); margin: -10px 0 16px; }
+  .pw-strength { margin: -8px 0 16px; }
+  .pw-strength-bar { height: 6px; background: var(--fill); border-radius: 99px; overflow: hidden; border: 1px solid var(--line); }
+  .pw-strength-bar span { display: block; height: 100%; width: 0; transition: width .15s ease, background .15s ease; }
+  .pw-strength[data-score="0"] span { width: 18%; background: var(--red); }
+  .pw-strength[data-score="1"] span { width: 36%; background: var(--red); }
+  .pw-strength[data-score="2"] span { width: 55%; background: var(--warn); }
+  .pw-strength[data-score="3"] span { width: 78%; background: var(--green); }
+  .pw-strength[data-score="4"] span { width: 100%; background: var(--green); }
+  .pw-strength-label { font-size: 12px; margin: 6px 0 0; color: var(--muted); }
   .text-btn {
     background: none; border: none; color: var(--ink); font-size: 13px; font-weight: 600;
     text-decoration: underline; text-decoration-color: var(--line); cursor: pointer;
@@ -349,7 +381,7 @@
 <div class="page cover-mode" id="page-wrap">
 
   <header class="topbar">
-    <div class="brand">MarketPulse India</div>
+    <button type="button" class="brand" id="brand-home-btn" aria-label="MarketPulse India home">MarketPulse India</button>
     <div class="topbar-right">
       <span id="edition-date" class="mono" style="font-size:12px;color:var(--muted)">—</span>
       <div class="theme-toggle" role="group" aria-label="Colour theme">
@@ -362,10 +394,17 @@
       </div>
       <div class="account-meta hidden" id="account-meta">
         <div class="who-block">
-          <span class="avatar" id="account-initials">MP</span>
-          <span class="who" id="account-who">—</span>
+          <button type="button" class="account-open-btn" id="account-open-btn" aria-label="Open profile">
+            <span class="avatar" id="account-initials">MP</span>
+            <span class="who" id="account-who">—</span>
+          </button>
+          <button type="button" class="icon-btn" id="profile-settings-btn" title="Profile settings" aria-label="Profile settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
         </div>
-        <button class="text-btn" id="profile-btn">Account</button>
         <span class="dot-sep">&middot;</span>
         <button class="text-btn" id="signout-btn">Sign out</button>
       </div>
@@ -487,7 +526,7 @@
     <h2>Confirming your email…</h2>
     <div id="verify-status" class="status" role="status"></div>
     <div id="verify-telegram-prompt" class="hidden">
-      <p class="step-note">Want today’s briefing on Telegram too? Sign in, then connect it from Account.</p>
+      <p class="step-note">Want today’s briefing on Telegram too? Sign in, then connect it from your profile.</p>
       <button class="ghost" id="verify-go-to-signin">Go to sign in</button>
     </div>
   </div>
@@ -639,7 +678,47 @@
 
   <div id="view-profile" class="hidden">
     <div class="sheet">
-      <h2>Account</h2>
+      <h2>Profile</h2>
+      <div id="profile-status" class="status" role="status"></div>
+      <label for="profile-first-name">First name</label>
+      <div class="field-edit-wrap">
+        <input type="text" id="profile-first-name" class="locked" placeholder="First name" autocomplete="given-name" readonly>
+        <button type="button" class="icon-btn field-edit-btn" data-field="profile-first-name" aria-label="Edit first name" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <label for="profile-last-name">Last name</label>
+      <div class="field-edit-wrap">
+        <input type="text" id="profile-last-name" class="locked" placeholder="Last name" autocomplete="family-name" readonly>
+        <button type="button" class="icon-btn field-edit-btn" data-field="profile-last-name" aria-label="Edit last name" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <label for="profile-email">Email ID</label>
+      <div class="field-edit-wrap">
+        <input type="email" id="profile-email" class="locked" placeholder="you@example.com" autocomplete="email" readonly>
+        <button type="button" class="icon-btn field-edit-btn" data-field="profile-email" aria-label="Edit email" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <p id="profile-email-verify-hint" class="field-verify-hint hidden">Changing email sends a confirmation link to the new address. The account stays unverified until you confirm.</p>
+      <label for="profile-whatsapp">WhatsApp number</label>
+      <div class="field-edit-wrap">
+        <input type="tel" id="profile-whatsapp" class="locked" placeholder="+919876543210" autocomplete="tel" readonly>
+        <button type="button" class="icon-btn field-edit-btn" data-field="profile-whatsapp" aria-label="Edit WhatsApp number" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <p id="profile-whatsapp-verify-hint" class="field-verify-hint hidden">Use international format (e.g. +919876543210). Delivery stays off until WhatsApp is enabled below.</p>
+      <label for="profile-telegram">Telegram ID</label>
+      <div class="field-edit-wrap">
+        <input type="text" id="profile-telegram" class="locked" placeholder="@username or numeric chat id" readonly>
+        <button type="button" class="icon-btn field-edit-btn" data-field="profile-telegram" aria-label="Edit Telegram ID" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <p id="profile-telegram-verify-hint" class="field-verify-hint hidden">Ownership is confirmed with the official bot link, not by typing an ID. Use Connect Telegram via bot below to verify.</p>
+      <button type="button" class="ghost hidden" id="save-profile-btn">Save profile</button>
 
       <p class="section-label">Delivery</p>
       <div id="settings-status" class="status" role="status"></div>
@@ -679,27 +758,16 @@
       <button class="ghost" id="save-channels-btn">Save delivery</button>
       <button class="ghost" id="dashboard-telegram-link-btn">Connect Telegram via bot</button>
 
-      <p class="section-label">Profile</p>
-      <div id="profile-status" class="status" role="status"></div>
-      <label for="profile-first-name">First name</label>
-      <input type="text" id="profile-first-name" placeholder="First name" autocomplete="given-name">
-      <label for="profile-last-name">Last name</label>
-      <input type="text" id="profile-last-name" placeholder="Last name" autocomplete="family-name">
-      <label for="profile-email">Email ID</label>
-      <input type="email" id="profile-email" placeholder="you@example.com" autocomplete="email">
-      <label for="profile-whatsapp">WhatsApp number</label>
-      <input type="tel" id="profile-whatsapp" placeholder="+919876543210" autocomplete="tel">
-      <label for="profile-telegram">Telegram ID</label>
-      <input type="text" id="profile-telegram" placeholder="@username or numeric chat id">
-      <p class="password-hint">Changing email sends a confirmation link. Telegram can still be connected with the official bot link.</p>
-      <button type="button" class="ghost" id="save-profile-btn">Save profile</button>
-
       <p class="section-label">Change password</p>
       <div id="changepw-status" class="status" role="status"></div>
       <label for="changepw-current">Current password</label>
       <input type="password" id="changepw-current" placeholder="Your current password" autocomplete="current-password">
       <label for="changepw-new">New password</label>
       <input type="password" id="changepw-new" placeholder="At least 12 characters" autocomplete="new-password">
+      <div id="changepw-strength" class="pw-strength hidden" aria-live="polite">
+        <div class="pw-strength-bar"><span></span></div>
+        <p class="pw-strength-label" id="changepw-strength-label"></p>
+      </div>
       <label for="changepw-confirm">Confirm new password</label>
       <input type="password" id="changepw-confirm" placeholder="Same as above" autocomplete="new-password">
       <button type="button" class="ghost" id="changepw-btn">Update password</button>
@@ -853,6 +921,96 @@
   function refreshHeaderIdentity() {
     E("account-who").textContent = displayName(currentSubscriber);
     E("account-initials").textContent = displayInitials(currentSubscriber);
+  }
+
+  const PROFILE_FIELDS = [
+    { id: "profile-first-name", key: "first_name", hint: null },
+    { id: "profile-last-name", key: "last_name", hint: null },
+    { id: "profile-email", key: "email", hint: "profile-email-verify-hint" },
+    { id: "profile-whatsapp", key: "whatsapp_number", hint: "profile-whatsapp-verify-hint" },
+    { id: "profile-telegram", key: "telegram_chat_id", hint: "profile-telegram-verify-hint" },
+  ];
+
+  function profileFieldValue(id) {
+    return (E(id).value || "").trim();
+  }
+
+  function storedProfileValue(key) {
+    if (!currentSubscriber) return "";
+    return (currentSubscriber[key] || "").trim();
+  }
+
+  function isProfileDirty() {
+    return PROFILE_FIELDS.some(function (f) {
+      return profileFieldValue(f.id) !== storedProfileValue(f.key);
+    });
+  }
+
+  function syncSaveProfileVisibility() {
+    E("save-profile-btn").classList.toggle("hidden", !isProfileDirty());
+  }
+
+  function lockProfileField(id, locked) {
+    const input = E(id);
+    input.readOnly = locked;
+    input.classList.toggle("locked", locked);
+    const btn = document.querySelector('.field-edit-btn[data-field="' + id + '"]');
+    if (btn) btn.setAttribute("aria-pressed", String(!locked));
+    const meta = PROFILE_FIELDS.find(function (f) { return f.id === id; });
+    if (meta && meta.hint) E(meta.hint).classList.toggle("hidden", locked);
+  }
+
+  function lockAllProfileFields() {
+    PROFILE_FIELDS.forEach(function (f) { lockProfileField(f.id, true); });
+  }
+
+  function scorePassword(pw) {
+    if (!pw) return { score: -1, label: "" };
+    if (pw.length < 12) return { score: 0, label: "Too short — use at least 12 characters" };
+    let score = 1;
+    const lower = /[a-z]/.test(pw);
+    const upper = /[A-Z]/.test(pw);
+    const digit = /\d/.test(pw);
+    const symbol = /[^A-Za-z0-9]/.test(pw);
+    const kinds = [lower, upper, digit, symbol].filter(Boolean).length;
+    if (kinds >= 2) score = 2;
+    if (kinds >= 3 && pw.length >= 12) score = 3;
+    if (kinds >= 3 && pw.length >= 16) score = 4;
+    if (/(.)\1{3,}/.test(pw) || /1234|abcd|password|qwerty/i.test(pw)) score = Math.min(score, 1);
+    const labels = ["Too short", "Weak", "Fair", "Strong", "Excellent"];
+    return { score: score, label: labels[score] };
+  }
+
+  function renderPasswordStrength(inputId, meterId, labelId) {
+    const pw = E(inputId).value;
+    const meter = E(meterId);
+    const result = scorePassword(pw);
+    if (result.score < 0) {
+      meter.classList.add("hidden");
+      return;
+    }
+    meter.classList.remove("hidden");
+    meter.setAttribute("data-score", String(result.score));
+    E(labelId).textContent = result.label;
+  }
+
+  function goHome() {
+    if (sessionToken && currentSubscriber) enterDashboard();
+    else showLandingState();
+  }
+
+  function openProfile() {
+    refreshMfaSection();
+    refreshChannelCheckboxes();
+    lockAllProfileFields();
+    syncSaveProfileVisibility();
+    clearStatus(E("changepw-status"));
+    clearStatus(E("profile-status"));
+    E("changepw-current").value = "";
+    E("changepw-new").value = "";
+    E("changepw-confirm").value = "";
+    E("changepw-strength").classList.add("hidden");
+    showView("view-profile");
   }
 
   function briefingThemeCss() {
@@ -1321,6 +1479,8 @@
     E("profile-email").value = currentSubscriber.email || "";
     E("profile-whatsapp").value = currentSubscriber.whatsapp_number || "";
     E("profile-telegram").value = currentSubscriber.telegram_chat_id || "";
+    lockAllProfileFields();
+    syncSaveProfileVisibility();
   }
 
   E("save-channels-btn").addEventListener("click", async function () {
@@ -1336,6 +1496,7 @@
     clearStatus(E("profile-status"));
     const btn = E("save-profile-btn");
     btn.disabled = true; btn.textContent = "Saving…";
+    const emailBefore = storedProfileValue("email");
     const { ok, data } = await POST("/profile", {
       first_name: E("profile-first-name").value.trim(),
       last_name: E("profile-last-name").value.trim(),
@@ -1348,7 +1509,15 @@
       currentSubscriber = data.subscriber;
       refreshHeaderIdentity();
       refreshChannelCheckboxes();
-      setStatus(E("profile-status"), data.warning || "Profile saved.", data.warning ? "info" : "success");
+      lockAllProfileFields();
+      syncSaveProfileVisibility();
+      var msg = data.warning || "Profile saved.";
+      var kind = data.warning ? "info" : "success";
+      if (!data.warning && emailBefore !== (currentSubscriber.email || "").trim() && currentSubscriber.email) {
+        msg = "Profile saved. Confirm the new email from the link we sent.";
+        kind = "info";
+      }
+      setStatus(E("profile-status"), msg, kind);
     } else {
       setStatus(E("profile-status"), data.error || "Could not save profile.", "error");
     }
@@ -1368,6 +1537,7 @@
     if (ok) {
       setStatus(E("changepw-status"), "Password updated.", "success");
       E("changepw-current").value = ""; E("changepw-new").value = ""; E("changepw-confirm").value = "";
+      E("changepw-strength").classList.add("hidden");
     } else {
       setStatus(E("changepw-status"), data.error || "Password change failed.", "error");
     }
@@ -1742,12 +1912,33 @@
     loadBriefing();
   }
 
-  E("profile-btn").addEventListener("click", function () {
-    refreshMfaSection();
-    refreshChannelCheckboxes();
-    clearStatus(E("changepw-status"));
-    E("changepw-current").value = ""; E("changepw-new").value = ""; E("changepw-confirm").value = "";
-    showView("view-profile");
+  E("account-open-btn").addEventListener("click", openProfile);
+  E("profile-settings-btn").addEventListener("click", openProfile);
+  E("brand-home-btn").addEventListener("click", goHome);
+
+  document.querySelectorAll(".field-edit-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const id = btn.getAttribute("data-field");
+      const unlocking = E(id).readOnly;
+      if (unlocking) {
+        lockProfileField(id, false);
+        E(id).focus();
+        E(id).select();
+      } else {
+        const meta = PROFILE_FIELDS.find(function (f) { return f.id === id; });
+        if (meta) E(id).value = storedProfileValue(meta.key);
+        lockProfileField(id, true);
+        syncSaveProfileVisibility();
+      }
+    });
+  });
+
+  PROFILE_FIELDS.forEach(function (f) {
+    E(f.id).addEventListener("input", syncSaveProfileVisibility);
+  });
+
+  E("changepw-new").addEventListener("input", function () {
+    renderPasswordStrength("changepw-new", "changepw-strength", "changepw-strength-label");
   });
 
   E("profile-back-btn").addEventListener("click", function () { showView("view-dashboard"); });
