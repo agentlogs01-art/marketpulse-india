@@ -63,6 +63,8 @@ create table if not exists subscribers (
     -- UI preference
     theme_preference    text not null default 'light'
                             check (theme_preference in ('light', 'dark')),
+    first_name          text,
+    last_name           text,
     created_at          timestamptz not null default now(),
     verified_at          timestamptz,
     last_login_at        timestamptz,
@@ -247,6 +249,153 @@ alter table send_log enable row level security;
 alter table password_resets enable row level security;
 alter table mfa_challenges enable row level security;
 
+-- Additive profile fields for existing deployments (create table above is if-not-exists).
+alter table subscribers add column if not exists first_name text;
+alter table subscribers add column if not exists last_name text;
+
+-- ---------------------------------------------------------------------------
+-- 10+. Investor platform tables (additive — never alter tables 1-9)
+-- ---------------------------------------------------------------------------
+
+create table if not exists portfolios (
+    id                  uuid primary key default gen_random_uuid(),
+    subscriber_id       uuid not null references subscribers (id) on delete cascade,
+    source              text not null default 'cas_excel'
+                            check (source in ('cas_pdf', 'cas_excel', 'broker_aa', 'manual')),
+    filename            text,
+    holdings_ciphertext text,
+    parse_status        text not null default 'parsed'
+                            check (parse_status in ('pending', 'parsed', 'failed')),
+    parse_error         text,
+    uploaded_at         timestamptz not null default now()
+);
+
+create index if not exists idx_portfolios_subscriber on portfolios (subscriber_id, uploaded_at desc);
+
+create table if not exists portfolio_holdings (
+    id                  uuid primary key default gen_random_uuid(),
+    portfolio_id        uuid not null references portfolios (id) on delete cascade,
+    subscriber_id       uuid not null references subscribers (id) on delete cascade,
+    symbol              text not null,
+    company_name        text,
+    isin                text,
+    asset_type          text not null default 'equity'
+                            check (asset_type in ('equity', 'mutual_fund', 'debt', 'gold', 'other')),
+    sector              text,
+    quantity            numeric(18, 4) not null default 0,
+    avg_price           numeric(18, 4) not null default 0,
+    current_price       numeric(18, 4) not null default 0,
+    market_value        numeric(18, 2) not null default 0,
+    fund_name           text,
+    purchase_date       date,
+    created_at          timestamptz not null default now()
+);
+
+create index if not exists idx_portfolio_holdings_subscriber on portfolio_holdings (subscriber_id);
+create index if not exists idx_portfolio_holdings_symbol on portfolio_holdings (symbol);
+
+create table if not exists valuation_snapshots (
+    as_of_date          date primary key,
+    nifty_pe            numeric(8, 2),
+    nifty_pb            numeric(8, 2),
+    dividend_yield      numeric(8, 3),
+    market_cap_to_gdp   numeric(8, 3),
+    zone                text not null default 'fair'
+                            check (zone in ('undervalued', 'fair', 'overvalued')),
+    zone_badge          text,
+    nifty50_level       numeric(12, 2),
+    smallcap250_level   numeric(12, 2),
+    gsec_10y_yield      numeric(8, 3),
+    source              text not null default 'seed',
+    created_at          timestamptz not null default now()
+);
+
+create table if not exists stock_universe (
+    symbol              text primary key,
+    nse_symbol          text,
+    bse_code            text,
+    company_name        text not null,
+    sector              text,
+    market_cap_category text,
+    pe                  numeric(10, 2),
+    pe_5yr_median       numeric(10, 2),
+    roe                 numeric(8, 2),
+    roce                numeric(8, 2),
+    debt_to_equity      numeric(8, 2),
+    fcf_crore           numeric(14, 2),
+    dividend_yield      numeric(8, 3),
+    promoter_pledge_pct numeric(8, 2),
+    yahoo_symbol        text,
+    current_price       numeric(14, 2),
+    week52_high         numeric(14, 2),
+    week52_low          numeric(14, 2)
+);
+
+create index if not exists idx_stock_universe_name on stock_universe (company_name);
+
+create table if not exists exchange_filings (
+    id                  uuid primary key default gen_random_uuid(),
+    symbol              text not null,
+    filed_at            date not null,
+    headline            text not null,
+    body                text,
+    summary_3_5yr       text,
+    source              text not null default 'NSE'
+);
+
+create index if not exists idx_exchange_filings_symbol on exchange_filings (symbol, filed_at desc);
+
+create table if not exists mutual_fund_underlyings (
+    scheme_key          text not null,
+    scheme_name         text not null,
+    underlying_symbol   text not null,
+    weight_pct          numeric(8, 3) not null,
+    primary key (scheme_key, underlying_symbol)
+);
+
+create table if not exists fixed_income_instruments (
+    id                  text primary key,
+    name                text not null,
+    category            text not null,
+    ytm                 numeric(8, 3),
+    expense_ratio       numeric(8, 3),
+    safety_badge        text,
+    tax_rules           text,
+    notes               text
+);
+
+create table if not exists sgb_series (
+    series              text primary key,
+    nse_symbol          text,
+    market_price        numeric(12, 2),
+    gold_spot_inr       numeric(12, 2),
+    discount_pct        numeric(8, 3),
+    maturity            date
+);
+
+create table if not exists investor_notifications (
+    id                  uuid primary key default gen_random_uuid(),
+    subscriber_id       uuid not null references subscribers (id) on delete cascade,
+    kind                text not null,
+    title               text not null,
+    body                text not null,
+    created_at          timestamptz not null default now(),
+    read_at             timestamptz,
+    dispatched_at       timestamptz
+);
+
+create index if not exists idx_investor_notifications_subscriber
+    on investor_notifications (subscriber_id, created_at desc);
+
+alter table portfolios enable row level security;
+alter table portfolio_holdings enable row level security;
+alter table valuation_snapshots enable row level security;
+alter table stock_universe enable row level security;
+alter table exchange_filings enable row level security;
+alter table mutual_fund_underlyings enable row level security;
+alter table fixed_income_instruments enable row level security;
+alter table sgb_series enable row level security;
+alter table investor_notifications enable row level security;
 
 -- No policies are defined for anon/authenticated roles -> default-deny.
 -- Service-role key requests bypass RLS automatically.

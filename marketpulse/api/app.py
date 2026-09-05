@@ -23,8 +23,14 @@ Deploy: Railway can run this directly via
 
 from __future__ import annotations
 
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, Response
+from werkzeug.exceptions import HTTPException
+from dotenv import load_dotenv
 import os
+
+_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+load_dotenv(os.path.join(_REPO_ROOT, ".env"))
+load_dotenv(os.path.join(_REPO_ROOT, "marketpulse", ".env"))
 
 from marketpulse.api.handlers import (
     AuthError,
@@ -46,8 +52,10 @@ from marketpulse.api.handlers import (
     unsubscribe,
     update_channels,
     update_theme_preference,
+    update_profile,
     verify_email,
 )
+from marketpulse.api import investor_handlers
 
 app = Flask(__name__)
 
@@ -68,10 +76,31 @@ def handle_auth_error(exc: AuthError):
     return _json_error(str(exc), 401)
 
 
+@app.errorhandler(Exception)
+def handle_unexpected_error(exc: Exception):
+    """Keep API clients on JSON even when login/signup hits a server fault."""
+    if isinstance(exc, HTTPException):
+        return exc
+    from marketpulse.persistence.supabase_client import SupabaseConfigError, SupabaseRequestError
+
+    app.logger.exception("Unhandled API error: %s", exc)
+    if isinstance(exc, SupabaseConfigError):
+        return _json_error(
+            "Database is not configured. Copy marketpulse/.env.example to marketpulse/.env "
+            "and set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY, then restart the server.",
+            503,
+        )
+    if isinstance(exc, SupabaseRequestError):
+        return _json_error("Could not reach the account database. Try again shortly.", 503)
+    return _json_error("Something went wrong. Please try again.", 500)
+
+
 def _session_token_from_request() -> str:
     auth_header = request.headers.get("Authorization", "")
     if auth_header.startswith("Bearer "):
         return auth_header[len("Bearer "):].strip()
+    if request.form.get("session_token"):
+        return request.form.get("session_token", "")
     body = request.get_json(force=True, silent=True) or {}
     return body.get("session_token", "")
 
@@ -79,6 +108,17 @@ def _session_token_from_request() -> str:
 # ---------------------------------------------------------------------------
 # Static web app
 # ---------------------------------------------------------------------------
+
+@app.route("/favicon.ico")
+def favicon():
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
+        '<rect width="32" height="32" rx="8" fill="#0B0E14"/>'
+        '<path d="M8 22 L16 8 L24 22" fill="none" stroke="#00D084" stroke-width="2.5"/>'
+        "</svg>"
+    )
+    return Response(svg, mimetype="image/svg+xml")
+
 
 @app.route("/")
 def serve_index():
@@ -124,6 +164,8 @@ def api_signup():
         mobile_number=body.get("mobile_number"),
         channels=body.get("channels"),
         whatsapp_number=body.get("whatsapp_number"),
+        first_name=body.get("first_name"),
+        last_name=body.get("last_name"),
     )
     # If the dictionary payload indicates an error status, assign a 400 status code
     if isinstance(result, dict) and result.get("status") == "error":
@@ -202,6 +244,20 @@ def api_update_channels():
     return jsonify(result)
 
 
+@app.route("/api/profile", methods=["POST"])
+def api_update_profile():
+    body = request.get_json(force=True, silent=True) or {}
+    result = update_profile(
+        _session_token_from_request(),
+        first_name=body.get("first_name"),
+        last_name=body.get("last_name"),
+        email=body.get("email"),
+        whatsapp_number=body.get("whatsapp_number"),
+        telegram_chat_id=body.get("telegram_chat_id"),
+    )
+    return jsonify(result)
+
+
 # ---------------------------------------------------------------------------
 # JSON API -- password change (authenticated) & reset (unauthenticated)
 # ---------------------------------------------------------------------------
@@ -270,6 +326,61 @@ def api_update_theme():
     body = request.get_json(force=True, silent=True) or {}
     result = update_theme_preference(_session_token_from_request(), theme=body.get("theme", ""))
     return jsonify(result)
+
+
+# ---------------------------------------------------------------------------
+# JSON API v1 — long-term investor (additive; legacy /api/* unchanged)
+# ---------------------------------------------------------------------------
+
+@app.route("/api/v1/portfolio/upload", methods=["POST"])
+def api_v1_portfolio_upload():
+    upload = request.files.get("file")
+    raw = upload.read() if upload else b""
+    filename = upload.filename if upload else ""
+    broker_token = request.form.get("broker_token") or ""
+    if not broker_token:
+        body = request.get_json(force=True, silent=True) or {}
+        broker_token = body.get("broker_token") or ""
+        if not raw:
+            raw = (body.get("csv") or body.get("text") or "").encode("utf-8")
+            filename = filename or body.get("filename") or "upload.csv"
+    result = investor_handlers.upload_portfolio(
+        _session_token_from_request(),
+        raw=raw,
+        filename=filename,
+        broker_token=broker_token,
+    )
+    return jsonify(result)
+
+
+@app.route("/api/v1/portfolio/analysis", methods=["GET"])
+def api_v1_portfolio_analysis():
+    return jsonify(investor_handlers.get_portfolio_analysis(_session_token_from_request()))
+
+
+@app.route("/api/v1/stocks/search", methods=["GET"])
+def api_v1_stocks_search():
+    return jsonify(investor_handlers.search_stock_symbols(_session_token_from_request(), request.args.get("q", "")))
+
+
+@app.route("/api/v1/stocks/<symbol>", methods=["GET"])
+def api_v1_stock_detail(symbol):
+    return jsonify(investor_handlers.get_stock_detail(_session_token_from_request(), symbol))
+
+
+@app.route("/api/v1/investor/valuation-zone", methods=["GET"])
+def api_v1_valuation_zone():
+    return jsonify(investor_handlers.get_valuation_zone(_session_token_from_request()))
+
+
+@app.route("/api/v1/fixed-income/secured", methods=["GET"])
+def api_v1_fixed_income_secured():
+    return jsonify(investor_handlers.get_secured_fixed_income(_session_token_from_request()))
+
+
+@app.route("/api/v1/investor/notifications", methods=["GET"])
+def api_v1_investor_notifications():
+    return jsonify(investor_handlers.get_investor_notifications(_session_token_from_request()))
 
 
 # ---------------------------------------------------------------------------

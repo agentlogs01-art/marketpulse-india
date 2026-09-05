@@ -4,44 +4,59 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MarketPulse India</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <style>
   :root {
-    --bg: #f3f3f1;
-    --surface: #ffffff;
-    --ink: #141414;
-    --muted: #5c5c57;
-    --line: #d8d8d2;
-    --fill: #ecece8;
-    --accent: #0b3d2e;
-    --accent-soft: #e4efe9;
-    --green: #1f7a4d;
-    --green-bg: #e9f3ec;
-    --red: #b23a2e;
-    --red-bg: #fbedea;
-    --warn: #8a611f;
-    --warn-bg: #f6eedc;
-    --ink-hover: #2a2a2a;
-    --ink-disabled: #9a9a94;
-    --radius: 8px;
+    --bg: #f3ebe0;
+    --surface: rgba(255, 250, 243, 0.86);
+    --ink: #0b0e14;
+    --muted: #5c5348;
+    --line: #d9cfc0;
+    --fill: #ebe1d3;
+    --accent: #0f9f6e;
+    --accent-soft: rgba(16, 185, 129, 0.14);
+    --green: #0f9f6e;
+    --green-bg: rgba(16, 185, 129, 0.16);
+    --red: #c2413b;
+    --red-bg: rgba(194, 65, 59, 0.12);
+    --warn: #b45309;
+    --warn-bg: rgba(245, 158, 11, 0.18);
+    --ink-hover: #1a2230;
+    --ink-disabled: #9a8f82;
+    --radius: 18px;
+    --amethyst: #6366f1;
+    --gold: #f59e0b;
+    --obsidian: #0b0e14;
+    --glass: rgba(255, 250, 243, 0.72);
+    --glow: rgba(16, 185, 129, 0.28);
+    --font-display: "Plus Jakarta Sans", "Outfit", sans-serif;
+    --font-body: "Outfit", "Plus Jakarta Sans", sans-serif;
   }
   [data-theme="dark"] {
-    --bg: #101010;
-    --surface: #1a1a1a;
-    --ink: #f1f1ee;
-    --muted: #a3a39b;
-    --line: #33332e;
-    --fill: #242422;
-    --accent: #8fbfa8;
-    --accent-soft: #1a2a23;
-    --green: #4fbf82;
-    --green-bg: #16291e;
-    --red: #e36b5c;
-    --red-bg: #2e1714;
-    --warn: #e0c383;
-    --warn-bg: #2e2410;
-    --ink-hover: #3a3a38;
-    --ink-disabled: #4a4a46;
+    --bg: #0b0e14;
+    --surface: rgba(22, 27, 38, 0.78);
+    --ink: #e8eef8;
+    --muted: #9aa6ba;
+    --line: #232d3f;
+    --fill: #121722;
+    --accent: #00d084;
+    --accent-soft: rgba(0, 208, 132, 0.12);
+    --green: #10b981;
+    --green-bg: rgba(16, 185, 129, 0.14);
+    --red: #f07167;
+    --red-bg: rgba(240, 113, 103, 0.12);
+    --warn: #f59e0b;
+    --warn-bg: rgba(245, 158, 11, 0.12);
+    --ink-hover: #243044;
+    --ink-disabled: #4b5568;
+    --amethyst: #818cf8;
+    --gold: #fbbf24;
+    --obsidian: #0b0e14;
+    --glass: rgba(22, 27, 38, 0.72);
+    --glow: rgba(0, 208, 132, 0.22);
     color-scheme: dark;
   }
   [data-theme="light"] { color-scheme: light; }
@@ -49,17 +64,24 @@
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
   }
-  html, body { background: var(--bg); }
+  html, body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(1200px 480px at 8% -10%, var(--glow), transparent 55%),
+      radial-gradient(900px 420px at 100% 0%, rgba(99, 102, 241, 0.16), transparent 50%);
+  }
   body {
     margin: 0;
     color: var(--ink);
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: var(--font-body);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
+  h1, h2, h3, .brand, .cover-hero h1 { font-family: var(--font-display); }
   .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-feature-settings: "tnum"; }
   .page { max-width: 920px; margin: 0 auto; padding: 0 20px 72px; }
   .page.cover-mode { max-width: 560px; }
+  .page.dashboard { max-width: 1180px; }
 
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
@@ -90,7 +112,7 @@
   .cover-hero .lede { font-size: 16px; color: var(--muted); margin: 0 0 28px; max-width: 38ch; }
   .cover-meta { font-size: 13px; color: var(--muted); margin-top: 18px; }
 
-  .sheet { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+  .sheet { background: var(--glass); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; backdrop-filter: blur(16px); }
   .sheet h2 { font-size: 18px; font-weight: 650; margin: 0 0 16px; }
 
   .auth-tabs { display: flex; gap: 4px; background: var(--fill); border: 1px solid var(--line); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
@@ -106,7 +128,7 @@
   .identity-toggle input[type="radio"] { accent-color: var(--accent); margin: 0; }
 
   label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-  input[type="email"], input[type="tel"], input[type="password"], input[type="text"] {
+  input[type="email"], input[type="tel"], input[type="password"], input[type="text"], input[type="file"] {
     width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 7px; font-size: 15px;
     color: var(--ink); margin-bottom: 16px; font-family: inherit; background: var(--bg);
   }
@@ -210,6 +232,78 @@
   .divider { border: none; border-top: 1px solid var(--line); margin: 20px 0; }
 
   footer.colophon { text-align: center; font-size: 11px; color: var(--muted); margin-top: 36px; }
+
+  .hub-nav {
+    display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 18px;
+    padding: 5px; background: var(--glass); border: 1px solid var(--line); border-radius: 999px;
+    backdrop-filter: blur(12px);
+  }
+  .hub-nav button {
+    border: none; background: transparent; color: var(--muted); font-family: var(--font-display);
+    font-size: 13px; font-weight: 650; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    transition: background .2s ease, color .2s ease, transform .2s ease;
+  }
+  .hub-nav button.active { background: var(--fill); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+  .hub-nav button:hover { color: var(--ink); }
+  .hub-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; }
+  .glass-card {
+    background: var(--glass); border: 1px solid var(--line); border-radius: 20px; padding: 20px;
+    backdrop-filter: blur(18px); margin-bottom: 16px;
+    transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+  }
+  .glass-card:hover { transform: translateY(-2px); border-color: rgba(0, 208, 132, 0.35); box-shadow: 0 12px 40px rgba(0,0,0,.18); }
+  .glass-card h3 { margin: 0 0 8px; font-size: 16px; letter-spacing: -.02em; }
+  .kicker-sm { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; font-weight: 650; }
+  .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .metric { background: var(--fill); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+  .metric .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .metric .val { font-size: 20px; font-weight: 750; font-family: var(--font-display); margin-top: 4px; }
+  .gauge-wrap { position: relative; height: 168px; }
+  .gauge-wrap svg { width: 100%; height: 168px; }
+  .zone-badge {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 8px;
+    padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 650;
+    background: var(--accent-soft); color: var(--green); border: 1px solid rgba(16,185,129,.25);
+  }
+  .health-glow {
+    width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center;
+    background: radial-gradient(circle at 50% 40%, var(--glow), transparent 68%);
+    border: 1px solid var(--line);
+  }
+  .health-glow strong { font-family: var(--font-display); font-size: 26px; }
+  .bar { height: 8px; border-radius: 99px; background: var(--fill); overflow: hidden; border: 1px solid var(--line); }
+  .bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--amethyst)); }
+  .search-box { position: relative; }
+  .search-box input { margin-bottom: 0; }
+  .search-hits {
+    position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 5;
+    background: var(--obsidian); color: #e8eef8; border: 1px solid #232d3f; border-radius: 12px;
+    overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.35);
+  }
+  [data-theme="light"] .search-hits { background: #fffaf3; color: var(--ink); border-color: var(--line); }
+  .search-hits button {
+    display: block; width: 100%; text-align: left; border: none; background: transparent;
+    color: inherit; padding: 10px 12px; font-family: inherit; cursor: pointer; font-size: 13px;
+  }
+  .search-hits button:hover { background: rgba(99,102,241,.18); }
+  .chip { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; }
+  .chip.gold { background: rgba(245,158,11,.16); color: var(--gold); }
+  .chip.jade { background: var(--accent-soft); color: var(--green); }
+  .chip.am { background: rgba(99,102,241,.16); color: var(--amethyst); }
+  .donut-legend { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+  .warn-list { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .timeline { border-left: 2px solid var(--line); margin-left: 8px; padding-left: 16px; }
+  .timeline .item { margin-bottom: 14px; }
+  .timeline .when { font-size: 11px; color: var(--muted); }
+  .sgb-box { border: 1px solid rgba(245,158,11,.4); background: var(--warn-bg); border-radius: 16px; padding: 16px; }
+  .range { height: 6px; background: var(--fill); border-radius: 99px; position: relative; margin: 10px 0 18px; }
+  .range i { position: absolute; top: -4px; width: 14px; height: 14px; border-radius: 50%; background: var(--amethyst); border: 2px solid var(--bg); }
+  .fund-empty { color: var(--muted); padding: 24px 0; }
+
+  @media (max-width: 900px) {
+    .hub-grid, .metric-row { grid-template-columns: 1fr; }
+  }
 
   @media (max-width: 720px) {
     .edition { grid-template-columns: 1fr; }
@@ -390,21 +484,114 @@
   </div>
 
   <div id="view-dashboard" class="hidden">
-    <div class="edition">
-      <aside class="edition-rail">
-        <div class="edition-date mono" id="briefing-run-date"></div>
-        <div class="bias-badge hidden" id="bias-badge"></div>
-        <p class="conn-detail" id="edition-rail-note">Your weekday edition. Same briefing as email, WhatsApp, and Telegram.</p>
-      </aside>
-      <div>
-        <div id="dashboard-status" class="status" role="status"></div>
-        <div id="briefing-available" class="hidden">
-          <div class="edition-article" id="briefing-article"></div>
-        </div>
-        <div id="briefing-unavailable" class="edition-empty hidden">
-          No edition has been printed yet. The first one is sent by 07:00 AM IST on the next trading day.
+    <nav class="hub-nav" aria-label="Investor sections">
+      <button type="button" class="active" data-hub="overview" id="hub-btn-overview">Overview</button>
+      <button type="button" data-hub="briefing" id="hub-btn-briefing">Briefing</button>
+      <button type="button" data-hub="portfolio" id="hub-btn-portfolio">Portfolio</button>
+      <button type="button" data-hub="passive" id="hub-btn-passive">Index &amp; bonds</button>
+      <button type="button" data-hub="alerts" id="hub-btn-alerts">Alerts</button>
+    </nav>
+
+    <div id="hub-overview">
+      <div class="hub-grid">
+        <article class="glass-card">
+          <div class="kicker-sm">Market valuation zone</div>
+          <h3>Nifty 50 P/E · Cap-to-GDP</h3>
+          <div class="gauge-wrap" id="valuation-gauge"></div>
+          <div class="zone-badge" id="zone-badge">Loading zone…</div>
+          <p class="conn-detail" id="zone-alloc" style="margin-top:10px"></p>
+        </article>
+        <article class="glass-card">
+          <div class="kicker-sm">Portfolio health</div>
+          <div style="display:flex;gap:16px;align-items:center">
+            <div class="health-glow"><strong id="health-score">—</strong></div>
+            <div>
+              <div id="health-label" style="font-weight:700">Sign in health appears after import</div>
+              <div class="conn-detail" id="health-ratio">Equity-to-debt —</div>
+            </div>
+          </div>
+          <ul class="warn-list" id="health-warnings" style="margin-top:12px"></ul>
+        </article>
+      </div>
+      <div class="metric-row" id="index-yield-row">
+        <div class="metric"><div class="lbl">Nifty 50</div><div class="val mono" id="idx-nifty">—</div></div>
+        <div class="metric"><div class="lbl">Nifty Smallcap 250</div><div class="val mono" id="idx-smallcap">—</div></div>
+        <div class="metric"><div class="lbl">Dividend yield</div><div class="val mono" id="idx-div">—</div></div>
+        <div class="metric" style="border-color:rgba(245,158,11,.35)"><div class="lbl">10Y G-Sec</div><div class="val mono" id="idx-gsec" style="color:var(--gold)">—</div></div>
+      </div>
+      <article class="glass-card search-box">
+        <div class="kicker-sm">Stock &amp; asset lookup</div>
+        <h3>NSE / BSE fundamentals</h3>
+        <label for="stock-search">Company or ticker</label>
+        <input type="text" id="stock-search" placeholder="INFY, TCS, Hindustan Unilever…" autocomplete="off">
+        <div id="stock-search-hits" class="search-hits hidden"></div>
+        <p class="fine-print">Long-term health metrics only — no candles, order books, or F&amp;O chains.</p>
+      </article>
+      <div id="stock-detail-card" class="hidden"></div>
+    </div>
+
+    <div id="hub-briefing" class="hidden">
+      <div class="edition">
+        <aside class="edition-rail">
+          <div class="edition-date mono" id="briefing-run-date"></div>
+          <div class="bias-badge hidden" id="bias-badge"></div>
+          <p class="conn-detail" id="edition-rail-note">Your weekday edition. Same briefing as email, WhatsApp, and Telegram.</p>
+        </aside>
+        <div>
+          <div id="dashboard-status" class="status" role="status"></div>
+          <div id="briefing-available" class="hidden">
+            <div class="edition-article" id="briefing-article"></div>
+          </div>
+          <div id="briefing-unavailable" class="edition-empty hidden">
+            No edition has been printed yet. The first one is sent by 07:00 AM IST on the next trading day.
+          </div>
         </div>
       </div>
+    </div>
+
+    <div id="hub-portfolio" class="hidden">
+      <article class="glass-card">
+        <div class="kicker-sm">Import</div>
+        <h3>CAS upload or Account Aggregator</h3>
+        <div id="portfolio-status" class="status" role="status"></div>
+        <label for="cas-file">Consolidated Account Statement (CSV / Excel / PDF)</label>
+        <input type="file" id="cas-file" accept=".csv,.tsv,.txt,.xlsx,.xls,.pdf,.json">
+        <button type="button" class="primary" id="cas-upload-btn" style="margin-top:8px">Parse holdings</button>
+        <button type="button" class="ghost" id="aa-sync-btn">Sync via Account Aggregator (demo book)</button>
+        <p class="fine-print">Holdings are encrypted at rest. Educational diagnostics only — not a recommendation to buy or sell.</p>
+      </article>
+      <div id="portfolio-empty" class="fund-empty">Upload a CAS to see allocation, overlap, and quality checks.</div>
+      <div id="portfolio-body" class="hidden">
+        <div class="hub-grid">
+          <article class="glass-card">
+            <div class="kicker-sm">Allocation vs model</div>
+            <h3>Equity · debt sleeves</h3>
+            <div id="alloc-bars"></div>
+            <svg id="alloc-donut" viewBox="0 0 120 120" width="160" height="160" style="margin-top:8px"></svg>
+            <div class="donut-legend" id="sector-legend"></div>
+          </article>
+          <article class="glass-card">
+            <div class="kicker-sm">Diagnostics</div>
+            <h3>Concentration · quality · overlap</h3>
+            <div id="diag-lists"></div>
+          </article>
+        </div>
+        <h3 class="section-label">Actionable suggestions</h3>
+        <div class="card-grid" id="suggestion-cards"></div>
+      </div>
+    </div>
+
+    <div id="hub-passive" class="hidden">
+      <article class="glass-card sgb-box" id="sgb-highlight"></article>
+      <div class="card-grid" id="passive-cards"></div>
+    </div>
+
+    <div id="hub-alerts" class="hidden">
+      <article class="glass-card">
+        <div class="kicker-sm">Rebalancing centre</div>
+        <h3>At most 2–3 high-value notes a week</h3>
+        <div id="alerts-list"></div>
+      </article>
     </div>
   </div>
 
@@ -741,7 +928,7 @@
     const btn = E("signin-submit");
     btn.disabled = true; btn.textContent = "Signing in…";
 
-    const { ok, data } = await POST("/login", {
+    const { ok, status, data } = await POST("/login", {
       login_id: E("signin-id").value.trim(),
       password: E("signin-password").value,
     });
@@ -762,7 +949,11 @@
       E("signin-form").reset();
       enterDashboard();
     } else {
-      setStatus(E("signin-status"), data.error || "Incorrect email/mobile number or password.", "error");
+      setStatus(
+        E("signin-status"),
+        data.error || (status >= 500 ? "Server error while signing in. Check that the API can reach Supabase." : "Incorrect email/mobile number or password."),
+        "error"
+      );
     }
   });
 
@@ -1023,6 +1214,252 @@
     E("mfa-disable-confirm").classList.add("hidden");
   }
 
+  const HUBS = ["overview", "briefing", "portfolio", "passive", "alerts"];
+  let searchTimer = null;
+
+  function showHub(name) {
+    HUBS.forEach(function (h) {
+      const pane = E("hub-" + h);
+      if (pane) pane.classList.toggle("hidden", h !== name);
+      const btn = E("hub-btn-" + h);
+      if (btn) btn.classList.toggle("active", h === name);
+    });
+    if (name === "briefing") loadBriefing();
+    if (name === "portfolio") loadPortfolioHub();
+    if (name === "passive") loadPassiveHub();
+    if (name === "alerts") loadAlertsHub();
+    if (name === "overview") loadInvestorOverview();
+  }
+
+  document.querySelectorAll(".hub-nav button").forEach(function (btn) {
+    btn.addEventListener("click", function () { showHub(btn.getAttribute("data-hub")); });
+  });
+
+  function zoneToAngle(zone) {
+    if (zone === "undervalued") return 28;
+    if (zone === "overvalued") return 152;
+    return 90;
+  }
+
+  function renderGauge(zone, pe, capGdp) {
+    const el = E("valuation-gauge");
+    const t = zoneToAngle(zone);
+    const rad = (Math.PI * t) / 180;
+    const x = 160 + 110 * Math.cos(Math.PI - rad);
+    const y = 150 - 110 * Math.sin(Math.PI - rad);
+    el.innerHTML = '<svg viewBox="0 0 320 170" aria-hidden="true">' +
+      '<path d="M30 150 A130 130 0 0 1 290 150" fill="none" stroke="#3d2a12" stroke-width="18" stroke-linecap="round"/>' +
+      '<path d="M30 150 A130 130 0 0 1 160 20" fill="none" stroke="#10b981" stroke-width="18" stroke-linecap="round"/>' +
+      '<path d="M160 20 A130 130 0 0 1 230 38" fill="none" stroke="#6366f1" stroke-width="18"/>' +
+      '<path d="M230 38 A130 130 0 0 1 290 150" fill="none" stroke="#f59e0b" stroke-width="18" stroke-linecap="round"/>' +
+      '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9" fill="#00d084" stroke="#0b0e14" stroke-width="3"/>' +
+      '<text x="160" y="118" text-anchor="middle" fill="currentColor" font-size="22" font-family="Plus Jakarta Sans" font-weight="700">' + (pe || "—") + '</text>' +
+      '<text x="160" y="138" text-anchor="middle" fill="currentColor" font-size="11" opacity=".7">Nifty P/E · cap/GDP ' + (capGdp || "—") + '</text>' +
+      "</svg>";
+  }
+
+  function fmtNum(n, d) {
+    if (n === null || n === undefined || n === "") return "—";
+    return Number(n).toLocaleString("en-IN", { maximumFractionDigits: d || 2 });
+  }
+
+  async function loadInvestorOverview() {
+    const zoneRes = await GET("/v1/investor/valuation-zone");
+    if (zoneRes.ok) {
+      const z = zoneRes.data;
+      renderGauge(z.zone, z.nifty_pe, z.market_cap_to_gdp);
+      E("zone-badge").textContent = z.zone_badge || z.zone;
+      const a = z.recommended_allocation || {};
+      E("zone-alloc").textContent = "Model mix " + (a.equity_pct || "—") + "% equity / " + (a.debt_pct || "—") + "% secured debt.";
+      E("idx-nifty").textContent = fmtNum(z.nifty50_level, 0);
+      E("idx-smallcap").textContent = fmtNum(z.smallcap250_level, 0);
+      E("idx-div").textContent = fmtNum(z.dividend_yield, 2) + "%";
+      E("idx-gsec").textContent = fmtNum(z.gsec_10y_yield, 2) + "%";
+    }
+    const an = await GET("/v1/portfolio/analysis");
+    if (an.ok && !an.data.empty) {
+      const rs = an.data.analysis.risk_score || {};
+      E("health-score").textContent = rs.score != null ? rs.score : "—";
+      E("health-label").textContent = rs.label || "Health";
+      E("health-ratio").textContent = "Equity-to-debt " + (an.data.analysis.equity_to_debt_ratio || "—");
+      const warns = (an.data.analysis.concentration_warnings || []).concat(an.data.analysis.quality_flags || []);
+      E("health-warnings").innerHTML = warns.slice(0, 3).map(function (w) {
+        return "<li>" + (w.message || "") + "</li>";
+      }).join("") || "<li>No diversification flags.</li>";
+    } else {
+      E("health-score").textContent = "—";
+      E("health-label").textContent = "Import a CAS to score the book";
+      E("health-ratio").textContent = "Equity-to-debt —";
+      E("health-warnings").innerHTML = "";
+    }
+  }
+
+  async function loadPortfolioHub() {
+    const { ok, data } = await GET("/v1/portfolio/analysis");
+    if (!ok || data.empty) {
+      E("portfolio-empty").classList.remove("hidden");
+      E("portfolio-body").classList.add("hidden");
+      return;
+    }
+    E("portfolio-empty").classList.add("hidden");
+    E("portfolio-body").classList.remove("hidden");
+    const a = data.analysis;
+    const eq = a.equity_pct || 0, db = a.debt_pct || 0;
+    const me = (a.ideal_allocation || {}).equity_pct || 60;
+    const md = (a.ideal_allocation || {}).debt_pct || 40;
+    E("alloc-bars").innerHTML =
+      "<p class='conn-detail'>You " + eq.toFixed(0) + "% equity vs model " + me + "%</p>" +
+      "<div class='bar'><span style='width:" + Math.min(eq, 100) + "%'></span></div>" +
+      "<p class='conn-detail' style='margin-top:10px'>You " + db.toFixed(0) + "% debt vs model " + md + "%</p>" +
+      "<div class='bar'><span style='width:" + Math.min(db, 100) + "%;background:linear-gradient(90deg,var(--gold),var(--amethyst))'></span></div>";
+    const sectors = a.sector_breakdown || [];
+    const colors = ["#10b981", "#6366f1", "#f59e0b", "#22d3ee", "#f472b6", "#a3e635", "#fb7185"];
+    let dash = "", off = 0;
+    sectors.slice(0, 7).forEach(function (s, i) {
+      const len = (s.pct / 100) * 251.2;
+      dash += "<circle cx='60' cy='60' r='40' fill='none' stroke='" + colors[i % colors.length] +
+        "' stroke-width='16' stroke-dasharray='" + len + " " + (251.2 - len) + "' stroke-dashoffset='" + (-off) + "' transform='rotate(-90 60 60)'/>";
+      off += len;
+    });
+    E("alloc-donut").innerHTML = dash;
+    E("sector-legend").innerHTML = sectors.map(function (s, i) {
+      return "<div><span style='color:" + colors[i % colors.length] + "'>●</span> " + s.sector +
+        " " + s.pct.toFixed(1) + "% <span class='conn-detail'>model " + (s.benchmark_pct || 0) + "%</span></div>";
+    }).join("");
+    const conc = (a.concentration_warnings || []).map(function (w) { return "<li>" + w.message + "</li>"; }).join("");
+    const qual = (a.quality_flags || []).map(function (w) { return "<li>" + w.message + "</li>"; }).join("");
+    const ov = a.overlap || {};
+    E("diag-lists").innerHTML =
+      "<p class='kicker-sm'>Over-concentration</p><ul class='warn-list'>" + (conc || "<li>No single-stock / sector breach.</li>") + "</ul>" +
+      "<p class='kicker-sm'>Quality &amp; debt audit</p><ul class='warn-list'>" + (qual || "<li>No ROCE / leverage / pledge flags.</li>") + "</ul>" +
+      "<p class='kicker-sm'>Fund overlap</p><p class='conn-detail'>" + (ov.message || "") + " (" + (ov.overlap_pct || 0) + "%)</p>";
+    E("suggestion-cards").innerHTML = (a.suggestions || []).map(function (s) {
+      return "<article class='glass-card'><div class='chip jade'>" + (s.code || "") + "</div><h3>" + s.title +
+        "</h3><p class='conn-detail'>" + s.body + "</p></article>";
+    }).join("");
+  }
+
+  async function loadPassiveHub() {
+    const { ok, data } = await GET("/v1/fixed-income/secured");
+    if (!ok) return;
+    const hi = data.sgb_discount_highlight;
+    E("sgb-highlight").innerHTML = hi
+      ? "<div class='kicker-sm'>SGB secondary-market discount</div><h3>" + hi.series + " trades " +
+        Number(hi.discount_pct).toFixed(2) + "% below IBJA spot</h3><p class='conn-detail'>Market ₹" +
+        fmtNum(hi.market_price, 0) + " vs spot ₹" + fmtNum(hi.gold_spot_inr, 0) + ". Prefer discounted series over physical gold.</p>"
+      : "<h3>No SGB series is at a discount vs spot right now.</h3>";
+    E("passive-cards").innerHTML = (data.instruments || []).map(function (it) {
+      const ytm = it.ytm == null ? "—" : Number(it.ytm).toFixed(2) + "%";
+      const er = it.expense_ratio == null ? "—" : Number(it.expense_ratio).toFixed(2) + "%";
+      const chip = (it.safety_badge || "").toLowerCase().indexOf("sovereign") >= 0 ? "gold" : "am";
+      return "<article class='glass-card'><span class='chip " + chip + "'>" + (it.safety_badge || "") +
+        "</span><h3>" + it.name + "</h3><p class='conn-detail'>" + it.category +
+        "</p><p>YTM <strong>" + ytm + "</strong> · ER <strong>" + er + "</strong></p>" +
+        "<p class='fine-print'>" + (it.tax_rules || "") + "</p><p class='conn-detail'>" + (it.notes || "") + "</p></article>";
+    }).join("");
+  }
+
+  async function loadAlertsHub() {
+    await GET("/v1/portfolio/analysis");
+    const { ok, data } = await GET("/v1/investor/notifications");
+    const notes = (ok && data.notifications) ? data.notifications : [];
+    if (!notes.length) {
+      E("alerts-list").innerHTML = "<p class='conn-detail'>No drift or filing notes this week. We cap these at 2–3 so the inbox stays quiet.</p>";
+      return;
+    }
+    E("alerts-list").innerHTML = notes.map(function (n) {
+      return "<div class='conn-row'><div><div class='conn-name'>" + (n.title || "") +
+        "</div><div class='conn-detail'>" + (n.body || "") + "</div></div><span class='chip am'>" + (n.kind || "") + "</span></div>";
+    }).join("");
+  }
+
+  async function renderStockDetail(symbol) {
+    const { ok, data } = await GET("/v1/stocks/" + encodeURIComponent(symbol));
+    if (!ok) return;
+    const s = data.stock;
+    const lo = Number(s.week52_low || 0), hi = Number(s.week52_high || 0), px = Number(s.current_price || 0);
+    const pct = hi > lo ? ((px - lo) / (hi - lo)) * 100 : 50;
+    const metrics = [
+      ["P/E vs 5-yr median", (s.pe || "—") + " / " + (s.pe_5yr_median || "—"), "am"],
+      ["ROE", (s.roe || "—") + "%", "jade"],
+      ["ROCE", (s.roce || "—") + "%", "jade"],
+      ["Debt / equity", s.debt_to_equity, ""],
+      ["FCF (₹ cr)", fmtNum(s.fcf_crore, 0), ""],
+      ["Dividend yield", (s.dividend_yield || "—") + "%", "gold"]
+    ];
+    const filings = (s.filings || []).map(function (f) {
+      return "<div class='item'><div class='when'>" + (f.filed_at || "") + " · " + (f.source || "NSE") +
+        "</div><strong>" + (f.headline || "") + "</strong><p class='conn-detail'>3–5 year takeaway: " +
+        (f.summary_3_5yr || "") + "</p></div>";
+    }).join("") || "<p class='conn-detail'>No recent exchange notes in the educational feed.</p>";
+    E("stock-detail-card").classList.remove("hidden");
+    E("stock-detail-card").innerHTML =
+      "<article class='glass-card'><div class='kicker-sm'>" + (s.sector || "") + " · " + (s.market_cap_category || "") +
+      "</div><h3>" + s.company_name + "</h3><p class='mono'>" + s.nse_symbol + " · BSE " + s.bse_code +
+      " · ₹" + fmtNum(s.current_price, 2) + "</p><div class='range'><i style='left:" + Math.max(0, Math.min(pct, 100)) +
+      "%'></i></div><p class='conn-detail'>52-week ₹" + fmtNum(lo, 0) + " – ₹" + fmtNum(hi, 0) +
+      "</p><div class='metric-row'>" + metrics.map(function (m) {
+        return "<div class='metric'><div class='lbl'>" + m[0] + "</div><div class='val'>" + m[1] + "</div></div>";
+      }).join("") + "</div><div class='section-label'>Official announcements</div><div class='timeline'>" + filings +
+      "</div></article>";
+    E("stock-search-hits").classList.add("hidden");
+  }
+
+  E("stock-search").addEventListener("input", function () {
+    const q = E("stock-search").value.trim();
+    clearTimeout(searchTimer);
+    if (q.length < 1) { E("stock-search-hits").classList.add("hidden"); return; }
+    searchTimer = setTimeout(async function () {
+      const { ok, data } = await GET("/v1/stocks/search?q=" + encodeURIComponent(q));
+      const box = E("stock-search-hits");
+      if (!ok || !data.results.length) { box.classList.add("hidden"); return; }
+      box.innerHTML = data.results.map(function (r) {
+        return "<button type='button' data-symbol='" + r.symbol + "'>" + r.company_name +
+          " <span class='mono'>· " + r.nse_symbol + "</span></button>";
+      }).join("");
+      box.classList.remove("hidden");
+      box.querySelectorAll("button").forEach(function (b) {
+        b.addEventListener("click", function () { renderStockDetail(b.getAttribute("data-symbol")); });
+      });
+    }, 180);
+  });
+
+  async function postPortfolio(form) {
+    const headers = {};
+    if (sessionToken) headers["Authorization"] = "Bearer " + sessionToken;
+    const resp = await fetch(API_BASE + "/v1/portfolio/upload", { method: "POST", headers: headers, body: form });
+    return resp.json().catch(function () { return {}; });
+  }
+
+  E("cas-upload-btn").addEventListener("click", async function () {
+    clearStatus(E("portfolio-status"));
+    const file = E("cas-file").files[0];
+    if (!file) { setStatus(E("portfolio-status"), "Choose a CAS file first.", "error"); return; }
+    const form = new FormData();
+    form.append("file", file);
+    const data = await postPortfolio(form);
+    if (data.ok) {
+      setStatus(E("portfolio-status"), "Parsed " + data.holdings_count + " holdings from " + (data.filename || "upload") + ".", "success");
+      loadPortfolioHub();
+      loadInvestorOverview();
+    } else {
+      setStatus(E("portfolio-status"), data.error || "Could not parse that file.", "error");
+    }
+  });
+
+  E("aa-sync-btn").addEventListener("click", async function () {
+    const form = new FormData();
+    form.append("broker_token", "account-aggregator");
+    const data = await postPortfolio(form);
+    if (data.ok) {
+      setStatus(E("portfolio-status"), "Account Aggregator demo book imported (" + data.holdings_count + " lines).", "success");
+      loadPortfolioHub();
+      loadInvestorOverview();
+    } else {
+      setStatus(E("portfolio-status"), data.error || "Aggregator sync failed.", "error");
+    }
+  });
+
   E("mfa-enroll-btn").addEventListener("click", async function () {
     const { ok, data } = await POST("/mfa/enroll/start", {});
     if (!ok) { setStatus(E("mfa-status"), data.error || "Could not start 2FA setup.", "error"); return; }
@@ -1113,6 +1550,7 @@
     E("page-wrap").classList.add("dashboard");
     showView("view-dashboard");
     refreshChannelCheckboxes();
+    showHub("overview");
     loadBriefing();
   }
 
