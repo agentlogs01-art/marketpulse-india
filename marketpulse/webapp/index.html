@@ -77,7 +77,7 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, .brand, .cover-hero h1 { font-family: var(--font-display); }
+  h1, h2, h3, .cover-hero h1 { font-family: var(--font-display); }
   .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-feature-settings: "tnum"; }
   .page { max-width: 920px; margin: 0 auto; padding: 0 20px 72px; }
   .page.cover-mode { max-width: 560px; }
@@ -87,12 +87,20 @@
     display: flex; align-items: center; justify-content: space-between;
     gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--line); margin-bottom: 28px;
   }
-  .brand { font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
-  button.brand {
-    background: none; border: none; color: inherit; cursor: pointer; padding: 0;
-    font-family: inherit; text-align: left;
+  .brand {
+    display: inline-flex; align-items: center; gap: 12px; text-decoration: none;
+    user-select: none; background: none; border: none; cursor: pointer; padding: 0;
+    color: inherit;
   }
-  button.brand:hover { color: var(--green); }
+  .brand svg { display: block; flex-shrink: 0; }
+  .brand-word { display: flex; align-items: center; gap: 8px; font-family: "Outfit", sans-serif; }
+  .brand-name { font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1; }
+  .brand-name span { color: #10b981; }
+  .brand-in {
+    background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.25);
+    color: #00d084; font-size: 9px; font-weight: 700; padding: 2px 6px;
+    border-radius: 4px; letter-spacing: .1em; line-height: 1;
+  }
   .topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .who { font-size: 13px; color: var(--ink); max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
   .account-meta { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
@@ -381,7 +389,19 @@
 <div class="page cover-mode" id="page-wrap">
 
   <header class="topbar">
-    <button type="button" class="brand" id="brand-home-btn" aria-label="MarketPulse India home">MarketPulse India</button>
+    <a href="/" class="brand" id="brand-home-btn" aria-label="MarketPulse India home">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="42" height="42" fill="none" aria-hidden="true">
+        <rect width="100" height="100" rx="22" fill="#0B0E14" />
+        <path d="M20 52H32L38 34L48 68L58 22L66 52H80" stroke="#00D084" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M30 30H55" stroke="#00D084" stroke-width="4" stroke-linecap="round" />
+        <path d="M30 38H50" stroke="#00D084" stroke-width="4" stroke-linecap="round" />
+        <circle cx="58" cy="22" r="4" fill="#00D084" />
+      </svg>
+      <span class="brand-word">
+        <span class="brand-name">Market<span>Pulse</span></span>
+        <span class="brand-in">IN</span>
+      </span>
+    </a>
     <div class="topbar-right">
       <span id="edition-date" class="mono" style="font-size:12px;color:var(--muted)">—</span>
       <div class="theme-toggle" role="group" aria-label="Colour theme">
@@ -1914,7 +1934,10 @@
 
   E("account-open-btn").addEventListener("click", openProfile);
   E("profile-settings-btn").addEventListener("click", openProfile);
-  E("brand-home-btn").addEventListener("click", goHome);
+  E("brand-home-btn").addEventListener("click", function (ev) {
+    ev.preventDefault();
+    goHome();
+  });
 
   document.querySelectorAll(".field-edit-btn").forEach(function (btn) {
     btn.addEventListener("click", function () {
