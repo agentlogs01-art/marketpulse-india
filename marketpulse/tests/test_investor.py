@@ -129,9 +129,15 @@ class TestInvestorApi(ApiHandlersTestCase):
         token = self._signup_verify_and_login("lookup@example.com")
         hits = investor_handlers.search_stock_symbols(token, "infosys")
         self.assertTrue(any(r["symbol"] == "INFY" for r in hits["results"]))
+        hul = investor_handlers.search_stock_symbols(token, "Hindustan Unilever")
+        self.assertTrue(any(r["symbol"] == "HINDUNILVR" for r in hul["results"]))
+        ticker = investor_handlers.search_stock_symbols(token, "INFY.NS")
+        self.assertTrue(any(r["symbol"] == "INFY" for r in ticker["results"]))
         with patch("marketpulse.pipeline.market_data.fetch_quote", side_effect=RuntimeError("offline")):
             detail = investor_handlers.get_stock_detail(token, "INFY")
+            hul_detail = investor_handlers.get_stock_detail(token, "HUL")
         self.assertEqual(detail["stock"]["nse_symbol"], "INFY")
+        self.assertEqual(hul_detail["stock"]["symbol"], "HINDUNILVR")
         self.assertIn("filings", detail["stock"])
 
     def test_valuation_and_fixed_income(self):

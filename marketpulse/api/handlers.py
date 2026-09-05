@@ -628,6 +628,8 @@ def update_profile(
     if email is not None:
         clean_email = _validate_optional_email(email)
         if clean_email != subscriber.email:
+            if not clean_email and not subscriber.mobile_number:
+                raise ValidationError("Keep an email or a mobile number on the account.")
             other = get_subscriber_by_email(clean_email) if clean_email else None
             if other and other.id != subscriber.id:
                 raise ValidationError("That email is already linked to another account.")
