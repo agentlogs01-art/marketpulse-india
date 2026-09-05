@@ -1313,6 +1313,11 @@
     setConnBadge("conn-email-badge", active.has("email"));
     setConnBadge("conn-whatsapp-badge", active.has("whatsapp"));
     setConnBadge("conn-telegram-badge", active.has("telegram"));
+    E("profile-first-name").value = currentSubscriber.first_name || "";
+    E("profile-last-name").value = currentSubscriber.last_name || "";
+    E("profile-email").value = currentSubscriber.email || "";
+    E("profile-whatsapp").value = currentSubscriber.whatsapp_number || "";
+    E("profile-telegram").value = currentSubscriber.telegram_chat_id || "";
   }
 
   E("save-channels-btn").addEventListener("click", async function () {
@@ -1322,6 +1327,28 @@
     const { ok, data } = await POST("/channels", { channels: channels });
     if (ok) { currentSubscriber.channels = data.channels; refreshChannelCheckboxes(); setStatus(E("settings-status"), "Saved.", "success"); }
     else { setStatus(E("settings-status"), data.error || "Could not save channels.", "error"); }
+  });
+
+  E("save-profile-btn").addEventListener("click", async function () {
+    clearStatus(E("profile-status"));
+    const btn = E("save-profile-btn");
+    btn.disabled = true; btn.textContent = "Saving…";
+    const { ok, data } = await POST("/profile", {
+      first_name: E("profile-first-name").value.trim(),
+      last_name: E("profile-last-name").value.trim(),
+      email: E("profile-email").value.trim(),
+      whatsapp_number: E("profile-whatsapp").value.trim(),
+      telegram_chat_id: E("profile-telegram").value.trim(),
+    });
+    btn.disabled = false; btn.textContent = "Save profile";
+    if (ok && data.subscriber) {
+      currentSubscriber = data.subscriber;
+      refreshHeaderIdentity();
+      refreshChannelCheckboxes();
+      setStatus(E("profile-status"), data.warning || "Profile saved.", data.warning ? "info" : "success");
+    } else {
+      setStatus(E("profile-status"), data.error || "Could not save profile.", "error");
+    }
   });
 
   E("changepw-btn").addEventListener("click", async function () {
@@ -1625,11 +1652,15 @@
       E("mfa-enroll-step1").classList.add("hidden");
       const list = E("mfa-backup-codes-list");
       list.innerHTML = data.backup_codes.map(function (c) { return '<div class="backup-code">' + c + "</div>"; }).join("");
+      lastBackupCodes = data.backup_codes;
       E("mfa-backup-codes-display").classList.remove("hidden");
     } else {
       setStatus(E("mfa-status"), data.reason || "Incorrect code. Please try again.", "error");
     }
   });
+
+  E("mfa-download-codes-btn").addEventListener("click", function () { downloadBackupCodes(lastBackupCodes); });
+  E("mfa-regen-download-btn").addEventListener("click", function () { downloadBackupCodes(lastBackupCodes); });
 
   E("mfa-backup-codes-done-btn").addEventListener("click", async function () {
     E("mfa-backup-codes-display").classList.add("hidden");
@@ -1644,6 +1675,7 @@
     if (ok) {
       const list = E("mfa-regen-codes-list");
       list.innerHTML = data.backup_codes.map(function (c) { return '<div class="backup-code">' + c + "</div>"; }).join("");
+      lastBackupCodes = data.backup_codes;
       E("mfa-regen-codes-display").classList.remove("hidden");
     } else {
       setStatus(E("mfa-status"), data.error || "Could not regenerate backup codes.", "error");
@@ -1685,7 +1717,7 @@
 
   function enterDashboard() {
     E("account-meta").classList.remove("hidden");
-    E("account-who").textContent = currentSubscriber.email || currentSubscriber.mobile_number || "Signed in";
+    refreshHeaderIdentity();
     E("page-wrap").classList.remove("cover-mode");
     E("page-wrap").classList.add("dashboard");
     showView("view-dashboard");
