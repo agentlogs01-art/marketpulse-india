@@ -101,6 +101,9 @@ def get_stock_detail(session_token: str, symbol: str) -> dict:
     _require_session(session_token)
     row = get_stock(symbol)
     if row is None:
+        hits = search_stocks(symbol, limit=1)
+        row = hits[0] if hits else None
+    if row is None:
         raise ValidationError("No matching NSE/BSE symbol in the long-term universe.")
     detail = dict(row)
     try:

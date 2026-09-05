@@ -1,6 +1,7 @@
 """Seeded NSE/BSE universe, fund underlyings, filings, and fixed-income cards."""
 
 from typing import Optional
+import re
 
 STOCKS = [
     {
@@ -108,6 +109,7 @@ STOCKS = [
         "nse_symbol": "HINDUNILVR",
         "bse_code": "500696",
         "company_name": "Hindustan Unilever Ltd",
+        "aliases": ["hul", "hindustan unilever"],
         "sector": "FMCG",
         "market_cap_category": "Large Cap",
         "pe": 54.2,
@@ -662,18 +664,37 @@ def enrich_holding(row: dict) -> dict:
 
 def search_stocks(query: str, limit: int = 8) -> list:
     q = (query or "").strip().lower()
+    q = q.replace(".ns", "").replace(".bo", "").replace(" nse", "").replace(" bse", "")
     if not q:
         return STOCKS[:limit]
+    tokens = [t for t in re.split(r"[\s,]+", q) if t]
     scored = []
     for row in STOCKS:
-        hay = f"{row['symbol']} {row['nse_symbol']} {row['bse_code']} {row['company_name']}".lower()
-        if q in hay:
+        hay = " ".join(
+            [
+                row.get("symbol") or "",
+                row.get("nse_symbol") or "",
+                row.get("bse_code") or "",
+                row.get("company_name") or "",
+                " ".join(row.get("aliases") or []),
+            ]
+        ).lower()
+        if q in hay or all(t in hay for t in tokens):
             scored.append(row)
     return scored[:limit]
 
 
 def get_stock(symbol: str) -> Optional[dict]:
-    return STOCK_BY_SYMBOL.get((symbol or "").upper().strip())
+    raw = (symbol or "").upper().strip()
+    raw = raw.replace(".NS", "").replace(".BO", "")
+    hit = STOCK_BY_SYMBOL.get(raw)
+    if hit:
+        return hit
+    for row in STOCKS:
+        aliases = [a.upper() for a in (row.get("aliases") or [])]
+        if raw in aliases:
+            return row
+    return None
 
 
 def filings_for(symbol: str) -> list:

@@ -151,19 +151,25 @@ def week_window_iso() -> str:
 
 
 def stock_search_rows(query: str) -> list:
+    from marketpulse.investor.catalog import search_stocks
+
+    catalog_hits = search_stocks(query)
     try:
         client = _client()
-        rows = client.select("stock_universe", params={"limit": "40"})
+        rows = client.select("stock_universe", params={"limit": "80"})
         if rows:
-            q = (query or "").lower()
-            return [
-                r for r in rows
-                if q in f"{r.get('symbol','')} {r.get('company_name','')} {r.get('nse_symbol','')} {r.get('bse_code','')}".lower()
-            ][:8]
+            q = (query or "").strip().lower().replace(".ns", "").replace(".bo", "")
+            tokens = [t for t in q.replace(",", " ").split() if t]
+            db_hits = []
+            for r in rows:
+                hay = f"{r.get('symbol','')} {r.get('company_name','')} {r.get('nse_symbol','')} {r.get('bse_code','')}".lower()
+                if q and (q in hay or all(t in hay for t in tokens)):
+                    db_hits.append(r)
+            if db_hits:
+                return db_hits[:8]
     except (SupabaseRequestError, Exception):
         pass
-    from marketpulse.investor.catalog import search_stocks
-    return search_stocks(query)
+    return catalog_hits
 
 
 def seed_catalog_tables() -> None:

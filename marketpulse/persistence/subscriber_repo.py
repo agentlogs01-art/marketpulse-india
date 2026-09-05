@@ -123,6 +123,8 @@ def create_pending_subscriber(
     mobile_number: Optional[str] = None,
     channels: Optional[list] = None,
     whatsapp_number: Optional[str] = None,
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
     client: Optional[SupabaseClient] = None,
 ) -> dict:
     """
@@ -165,6 +167,10 @@ def create_pending_subscriber(
         row["mobile_number"] = mobile_number
     if whatsapp_number:
         row["whatsapp_number"] = whatsapp_number
+    if first_name:
+        row["first_name"] = first_name
+    if last_name:
+        row["last_name"] = last_name
 
     if email:
         return client.upsert(SUBSCRIBERS_TABLE, row, on_conflict="email")
@@ -199,6 +205,23 @@ def set_theme_preference(subscriber_id: str, theme: str, client: Optional[Supaba
         raise ValueError(f"Unknown theme preference: {theme!r} (must be 'light' or 'dark')")
     client = client or get_client()
     client.update(SUBSCRIBERS_TABLE, params={"id": f"eq.{subscriber_id}"}, patch={"theme_preference": theme})
+
+
+def update_subscriber_profile(subscriber_id: str, patch: dict, client: Optional[SupabaseClient] = None) -> Optional[dict]:
+    """Additive profile fields. Never pass password_hash through this helper."""
+    if not patch:
+        return None
+    client = client or get_client()
+    result = client.update(
+        SUBSCRIBERS_TABLE,
+        params={"id": f"eq.{subscriber_id}"},
+        patch=patch,
+        return_row=True,
+    )
+    if result:
+        return result[0]
+    return None
+
 
 
 
