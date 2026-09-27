@@ -27,8 +27,8 @@
     --ink-hover: #1a2230;
     --ink-disabled: #9a8f82;
     --radius: 18px;
-    --amethyst: #6366f1;
-    --gold: #f59e0b;
+    --amethyst: #4f46e5;
+    --gold: #a16207;
     --obsidian: #0b0e14;
     --glass: rgba(255, 250, 243, 0.72);
     --glow: rgba(16, 185, 129, 0.28);
@@ -77,7 +77,11 @@
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
+  h1, h2, h3, .cover-hero h1, .glass-card, .sheet, .metric .val, .health-glow strong, .bond-table td {
+    color: var(--ink);
+  }
   h1, h2, h3, .cover-hero h1 { font-family: var(--font-display); }
+  ::placeholder { color: var(--ink-disabled); opacity: 1; }
   .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-feature-settings: "tnum"; }
   .page { max-width: 920px; margin: 0 auto; padding: 0 20px 72px; }
   .page.cover-mode { max-width: 560px; }
@@ -95,10 +99,10 @@
   .brand svg { display: block; flex-shrink: 0; }
   .brand-word { display: flex; align-items: center; gap: 8px; font-family: "Outfit", sans-serif; }
   .brand-name { font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1; }
-  .brand-name span { color: #10b981; }
+  .brand-name span { color: var(--green); }
   .brand-in {
-    background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.25);
-    color: #00d084; font-size: 9px; font-weight: 700; padding: 2px 6px;
+    background: var(--accent-soft); border: 1px solid var(--line);
+    color: var(--green); font-size: 9px; font-weight: 700; padding: 2px 6px;
     border-radius: 4px; letter-spacing: .1em; line-height: 1;
   }
   .topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -329,7 +333,7 @@
   .metric { background: var(--fill); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
   .metric .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
   .metric .val { font-size: 20px; font-weight: 750; font-family: var(--font-display); margin-top: 4px; }
-  .gauge-wrap { position: relative; height: 168px; }
+  .gauge-wrap { position: relative; height: 168px; color: var(--ink); }
   .gauge-wrap svg { width: 100%; height: 168px; }
   .zone-badge {
     display: inline-flex; align-items: center; gap: 8px; margin-top: 8px;
@@ -349,10 +353,10 @@
   .search-box input { margin-bottom: 0; }
   .search-hits {
     position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
-    background: var(--obsidian); color: #e8eef8; border: 1px solid #232d3f; border-radius: 12px;
+    background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 12px;
     overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.35); max-height: 280px; overflow-y: auto;
   }
-  [data-theme="light"] .search-hits { background: #fffaf3; color: var(--ink); border-color: var(--line); }
+  .search-hits .conn-detail { color: var(--muted); }
   .search-hits button {
     display: block; width: 100%; text-align: left; border: none; background: transparent;
     color: inherit; padding: 10px 12px; font-family: inherit; cursor: pointer; font-size: 13px;
@@ -1758,13 +1762,13 @@
     const x = 160 + 110 * Math.cos(Math.PI - rad);
     const y = 150 - 110 * Math.sin(Math.PI - rad);
     el.innerHTML = '<svg viewBox="0 0 320 170" aria-hidden="true">' +
-      '<path d="M30 150 A130 130 0 0 1 290 150" fill="none" stroke="#3d2a12" stroke-width="18" stroke-linecap="round"/>' +
-      '<path d="M30 150 A130 130 0 0 1 160 20" fill="none" stroke="#10b981" stroke-width="18" stroke-linecap="round"/>' +
-      '<path d="M160 20 A130 130 0 0 1 230 38" fill="none" stroke="#6366f1" stroke-width="18"/>' +
-      '<path d="M230 38 A130 130 0 0 1 290 150" fill="none" stroke="#f59e0b" stroke-width="18" stroke-linecap="round"/>' +
-      '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9" fill="#00d084" stroke="#0b0e14" stroke-width="3"/>' +
-      '<text x="160" y="118" text-anchor="middle" fill="currentColor" font-size="22" font-family="Plus Jakarta Sans" font-weight="700">' + (pe || "—") + '</text>' +
-      '<text x="160" y="138" text-anchor="middle" fill="currentColor" font-size="11" opacity=".7">Nifty P/E · cap/GDP ' + (capGdp || "—") + '</text>' +
+      '<path d="M30 150 A130 130 0 0 1 290 150" fill="none" stroke="var(--line)" stroke-width="18" stroke-linecap="round"/>' +
+      '<path d="M30 150 A130 130 0 0 1 160 20" fill="none" stroke="var(--green)" stroke-width="18" stroke-linecap="round"/>' +
+      '<path d="M160 20 A130 130 0 0 1 230 38" fill="none" stroke="var(--amethyst)" stroke-width="18"/>' +
+      '<path d="M230 38 A130 130 0 0 1 290 150" fill="none" stroke="var(--gold)" stroke-width="18" stroke-linecap="round"/>' +
+      '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9" fill="var(--accent)" stroke="var(--bg)" stroke-width="3"/>' +
+      '<text x="160" y="118" text-anchor="middle" fill="var(--ink)" font-size="22" font-family="Plus Jakarta Sans" font-weight="700">' + (pe || "—") + '</text>' +
+      '<text x="160" y="138" text-anchor="middle" fill="var(--muted)" font-size="11">Nifty P/E · cap/GDP ' + (capGdp || "—") + '</text>' +
       "</svg>";
   }
 
