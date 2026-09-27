@@ -208,7 +208,7 @@ def _require_session(session_token: Optional[str]):
 
     subscriber_id = get_subscriber_id_for_token(session_token or "")
     if not subscriber_id:
-        raise AuthError("Please sign in to continue.")
+        raise AuthError("Please sign in to continue. Your session may have expired after 30 minutes of inactivity.")
 
     subscriber = get_subscriber_by_id(subscriber_id)
     if subscriber is None:

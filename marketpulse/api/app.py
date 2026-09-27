@@ -360,7 +360,19 @@ def api_v1_portfolio_analysis():
 
 @app.route("/api/v1/stocks/search", methods=["GET"])
 def api_v1_stocks_search():
-    return jsonify(investor_handlers.search_stock_symbols(_session_token_from_request(), request.args.get("q", "")))
+    q = request.args.get("q", "")
+    universe = (request.args.get("universe") or request.args.get("asset") or "").lower()
+    index_only = request.args.get("index_only", "").lower() in {"1", "true", "yes"}
+    if universe in {"funds", "mf", "mutual_fund", "mutual-funds"} or index_only:
+        return jsonify(
+            investor_handlers.search_mutual_funds(
+                _session_token_from_request(),
+                q,
+                request.args.get("category", ""),
+                index_only,
+            )
+        )
+    return jsonify(investor_handlers.search_stock_symbols(_session_token_from_request(), q))
 
 
 @app.route("/api/v1/stocks/<symbol>", methods=["GET"])
@@ -400,6 +412,47 @@ def api_v1_investor_notifications():
     return jsonify(investor_handlers.get_investor_notifications(_session_token_from_request()))
 
 
+@app.route("/api/v1/mutual-funds", methods=["GET"])
+def api_v1_mutual_funds():
+    q = (request.args.get("q") or "").strip()
+    index_only = request.args.get("index_only", "").lower() in {"1", "true", "yes"}
+    if q or index_only:
+        return jsonify(
+            investor_handlers.search_mutual_funds(
+                _session_token_from_request(),
+                q,
+                request.args.get("category", ""),
+                index_only,
+            )
+        )
+    return jsonify(investor_handlers.list_mutual_funds(_session_token_from_request()))
+
+
+@app.route("/api/v1/investor/funds/search", methods=["GET"])
+def api_v1_investor_funds_search():
+    """Dedicated search path so it cannot clash with /mutual-funds/<code>."""
+    return jsonify(
+        investor_handlers.search_mutual_funds(
+            _session_token_from_request(),
+            request.args.get("q", ""),
+            request.args.get("category", ""),
+            request.args.get("index_only", "").lower() in {"1", "true", "yes"},
+        )
+    )
+
+
+@app.route("/api/v1/mutual-funds/search", methods=["GET"])
+def api_v1_mutual_funds_search():
+    return api_v1_investor_funds_search()
+
+
+@app.route("/api/v1/mutual-funds/<code>", methods=["GET"])
+def api_v1_mutual_fund_detail(code):
+    if code.lower() == "search":
+        return api_v1_investor_funds_search()
+    return jsonify(investor_handlers.get_mutual_fund_detail(_session_token_from_request(), code))
+
+
 # ---------------------------------------------------------------------------
 # Telegram webhook
 # ---------------------------------------------------------------------------
@@ -436,4 +489,10 @@ def telegram_webhook():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8000)))
+    app.run(
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 8000)),
+        threaded=True,
+        debug=True,
+        use_reloader=True,
+    )

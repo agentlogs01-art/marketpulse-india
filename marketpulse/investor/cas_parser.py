@@ -8,7 +8,7 @@ import json
 import re
 from typing import Optional
 
-from marketpulse.investor.catalog import BROKER_DEMO_HOLDINGS, enrich_holding
+from marketpulse.investor.catalog import get_broker_demo_holdings, enrich_holding
 
 
 HEADER_ALIASES = {
@@ -69,7 +69,7 @@ def parse_holdings_payload(raw: bytes, filename: str = "", broker_token: str = "
     the educational demo book used for advisory screens.
     """
     if (broker_token or "").strip():
-        holdings = [enrich_holding(dict(h)) for h in BROKER_DEMO_HOLDINGS]
+        holdings = get_broker_demo_holdings()
         return {"source": "broker_aa", "filename": filename or "account-aggregator", "holdings": holdings}
 
     name = (filename or "upload").lower()

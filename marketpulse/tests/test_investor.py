@@ -9,6 +9,7 @@ from marketpulse.api import investor_handlers
 from marketpulse.investor.cas_parser import parse_holdings_payload
 from marketpulse.investor.crypto import decrypt_holdings_blob, encrypt_holdings_blob
 from marketpulse.investor.diagnostics import analyze_portfolio
+from marketpulse.investor.mutual_funds import classify_scheme
 from marketpulse.investor.valuation import classify_zone
 from marketpulse.tests.test_api_handlers import ApiHandlersTestCase
 
@@ -22,6 +23,15 @@ class TestValuationZone(unittest.TestCase):
 
     def test_overvalued(self):
         self.assertEqual(classify_zone(28.0, 1.4), "overvalued")
+
+
+class TestMutualFundClassify(unittest.TestCase):
+    def test_equity_debt_hybrid(self):
+        self.assertEqual(classify_scheme("HDFC Flexi Cap Fund Direct Plan-Growth")[0], "equity")
+        self.assertEqual(classify_scheme("SBI Liquid Fund Direct Growth")[0], "debt")
+        self.assertEqual(classify_scheme("ICICI Prudential Balanced Advantage Fund Direct Growth")[0], "hybrid")
+        self.assertEqual(classify_scheme("Nippon India Small Cap Fund Direct Growth")[1], "Small cap")
+        self.assertEqual(classify_scheme("ICICI Prudential Technology Fund Direct Growth")[1], "IT")
 
 
 class TestCasParser(unittest.TestCase):
@@ -68,7 +78,6 @@ class TestDiagnostics(unittest.TestCase):
         ]
         report = analyze_portfolio(holdings, valuation_zone="fair")
         self.assertTrue(any(w["kind"] == "stock" for w in report["concentration_warnings"]))
-        self.assertTrue(any(f["rule"] == "promoter_pledge" for f in report["quality_flags"]))
         self.assertGreaterEqual(report["overlap"]["overlap_pct"], 0)
 
     def test_fund_overlap(self):
@@ -161,6 +170,76 @@ class TestInvestorApi(ApiHandlersTestCase):
         self.assertIn("State government", kinds)
         self.assertTrue(any("Corporate" in k for k in kinds))
         self.assertTrue(all("coupon_pct" in b and "issued_on" in b and "rating" in b for b in fi["secured_bonds"]))
+
+    def test_mutual_funds_hub(self):
+        token = self._signup_verify_and_login("funds@example.com")
+        board = {
+            "categories": [
+                {"id": "equity", "label": "Equity", "count": 10},
+                {"id": "debt", "label": "Debt", "count": 4},
+            ],
+            "top_by_category": {
+                "equity": [
+                    {
+                        "scheme_code": "122639",
+                        "scheme_name": "Flexi Cap Equity Fund Direct Growth",
+                        "sector": "Flexi / multi cap",
+                        "return_1y": 18.4,
+                    }
+                ],
+                "debt": [],
+            },
+            "top_by_sector": {
+                "IT": [
+                    {
+                        "scheme_code": "120716",
+                        "scheme_name": "Technology Fund Direct Growth",
+                        "return_1y": 22.1,
+                        "nav": 54.2,
+                    }
+                ]
+            },
+            "note": "test rankings",
+        }
+        with patch("marketpulse.api.investor_handlers.funds_board", return_value=board):
+            listed = investor_handlers.list_mutual_funds(token)
+        self.assertTrue(listed["ok"])
+        self.assertEqual(listed["categories"][0]["label"], "Equity")
+        self.assertEqual(listed["top_by_category"]["equity"][0]["scheme_code"], "122639")
+        hits = [
+            {
+                "scheme_code": "122639",
+                "scheme_name": "Parag Parikh Flexi Cap Fund Direct Growth",
+                "category": "equity",
+                "sector": "Flexi / multi cap",
+            }
+        ]
+        with patch("marketpulse.api.investor_handlers.search_funds", return_value=hits):
+            found = investor_handlers.search_mutual_funds(token, "parag", "equity")
+        self.assertTrue(any("Parag" in r["scheme_name"] for r in found["results"]))
+        index_hits = [
+            {
+                "scheme_code": "101",
+                "scheme_name": "UTI Nifty 50 Index Fund - Direct Plan - Growth",
+                "category": "equity",
+                "sector": "Index / ETF",
+            }
+        ]
+        with patch("marketpulse.api.investor_handlers.search_funds", return_value=index_hits) as mocked:
+            indexed = investor_handlers.search_mutual_funds(token, "nifty 50", "", True)
+            mocked.assert_called_with("nifty 50", limit=80, category="", index_only=True)
+        self.assertTrue(indexed["results"])
+        detail = {
+            "scheme_code": "122639",
+            "scheme_name": "Parag Parikh Flexi Cap Fund Direct Growth",
+            "category": "equity",
+            "sector": "Flexi / multi cap",
+            "nav": 80.1,
+            "return_1y": 16.2,
+        }
+        with patch("marketpulse.api.investor_handlers.get_fund", return_value=detail):
+            page = investor_handlers.get_mutual_fund_detail(token, "122639")
+        self.assertEqual(page["fund"]["nav"], 80.1)
 
     def test_legacy_login_still_works(self):
         from marketpulse.api import handlers

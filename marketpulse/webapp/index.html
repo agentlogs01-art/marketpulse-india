@@ -395,6 +395,22 @@
   .range { height: 6px; background: var(--fill); border-radius: 99px; position: relative; margin: 10px 0 18px; }
   .range i { position: absolute; top: -4px; width: 14px; height: 14px; border-radius: 50%; background: var(--amethyst); border: 2px solid var(--bg); }
   .fund-empty { color: var(--muted); padding: 24px 0; }
+  .mf-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+  .mf-pill {
+    border: 1px solid var(--line); background: var(--fill); color: var(--muted);
+    border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 650;
+    cursor: pointer; font-family: inherit;
+  }
+  .mf-pill.active { color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
+  .mf-sector-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .mf-fund-btn {
+    display: block; width: 100%; text-align: left; border: none; background: transparent;
+    color: inherit; padding: 8px 0; cursor: pointer; font-family: inherit;
+    border-bottom: 1px solid var(--line);
+  }
+  .mf-fund-btn:last-child { border-bottom: none; }
+  .mf-fund-btn:hover { color: var(--accent); }
+  #mf-detail-card .metric-row, #idx-fund-detail .metric-row { grid-template-columns: repeat(4, 1fr); }
 
   @media (max-width: 900px) {
     .hub-grid, .metric-row { grid-template-columns: 1fr; }
@@ -613,6 +629,7 @@
       <button type="button" class="active" data-hub="overview" id="hub-btn-overview">Overview</button>
       <button type="button" data-hub="briefing" id="hub-btn-briefing">Briefing</button>
       <button type="button" data-hub="portfolio" id="hub-btn-portfolio">Portfolio</button>
+      <button type="button" data-hub="funds" id="hub-btn-funds">Mutual funds</button>
       <button type="button" data-hub="passive" id="hub-btn-passive">Index &amp; bonds</button>
       <button type="button" data-hub="alerts" id="hub-btn-alerts">Alerts</button>
     </nav>
@@ -709,8 +726,42 @@
       </div>
     </div>
 
+    <div id="hub-funds" class="hidden">
+      <article class="glass-card search-box">
+        <div class="kicker-sm">Scheme lookup</div>
+        <h3>Search a mutual fund</h3>
+        <label for="mf-search">Fund name or scheme code</label>
+        <div class="search-wrap">
+          <input type="text" id="mf-search" placeholder="Parag Parikh, Nippon Small Cap, 122639…" autocomplete="off">
+          <div id="mf-search-hits" class="search-hits hidden"></div>
+        </div>
+        <p class="fine-print">Latest NAVs from AMFI. Type a name, AMC, or scheme code — every matching scheme is listed below (Direct Growth first).</p>
+        <div id="mf-search-status" class="conn-detail" style="margin-top:8px"></div>
+        <div id="mf-search-results"></div>
+      </article>
+      <div id="mf-detail-card" class="hidden"></div>
+      <div id="mf-pills" class="mf-pills"></div>
+      <h3 class="section-label">Top performers by category</h3>
+      <div class="card-grid" id="mf-category-leaders"></div>
+      <h3 class="section-label">Sector leaders (equity)</h3>
+      <div class="mf-sector-grid" id="mf-sector-leaders"></div>
+      <p class="fine-print" id="mf-board-note"></p>
+    </div>
+
     <div id="hub-passive" class="hidden">
       <article class="glass-card sgb-box" id="sgb-highlight"></article>
+      <article class="glass-card search-box">
+        <div class="kicker-sm">Index / ETF lookup</div>
+        <h3>Search index funds</h3>
+        <label for="idx-search">Nifty, Sensex, or AMC name</label>
+        <div class="search-wrap">
+          <input type="text" id="idx-search" placeholder="Nifty 50, Sensex, UTI Nifty…" autocomplete="off">
+          <div id="idx-search-hits" class="search-hits hidden"></div>
+        </div>
+        <div id="idx-search-status" class="conn-detail" style="margin-top:8px"></div>
+        <div id="idx-search-results"></div>
+      </article>
+      <div id="idx-fund-detail" class="hidden"></div>
       <h3 class="section-label">Index sleeves</h3>
       <div class="card-grid" id="passive-cards"></div>
       <h3 class="section-label">Secured bonds</h3>
@@ -908,6 +959,8 @@
 
   const API_BASE = window.location.origin + "/api";
   const SESSION_KEY = "marketpulse_session_token";
+  const LAST_ACTIVE_KEY = "marketpulse_last_active";
+  const IDLE_MS = 30 * 60 * 1000;
   const THEME_KEY = "marketpulse_theme";
   const E = function (id) { return document.getElementById(id); };
   const BIAS_COPY = {
@@ -1128,6 +1181,9 @@
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     const data = await resp.json().catch(function () { return {}; });
+    if (resp.status === 401 && sessionToken && path !== "/logout") {
+      expireSession("Signed out after 30 minutes of inactivity. Please sign in again.");
+    }
     return { ok: resp.ok && data.ok !== false, status: resp.status, data: data };
   }
 
@@ -1136,8 +1192,47 @@
 
   function setSession(token) {
     sessionToken = token;
-    if (token) localStorage.setItem(SESSION_KEY, token);
-    else localStorage.removeItem(SESSION_KEY);
+    if (token) {
+      localStorage.setItem(SESSION_KEY, token);
+      markActivity();
+    } else {
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(LAST_ACTIVE_KEY);
+    }
+  }
+
+  function markActivity() {
+    if (!sessionToken) return;
+    localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now()));
+  }
+
+  function expireSession(message) {
+    if (!sessionToken && !currentSubscriber) return;
+    sessionToken = null;
+    currentSubscriber = null;
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(LAST_ACTIVE_KEY);
+    showLandingState();
+    if (message) {
+      showView("view-auth");
+      const tabIn = E("tab-signin");
+      const tabUp = E("tab-signup");
+      if (tabIn && tabUp) {
+        tabIn.classList.add("active");
+        tabUp.classList.remove("active");
+        E("panel-signin").classList.remove("hidden");
+        E("panel-signup").classList.add("hidden");
+      }
+      setStatus(E("signin-status"), message, "info");
+    }
+  }
+
+  function checkIdleTimeout() {
+    if (!sessionToken) return;
+    const last = Number(localStorage.getItem(LAST_ACTIVE_KEY) || 0);
+    if (last && Date.now() - last > IDLE_MS) {
+      expireSession("Signed out after 30 minutes of inactivity. Please sign in again.");
+    }
   }
 
   function drawQR(canvas, uri) {
@@ -1620,8 +1715,14 @@
     E("mfa-disable-confirm").classList.add("hidden");
   }
 
-  const HUBS = ["overview", "briefing", "portfolio", "passive", "alerts"];
+  const HUBS = ["overview", "briefing", "portfolio", "funds", "passive", "alerts"];
   let searchTimer = null;
+  let mfSearchTimer = null;
+  let mfSearchSeq = 0;
+  let mfCatFilter = "all";
+  let mfBoard = null;
+  let idxSearchTimer = null;
+  let idxSearchSeq = 0;
   let searchSeq = 0;
   let tickerWatch = { recents: [], favorites: [] };
 
@@ -1634,6 +1735,7 @@
     });
     if (name === "briefing") loadBriefing();
     if (name === "portfolio") loadPortfolioHub();
+    if (name === "funds") loadFundsHub();
     if (name === "passive") loadPassiveHub();
     if (name === "alerts") loadAlertsHub();
     if (name === "overview") loadInvestorOverview();
@@ -1760,6 +1862,189 @@
       return "<article class='glass-card'><div class='chip jade'>" + (s.code || "") + "</div><h3>" + s.title +
         "</h3><p class='conn-detail'>" + s.body + "</p></article>";
     }).join("");
+  }
+
+  function fmtRet(n) {
+    if (n === null || n === undefined || n === "") return "—";
+    const num = Number(n);
+    const cls = num > 0 ? "delta up" : (num < 0 ? "delta down" : "delta flat");
+    return "<span class='" + cls + "'>" + fmtSignedPct(num, 1) + "</span>";
+  }
+
+  function catLabel(id) {
+    const map = { equity: "Equity", debt: "Debt", hybrid: "Hybrid", solution: "Solution oriented", other: "Other" };
+    return map[id] || id || "—";
+  }
+
+  function renderFundsBoard() {
+    const data = mfBoard || {};
+    const cats = data.categories || [];
+    E("mf-pills").innerHTML = ["all"].concat(cats.map(function (c) { return c.id; })).map(function (id) {
+      const row = cats.filter(function (c) { return c.id === id; })[0];
+      const label = id === "all" ? "All" : (row ? row.label : catLabel(id));
+      const count = row ? " · " + row.count : "";
+      const active = mfCatFilter === id ? " active" : "";
+      return "<button type='button' class='mf-pill" + active + "' data-cat='" + id + "'>" + label + count + "</button>";
+    }).join("");
+    E("mf-pills").querySelectorAll(".mf-pill").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        mfCatFilter = btn.getAttribute("data-cat") || "all";
+        renderFundsBoard();
+      });
+    });
+    const byCat = data.top_by_category || {};
+    const catIds = mfCatFilter === "all" ? ["equity", "debt", "hybrid", "solution", "other"] : [mfCatFilter];
+    E("mf-category-leaders").innerHTML = catIds.map(function (id) {
+      const rows = byCat[id] || [];
+      if (!rows.length) return "";
+      const body = rows.map(function (f) {
+        return "<button type='button' class='mf-fund-btn' data-code='" + f.scheme_code + "'><strong>" +
+          (f.scheme_name || "") + "</strong><div class='conn-detail'>" + (f.sector || "") +
+          " · 1Y " + (f.return_1y == null ? "—" : fmtSignedPct(f.return_1y, 1)) + "</div></button>";
+      }).join("");
+      return "<article class='glass-card'><div class='kicker-sm'>" + catLabel(id) + "</div><h3>1-year leaders</h3>" + body + "</article>";
+    }).join("") || "<p class='conn-detail'>No category leaders yet. The AMFI list may still be loading — wait a moment and reopen this tab.</p>";
+    const sectors = data.top_by_sector || {};
+    const sectorNames = Object.keys(sectors).filter(function (name) {
+      if (mfCatFilter !== "all" && mfCatFilter !== "equity") return false;
+      return (sectors[name] || []).length;
+    });
+    E("mf-sector-leaders").innerHTML = sectorNames.map(function (name) {
+      const rows = sectors[name] || [];
+      const body = rows.map(function (f) {
+        return "<button type='button' class='mf-fund-btn' data-code='" + f.scheme_code + "'><strong>" +
+          (f.scheme_name || "") + "</strong><div class='conn-detail'>1Y " +
+          (f.return_1y == null ? "—" : fmtSignedPct(f.return_1y, 1)) +
+          " · NAV ₹" + fmtNum(f.nav, 2) + "</div></button>";
+      }).join("");
+      return "<article class='glass-card'><div class='kicker-sm'>Equity sector</div><h3>" + name + "</h3>" + body + "</article>";
+    }).join("") || (mfCatFilter === "all" || mfCatFilter === "equity"
+      ? "<p class='conn-detail'>Sector leaders appear after the AMFI scheme list loads.</p>"
+      : "<p class='conn-detail'>Sector leaders are shown on Equity (and All).</p>");
+    E("mf-board-note").textContent = data.note || "";
+    document.querySelectorAll("#mf-category-leaders [data-code], #mf-sector-leaders [data-code]").forEach(function (btn) {
+      btn.addEventListener("click", function () { pickFund(btn.getAttribute("data-code"), "mf-detail-card"); });
+    });
+  }
+
+  async function loadFundsHub() {
+    E("mf-category-leaders").innerHTML = "<p class='conn-detail'>Loading AMFI scheme list…</p>";
+    E("mf-sector-leaders").innerHTML = "";
+    const { ok, data } = await GET("/v1/mutual-funds");
+    if (ok) {
+      mfBoard = data;
+      renderFundsBoard();
+    } else {
+      E("mf-category-leaders").innerHTML = "<p class='conn-detail'>" + (data.error || "Could not load fund rankings. Sign in and try again.") + "</p>";
+    }
+  }
+
+  function renderFundDetail(f, cardId) {
+    const card = E(cardId);
+    card.classList.remove("hidden");
+    card.innerHTML =
+      "<article class='glass-card'><div class='stock-head'><div><div class='kicker-sm'>" +
+      catLabel(f.category) + " · " + (f.sector || "") + "</div><h3>" + (f.scheme_name || "") +
+      "</h3><p class='conn-detail'>" + (f.fund_house || "") + " · code " + (f.scheme_code || "") +
+      "</p></div><span class='chip jade'>" + (f.scheme_type || f.plan || "Open ended") + "</span></div>" +
+      "<div class='metric-row' style='margin-top:12px'>" +
+      "<div class='metric'><div class='lbl'>NAV</div><div class='val'>₹" + fmtNum(f.nav, 2) + "</div><div class='conn-detail'>" + (f.nav_date || "") + "</div></div>" +
+      "<div class='metric'><div class='lbl'>1 month</div><div class='val'>" + fmtRet(f.return_1m) + "</div></div>" +
+      "<div class='metric'><div class='lbl'>1 year</div><div class='val'>" + fmtRet(f.return_1y) + "</div></div>" +
+      "<div class='metric'><div class='lbl'>3 year</div><div class='val'>" + fmtRet(f.return_3y) + "</div></div>" +
+      "</div><p class='fine-print'>" + (f.scheme_category || "") + "</p></article>";
+    card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function fundResultRows(rows, emptyMsg) {
+    if (!rows.length) return "<p class='conn-detail'>" + emptyMsg + "</p>";
+    return "<div class='bond-table-wrap'><table class='bond-table'><thead><tr><th>Scheme</th><th>Group</th><th>NAV</th></tr></thead><tbody>" +
+      rows.map(function (r) {
+        return "<tr><td><button type='button' class='mf-fund-btn' data-code='" + r.scheme_code + "'><strong>" +
+          (r.scheme_name || "") + "</strong><div class='conn-detail'>Code " + r.scheme_code +
+          (r.fund_house ? " · " + r.fund_house : "") + "</div></button></td><td>" +
+          catLabel(r.category) + "<div class='conn-detail'>" + (r.sector || "") + "</div></td><td class='mono'>₹" +
+          fmtNum(r.nav, 2) + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+  }
+
+  async function pickFund(code, cardId) {
+    if (!code) return;
+    const target = cardId || "mf-detail-card";
+    E("mf-search-hits").classList.add("hidden");
+    if (E("idx-search-hits")) E("idx-search-hits").classList.add("hidden");
+    const { ok, data } = await GET("/v1/mutual-funds/" + encodeURIComponent(code));
+    if (!ok || !data.fund) {
+      const card = E(target);
+      card.classList.remove("hidden");
+      card.innerHTML = "<article class='glass-card'><p class='conn-detail'>No scheme matched that code.</p></article>";
+      return;
+    }
+    renderFundDetail(data.fund, target);
+  }
+
+  async function runFundSearch(q) {
+    const seq = ++mfSearchSeq;
+    const { ok, data } = await GET("/v1/stocks/search?universe=funds&q=" + encodeURIComponent(q));
+    if (seq !== mfSearchSeq) return;
+    const box = E("mf-search-hits");
+    const list = E("mf-search-results");
+    const status = E("mf-search-status");
+    const rows = (ok && data.results) ? data.results : [];
+    status.textContent = ok
+      ? (rows.length ? rows.length + " scheme" + (rows.length === 1 ? "" : "s") + " matched" : "No schemes matched \"" + q + "\"")
+      : (data.error || "Search failed. Sign in and try again.");
+    if (!rows.length) {
+      box.classList.add("hidden");
+      box.innerHTML = "";
+      list.innerHTML = "";
+      return;
+    }
+    box.classList.remove("hidden");
+    box.innerHTML = rows.slice(0, 8).map(function (r) {
+      return "<button type='button' data-code='" + r.scheme_code + "'><strong>" + (r.scheme_name || "") +
+        "</strong><div class='conn-detail'>" + catLabel(r.category) + " · " + (r.sector || "") +
+        " · ₹" + fmtNum(r.nav, 2) + "</div></button>";
+    }).join("");
+    list.innerHTML = fundResultRows(rows, "");
+    function bind(el) {
+      el.querySelectorAll("button[data-code]").forEach(function (btn) {
+        btn.addEventListener("click", function () { pickFund(btn.getAttribute("data-code"), "mf-detail-card"); });
+      });
+    }
+    bind(box);
+    bind(list);
+  }
+
+  async function runIndexFundSearch(q) {
+    const seq = ++idxSearchSeq;
+    const { ok, data } = await GET("/v1/stocks/search?universe=funds&index_only=1&q=" + encodeURIComponent(q));
+    if (seq !== idxSearchSeq) return;
+    const box = E("idx-search-hits");
+    const list = E("idx-search-results");
+    const status = E("idx-search-status");
+    const rows = (ok && data.results) ? data.results : [];
+    status.textContent = ok
+      ? (rows.length ? rows.length + " index / ETF scheme" + (rows.length === 1 ? "" : "s") + " matched" : "No index funds matched \"" + q + "\"")
+      : (data.error || "Search failed. Sign in and try again.");
+    if (!rows.length) {
+      box.classList.add("hidden");
+      list.innerHTML = "";
+      return;
+    }
+    box.classList.remove("hidden");
+    box.innerHTML = rows.slice(0, 8).map(function (r) {
+      return "<button type='button' data-code='" + r.scheme_code + "'><strong>" + (r.scheme_name || "") +
+        "</strong><div class='conn-detail'>" + (r.sector || "") + " · ₹" + fmtNum(r.nav, 2) + "</div></button>";
+    }).join("");
+    list.innerHTML = fundResultRows(rows, "");
+    function bind(el) {
+      el.querySelectorAll("button[data-code]").forEach(function (btn) {
+        btn.addEventListener("click", function () { pickFund(btn.getAttribute("data-code"), "idx-fund-detail"); });
+      });
+    }
+    bind(box);
+    bind(list);
   }
 
   async function loadPassiveHub() {
@@ -1949,6 +2234,56 @@
     ev.preventDefault();
     const first = E("stock-search-hits").querySelector("button[data-symbol]");
     if (first) pickStock(first.getAttribute("data-symbol"));
+  });
+
+  E("mf-search").addEventListener("input", function () {
+    const q = E("mf-search").value.trim();
+    clearTimeout(mfSearchTimer);
+    if (q.length < 1) {
+      E("mf-search-hits").classList.add("hidden");
+      E("mf-search-results").innerHTML = "";
+      E("mf-search-status").textContent = "";
+      return;
+    }
+    mfSearchTimer = setTimeout(function () { runFundSearch(q); }, 160);
+  });
+
+  E("mf-search").addEventListener("focus", function () {
+    const q = E("mf-search").value.trim();
+    if (q.length >= 1) runFundSearch(q);
+  });
+
+  E("mf-search").addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter") return;
+    ev.preventDefault();
+    const first = E("mf-search-hits").querySelector("button[data-code]") ||
+      E("mf-search-results").querySelector("button[data-code]");
+    if (first) pickFund(first.getAttribute("data-code"), "mf-detail-card");
+  });
+
+  E("idx-search").addEventListener("input", function () {
+    const q = E("idx-search").value.trim();
+    clearTimeout(idxSearchTimer);
+    if (q.length < 1) {
+      E("idx-search-hits").classList.add("hidden");
+      E("idx-search-results").innerHTML = "";
+      E("idx-search-status").textContent = "";
+      return;
+    }
+    idxSearchTimer = setTimeout(function () { runIndexFundSearch(q); }, 160);
+  });
+
+  E("idx-search").addEventListener("focus", function () {
+    const q = E("idx-search").value.trim();
+    if (q.length >= 1) runIndexFundSearch(q);
+  });
+
+  E("idx-search").addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter") return;
+    ev.preventDefault();
+    const first = E("idx-search-hits").querySelector("button[data-code]") ||
+      E("idx-search-results").querySelector("button[data-code]");
+    if (first) pickFund(first.getAttribute("data-code"), "idx-fund-detail");
   });
 
   async function postPortfolio(form) {
@@ -2163,6 +2498,13 @@
 
   updateCountdown();
   setInterval(updateCountdown, 1000);
+  setInterval(checkIdleTimeout, 30000);
+  ["click", "keydown", "mousemove", "scroll", "touchstart"].forEach(function (evt) {
+    document.addEventListener(evt, function () { markActivity(); }, { passive: true });
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") checkIdleTimeout();
+  });
 
   (async function init() {
     if (await handlePasswordReset()) return;

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional
 
-from marketpulse.investor.catalog import DEFAULT_VALUATION
+from marketpulse.investor.catalog import get_default_valuation
 from marketpulse.investor.diagnostics import recommended_allocation
 
 
@@ -32,7 +32,7 @@ def classify_zone(nifty_pe: float, market_cap_to_gdp: float) -> str:
 
 
 def build_valuation_snapshot(overrides: Optional[dict] = None) -> dict:
-    data = dict(DEFAULT_VALUATION)
+    data = dict(get_default_valuation())
     if overrides:
         data.update({k: v for k, v in overrides.items() if v is not None})
     zone = classify_zone(float(data["nifty_pe"]), float(data["market_cap_to_gdp"]))

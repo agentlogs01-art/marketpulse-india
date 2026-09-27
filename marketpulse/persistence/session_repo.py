@@ -24,14 +24,25 @@ from marketpulse.persistence.supabase_client import SupabaseClient, get_client
 
 TABLE = "sessions"
 
+# Hard cap if a session is never used; activity slides this window.
 SESSION_LIFETIME_DAYS = 30
+# Sign-out after this much idle time (no authenticated API calls).
+IDLE_TIMEOUT_MINUTES = 30
+
+
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _idle_expiry() -> datetime:
+    return _utc_now() + timedelta(minutes=IDLE_TIMEOUT_MINUTES)
 
 
 def create_session(subscriber_id: str, client: Optional[SupabaseClient] = None) -> str:
     """Issues a new session token for a subscriber and returns it."""
     client = client or get_client()
     token = secrets.token_urlsafe(32)
-    expires_at = (datetime.now(timezone.utc) + timedelta(days=SESSION_LIFETIME_DAYS)).isoformat()
+    expires_at = _idle_expiry().isoformat()
     client.insert(
         TABLE,
         {"token": token, "subscriber_id": subscriber_id, "expires_at": expires_at},
@@ -61,10 +72,32 @@ def get_subscriber_id_for_token(token: str, client: Optional[SupabaseClient] = N
     if expires_at:
         try:
             expiry = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
-            if expiry < datetime.now(timezone.utc):
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=timezone.utc)
+            if expiry < _utc_now():
                 return None
         except ValueError:
             pass  # malformed timestamp -- fail open rather than lock someone out on a parse quirk
+
+    created_at = session.get("created_at")
+    if created_at:
+        try:
+            created = datetime.fromisoformat(str(created_at).replace("Z", "+00:00"))
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
+            if created + timedelta(days=SESSION_LIFETIME_DAYS) < _utc_now():
+                return None
+        except ValueError:
+            pass
+
+    try:
+        client.update(
+            TABLE,
+            params={"token": f"eq.{token}"},
+            patch={"expires_at": _idle_expiry().isoformat()},
+        )
+    except Exception:
+        pass
 
     return session["subscriber_id"]
 

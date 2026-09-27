@@ -11,6 +11,9 @@ New routes (wired in api/app.py) — existing /api/login, /api/me, etc. are unto
   GET  /api/v1/investor/tickers
   POST /api/v1/investor/tickers
   GET  /api/v1/investor/notifications
+  GET  /api/v1/mutual-funds
+  GET  /api/v1/mutual-funds/search?q=
+  GET  /api/v1/mutual-funds/<code>
 """
 
 from __future__ import annotations
@@ -19,16 +22,18 @@ from marketpulse.api.handlers import AuthError, ValidationError, _require_sessio
 from marketpulse.investor import repo
 from marketpulse.investor.cas_parser import parse_holdings_payload
 from marketpulse.investor.catalog import (
-    FIXED_INCOME,
-    SECURED_BONDS,
-    SGB_SERIES,
     filings_for,
+    get_fixed_income,
+    get_secured_bonds,
+    get_sgb_series,
     get_stock,
+    get_stock_meta,
     search_stocks,
     sector_metric_deltas,
     week52_context,
 )
 from marketpulse.investor.diagnostics import analyze_portfolio
+from marketpulse.investor.mutual_funds import funds_board, get_fund, search_funds
 from marketpulse.investor.notifications import maybe_dispatch_from_analysis, watchlist_filing_alerts
 from marketpulse.investor.valuation import build_valuation_snapshot
 
@@ -139,13 +144,14 @@ def get_valuation_zone(session_token: str) -> dict:
 
 def get_secured_fixed_income(session_token: str) -> dict:
     _require_session(session_token)
-    discounted = [s for s in SGB_SERIES if (s.get("discount_pct") or 0) > 0]
+    sgb_series = get_sgb_series()
+    discounted = [s for s in sgb_series if (s.get("discount_pct") or 0) > 0]
     discounted.sort(key=lambda s: -float(s["discount_pct"]))
     return {
         "ok": True,
-        "instruments": FIXED_INCOME,
-        "secured_bonds": SECURED_BONDS,
-        "sgb_series": SGB_SERIES,
+        "instruments": get_fixed_income(),
+        "secured_bonds": get_secured_bonds(),
+        "sgb_series": sgb_series,
         "sgb_discount_highlight": discounted[0] if discounted else None,
     }
 
@@ -158,7 +164,7 @@ def get_ticker_watchlist(session_token: str) -> dict:
     seen_fav = set()
     for row in rows:
         symbol = row.get("symbol")
-        meta = get_stock(symbol) or {"symbol": symbol, "company_name": symbol, "nse_symbol": symbol}
+        meta = get_stock_meta(symbol) or {"symbol": symbol, "company_name": symbol, "nse_symbol": symbol}
         chip = {
             "symbol": meta.get("symbol") or symbol,
             "nse_symbol": meta.get("nse_symbol") or symbol,
@@ -187,3 +193,23 @@ def set_ticker_favorite(session_token: str, symbol: str, is_favorite: bool) -> d
 def get_investor_notifications(session_token: str) -> dict:
     subscriber = _require_session(session_token)
     return {"ok": True, "notifications": repo.list_notifications(subscriber.id)}
+
+
+def list_mutual_funds(session_token: str) -> dict:
+    _require_session(session_token)
+    board = funds_board()
+    return {"ok": True, **board}
+
+
+def search_mutual_funds(session_token: str, query: str, category: str = "", index_only: bool = False) -> dict:
+    _require_session(session_token)
+    results = search_funds(query, limit=80, category=category, index_only=index_only)
+    return {"ok": True, "results": results, "count": len(results)}
+
+
+def get_mutual_fund_detail(session_token: str, code: str) -> dict:
+    _require_session(session_token)
+    fund = get_fund(code)
+    if fund is None:
+        raise ValidationError("No matching mutual fund scheme.")
+    return {"ok": True, "fund": fund}

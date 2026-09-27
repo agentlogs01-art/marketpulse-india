@@ -87,9 +87,9 @@ create index if not exists idx_subscribers_whatsapp_number on subscribers (whats
 --
 -- Backs the website's signed-in dashboard. A session token is issued at
 -- login (POST /api/login) and stored client-side (the web app keeps it
--- in memory + a same-site cookie); every authenticated request looks the
--- token up here. Sessions expire and can be revoked (logout) without
--- touching the subscriber row itself.
+-- in memory + localStorage). Sessions idle out after 30 minutes without
+-- an authenticated request (the API slides expires_at on each use) and
+-- can be revoked (logout) without touching the subscriber row itself.
 -- ---------------------------------------------------------------------------
 create table if not exists sessions (
     token           text primary key,

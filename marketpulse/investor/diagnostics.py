@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import date
 from typing import Optional
 
-from marketpulse.investor.catalog import FUND_UNDERLYINGS, STOCK_BY_SYMBOL, scheme_key_from_name
+from marketpulse.investor.catalog import get_fund_underlyings, get_stock_meta, scheme_key_from_name
 
 
 STOCK_CONCENTRATION_PCT = 10.0
@@ -176,7 +176,7 @@ def _quality_flags(rows: list) -> list:
     for h in rows:
         if (h.get("asset_type") or "").lower() != "equity":
             continue
-        meta = STOCK_BY_SYMBOL.get((h.get("symbol") or "").upper(), {})
+        meta = get_stock_meta((h.get("symbol") or "").upper()) or {}
         if not meta:
             continue
         sector = (meta.get("sector") or "").lower()
@@ -216,11 +216,14 @@ def _quality_flags(rows: list) -> list:
 def _fund_overlap(rows: list, total: float) -> dict:
     fund_rows = [h for h in rows if (h.get("asset_type") or "").lower() == "mutual_fund"]
     exposure: dict[str, dict] = {}
+    funds = get_fund_underlyings()
     for fund in fund_rows:
         key = scheme_key_from_name(fund.get("fund_name") or fund.get("company_name") or "")
         if not key:
             continue
-        scheme = FUND_UNDERLYINGS[key]
+        scheme = funds.get(key)
+        if not scheme:
+            continue
         fund_value = _num(fund.get("market_value"))
         for symbol, weight in scheme["holdings"]:
             lookthrough = fund_value * (weight / 100.0)

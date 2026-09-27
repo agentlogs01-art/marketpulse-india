@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
-from marketpulse.investor.catalog import FIXED_INCOME, SGB_SERIES, STOCKS
+from marketpulse.investor.catalog import get_fixed_income, get_sgb_series, list_stocks
 from marketpulse.investor.crypto import decrypt_holdings_blob, encrypt_holdings_blob
 from marketpulse.persistence.supabase_client import SupabaseRequestError, get_client
 
@@ -173,19 +173,19 @@ def stock_search_rows(query: str) -> list:
 
 
 def seed_catalog_tables() -> None:
-    """Best-effort upsert of static cards so a fresh Supabase project has rows."""
+    """Best-effort upsert of catalog cards so a fresh Supabase project has rows."""
     client = _client()
-    for stock in STOCKS:
+    for stock in list_stocks()[:400]:
         try:
             client.upsert("stock_universe", stock, on_conflict="symbol")
         except Exception:
             return
-    for item in FIXED_INCOME:
+    for item in get_fixed_income():
         try:
             client.upsert("fixed_income_instruments", item, on_conflict="id")
         except Exception:
             return
-    for item in SGB_SERIES:
+    for item in get_sgb_series():
         try:
             client.upsert("sgb_series", item, on_conflict="series")
         except Exception:
