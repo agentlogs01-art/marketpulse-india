@@ -652,6 +652,35 @@ class TestThemePreference(ApiHandlersTestCase):
     def test_update_theme_without_session_raises_auth_error(self):
         with self.assertRaises(handlers.AuthError):
             handlers.update_theme_preference("not-a-real-token", "dark")
+
+
+class TestProfileUpdate(ApiHandlersTestCase):
+    def test_update_name_and_whatsapp(self):
+        token = self._signup_verify_and_login("named@example.com")
+        result = handlers.update_profile(
+            token,
+            first_name="Logeswaran",
+            last_name="Kumar",
+            whatsapp_number="+919876543210",
+        )
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["subscriber"]["first_name"], "Logeswaran")
+        self.assertEqual(result["subscriber"]["last_name"], "Kumar")
+        self.assertEqual(result["subscriber"]["whatsapp_number"], "+919876543210")
+        me = handlers.get_current_subscriber(token)
+        self.assertEqual(me["subscriber"]["first_name"], "Logeswaran")
+
+    def test_signup_stores_names(self):
+        handlers.signup(
+            VALID_PASSWORD,
+            email="namedsignup@example.com",
+            first_name="Ada",
+            last_name="Lovelace",
+        )
+        rows = self.fake_client.select("subscribers")
+        self.assertEqual(rows[0]["first_name"], "Ada")
+        self.assertEqual(rows[0]["last_name"], "Lovelace")
+
  
  
 if __name__ == "__main__":

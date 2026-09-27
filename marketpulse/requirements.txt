@@ -12,3 +12,4 @@ pyotp>=2.9.0      # TOTP-based MFA (persistence/mfa_repo.py) -- RFC 6238, no ext
 Pillow>=10.4.0
 qrcode>=8.0
 python-dotenv>=1.0.0
+yfinance>=0.2.35

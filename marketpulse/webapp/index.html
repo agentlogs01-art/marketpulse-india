@@ -4,44 +4,59 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MarketPulse India</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 <style>
   :root {
-    --bg: #f3f3f1;
-    --surface: #ffffff;
-    --ink: #141414;
-    --muted: #5c5c57;
-    --line: #d8d8d2;
-    --fill: #ecece8;
-    --accent: #0b3d2e;
-    --accent-soft: #e4efe9;
-    --green: #1f7a4d;
-    --green-bg: #e9f3ec;
-    --red: #b23a2e;
-    --red-bg: #fbedea;
-    --warn: #8a611f;
-    --warn-bg: #f6eedc;
-    --ink-hover: #2a2a2a;
-    --ink-disabled: #9a9a94;
-    --radius: 8px;
+    --bg: #f3ebe0;
+    --surface: rgba(255, 250, 243, 0.86);
+    --ink: #0b0e14;
+    --muted: #5c5348;
+    --line: #d9cfc0;
+    --fill: #ebe1d3;
+    --accent: #0f9f6e;
+    --accent-soft: rgba(16, 185, 129, 0.14);
+    --green: #0f9f6e;
+    --green-bg: rgba(16, 185, 129, 0.16);
+    --red: #c2413b;
+    --red-bg: rgba(194, 65, 59, 0.12);
+    --warn: #b45309;
+    --warn-bg: rgba(245, 158, 11, 0.18);
+    --ink-hover: #1a2230;
+    --ink-disabled: #9a8f82;
+    --radius: 18px;
+    --amethyst: #6366f1;
+    --gold: #f59e0b;
+    --obsidian: #0b0e14;
+    --glass: rgba(255, 250, 243, 0.72);
+    --glow: rgba(16, 185, 129, 0.28);
+    --font-display: "Plus Jakarta Sans", "Outfit", sans-serif;
+    --font-body: "Outfit", "Plus Jakarta Sans", sans-serif;
   }
   [data-theme="dark"] {
-    --bg: #101010;
-    --surface: #1a1a1a;
-    --ink: #f1f1ee;
-    --muted: #a3a39b;
-    --line: #33332e;
-    --fill: #242422;
-    --accent: #8fbfa8;
-    --accent-soft: #1a2a23;
-    --green: #4fbf82;
-    --green-bg: #16291e;
-    --red: #e36b5c;
-    --red-bg: #2e1714;
-    --warn: #e0c383;
-    --warn-bg: #2e2410;
-    --ink-hover: #3a3a38;
-    --ink-disabled: #4a4a46;
+    --bg: #0b0e14;
+    --surface: rgba(22, 27, 38, 0.78);
+    --ink: #e8eef8;
+    --muted: #9aa6ba;
+    --line: #232d3f;
+    --fill: #121722;
+    --accent: #00d084;
+    --accent-soft: rgba(0, 208, 132, 0.12);
+    --green: #10b981;
+    --green-bg: rgba(16, 185, 129, 0.14);
+    --red: #f07167;
+    --red-bg: rgba(240, 113, 103, 0.12);
+    --warn: #f59e0b;
+    --warn-bg: rgba(245, 158, 11, 0.12);
+    --ink-hover: #243044;
+    --ink-disabled: #4b5568;
+    --amethyst: #818cf8;
+    --gold: #fbbf24;
+    --obsidian: #0b0e14;
+    --glass: rgba(22, 27, 38, 0.72);
+    --glow: rgba(0, 208, 132, 0.22);
     color-scheme: dark;
   }
   [data-theme="light"] { color-scheme: light; }
@@ -49,25 +64,78 @@
   @media (prefers-reduced-motion: reduce) {
     * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
   }
-  html, body { background: var(--bg); }
+  html, body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(1200px 480px at 8% -10%, var(--glow), transparent 55%),
+      radial-gradient(900px 420px at 100% 0%, rgba(99, 102, 241, 0.16), transparent 50%);
+  }
   body {
     margin: 0;
     color: var(--ink);
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: var(--font-body);
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
   }
+  h1, h2, h3, .cover-hero h1 { font-family: var(--font-display); }
   .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-feature-settings: "tnum"; }
   .page { max-width: 920px; margin: 0 auto; padding: 0 20px 72px; }
   .page.cover-mode { max-width: 560px; }
+  .page.dashboard { max-width: 1180px; }
 
   .topbar {
     display: flex; align-items: center; justify-content: space-between;
     gap: 12px; padding: 18px 0; border-bottom: 1px solid var(--line); margin-bottom: 28px;
   }
-  .brand { font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+  .brand {
+    display: inline-flex; align-items: center; gap: 12px; text-decoration: none;
+    user-select: none; background: none; border: none; cursor: pointer; padding: 0;
+    color: inherit;
+  }
+  .brand svg { display: block; flex-shrink: 0; }
+  .brand-word { display: flex; align-items: center; gap: 8px; font-family: "Outfit", sans-serif; }
+  .brand-name { font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1; }
+  .brand-name span { color: #10b981; }
+  .brand-in {
+    background: rgba(0, 208, 132, 0.1); border: 1px solid rgba(0, 208, 132, 0.25);
+    color: #00d084; font-size: 9px; font-weight: 700; padding: 2px 6px;
+    border-radius: 4px; letter-spacing: .1em; line-height: 1;
+  }
   .topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-  .who { font-size: 13px; color: var(--muted); max-width: 18ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .who { font-size: 13px; color: var(--ink); max-width: 22ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 650; }
+  .account-meta { display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+  .who-block { display: flex; align-items: center; gap: 4px; flex-wrap: nowrap; }
+  .account-open-btn {
+    display: flex; align-items: center; gap: 8px; background: none; border: none;
+    color: inherit; cursor: pointer; padding: 4px 6px; border-radius: 999px; font-family: inherit;
+  }
+  .account-open-btn:hover { background: var(--fill); }
+  .icon-btn {
+    background: none; border: 1px solid transparent; color: var(--muted);
+    width: 32px; height: 32px; border-radius: 8px; cursor: pointer;
+    display: grid; place-items: center; padding: 0; flex-shrink: 0;
+  }
+  .icon-btn:hover, .icon-btn[aria-pressed="true"] { background: var(--fill); color: var(--ink); }
+  .icon-btn svg { width: 16px; height: 16px; display: block; }
+  .avatar {
+    width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--accent-soft); color: var(--green); font-size: 11px; font-weight: 800;
+    font-family: var(--font-display); border: 1px solid var(--line);
+  }
+  .field-edit-wrap { display: flex; align-items: flex-start; gap: 6px; }
+  .field-edit-wrap input { flex: 1; }
+  .field-edit-wrap .icon-btn { margin-top: 2px; margin-bottom: 16px; }
+  input.locked { background: var(--fill); cursor: default; }
+  .field-verify-hint { font-size: 11.5px; color: var(--muted); margin: -10px 0 16px; }
+  .pw-strength { margin: -8px 0 16px; }
+  .pw-strength-bar { height: 6px; background: var(--fill); border-radius: 99px; overflow: hidden; border: 1px solid var(--line); }
+  .pw-strength-bar span { display: block; height: 100%; width: 0; transition: width .15s ease, background .15s ease; }
+  .pw-strength[data-score="0"] span { width: 18%; background: var(--red); }
+  .pw-strength[data-score="1"] span { width: 36%; background: var(--red); }
+  .pw-strength[data-score="2"] span { width: 55%; background: var(--warn); }
+  .pw-strength[data-score="3"] span { width: 78%; background: var(--green); }
+  .pw-strength[data-score="4"] span { width: 100%; background: var(--green); }
+  .pw-strength-label { font-size: 12px; margin: 6px 0 0; color: var(--muted); }
   .text-btn {
     background: none; border: none; color: var(--ink); font-size: 13px; font-weight: 600;
     text-decoration: underline; text-decoration-color: var(--line); cursor: pointer;
@@ -78,11 +146,40 @@
 
   .theme-toggle { display: inline-flex; gap: 2px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 2px; }
   .theme-toggle button {
-    border: none; background: transparent; color: var(--muted); width: 28px; height: 28px;
-    border-radius: 999px; cursor: pointer; font-size: 11px; font-weight: 700; font-family: inherit;
+    border: none; background: transparent; color: var(--muted); width: 32px; height: 32px;
+    border-radius: 999px; cursor: pointer; display: grid; place-items: center; padding: 0;
   }
+  .theme-toggle button svg { width: 16px; height: 16px; display: block; }
   .theme-toggle button.active { background: var(--fill); color: var(--ink); }
   .theme-toggle button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  #view-profile .channel-option {
+    position: relative; padding: 6px 4px 6px 0; border: none; background: transparent; gap: 10px;
+  }
+  #view-profile .channel-option:hover { border-color: transparent; }
+  #view-profile .channel-option input[type="checkbox"] {
+    position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;
+  }
+  .switch {
+    width: 42px; height: 24px; border-radius: 999px; background: var(--fill); border: 1px solid var(--line);
+    position: relative; flex-shrink: 0; transition: background .2s ease, border-color .2s ease;
+  }
+  .switch::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--muted); transition: transform .2s ease, background .2s ease;
+  }
+  .channel-option.checked .switch { background: var(--green); border-color: var(--green); }
+  .channel-option.checked .switch::after { transform: translateX(18px); background: #fff; }
+
+  .edition-article {
+    background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 4px;
+    overflow: auto; color: var(--ink);
+  }
+  .edition-article, .edition-article iframe { color-scheme: inherit; }
+  .briefing-html { color: var(--ink); padding: 12px 16px; }
+  .briefing-html, .briefing-html p, .briefing-html td, .briefing-html li, .briefing-html h1, .briefing-html h2, .briefing-html h3 {
+    color: var(--ink);
+  }
 
   .cover-hero { padding: 24px 0 8px; }
   .cover-hero .kicker { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
@@ -90,7 +187,7 @@
   .cover-hero .lede { font-size: 16px; color: var(--muted); margin: 0 0 28px; max-width: 38ch; }
   .cover-meta { font-size: 13px; color: var(--muted); margin-top: 18px; }
 
-  .sheet { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; }
+  .sheet { background: var(--glass); border: 1px solid var(--line); border-radius: var(--radius); padding: 24px; margin-bottom: 16px; backdrop-filter: blur(16px); }
   .sheet h2 { font-size: 18px; font-weight: 650; margin: 0 0 16px; }
 
   .auth-tabs { display: flex; gap: 4px; background: var(--fill); border: 1px solid var(--line); border-radius: 8px; padding: 4px; margin-bottom: 20px; }
@@ -106,7 +203,7 @@
   .identity-toggle input[type="radio"] { accent-color: var(--accent); margin: 0; }
 
   label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
-  input[type="email"], input[type="tel"], input[type="password"], input[type="text"] {
+  input[type="email"], input[type="tel"], input[type="password"], input[type="text"], input[type="file"] {
     width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 7px; font-size: 15px;
     color: var(--ink); margin-bottom: 16px; font-family: inherit; background: var(--bg);
   }
@@ -186,10 +283,6 @@
   .bias-badge.up { background: var(--green-bg); color: var(--green); }
   .bias-badge.down { background: var(--red-bg); color: var(--red); }
   .bias-badge.flat { background: var(--warn-bg); color: var(--warn); }
-  .edition-article {
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 4px;
-    overflow: auto;
-  }
   .edition-empty { padding: 48px 20px; color: var(--muted); font-size: 15px; }
 
   .conn-row {
@@ -211,6 +304,118 @@
 
   footer.colophon { text-align: center; font-size: 11px; color: var(--muted); margin-top: 36px; }
 
+  .hub-nav {
+    display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 18px;
+    padding: 5px; background: var(--glass); border: 1px solid var(--line); border-radius: 999px;
+    backdrop-filter: blur(12px);
+  }
+  .hub-nav button {
+    border: none; background: transparent; color: var(--muted); font-family: var(--font-display);
+    font-size: 13px; font-weight: 650; padding: 8px 14px; border-radius: 999px; cursor: pointer;
+    transition: background .2s ease, color .2s ease, transform .2s ease;
+  }
+  .hub-nav button.active { background: var(--fill); color: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+  .hub-nav button:hover { color: var(--ink); }
+  .hub-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 16px; }
+  .glass-card {
+    background: var(--glass); border: 1px solid var(--line); border-radius: 20px; padding: 20px;
+    backdrop-filter: blur(18px); margin-bottom: 16px;
+    transition: transform .22s ease, border-color .22s ease, box-shadow .22s ease;
+  }
+  .glass-card:hover { transform: translateY(-2px); border-color: rgba(0, 208, 132, 0.35); box-shadow: 0 12px 40px rgba(0,0,0,.18); }
+  .glass-card h3 { margin: 0 0 8px; font-size: 16px; letter-spacing: -.02em; }
+  .kicker-sm { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; font-weight: 650; }
+  .metric-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .metric { background: var(--fill); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+  .metric .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+  .metric .val { font-size: 20px; font-weight: 750; font-family: var(--font-display); margin-top: 4px; }
+  .gauge-wrap { position: relative; height: 168px; }
+  .gauge-wrap svg { width: 100%; height: 168px; }
+  .zone-badge {
+    display: inline-flex; align-items: center; gap: 8px; margin-top: 8px;
+    padding: 8px 12px; border-radius: 999px; font-size: 13px; font-weight: 650;
+    background: var(--accent-soft); color: var(--green); border: 1px solid rgba(16,185,129,.25);
+  }
+  .health-glow {
+    width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center;
+    background: radial-gradient(circle at 50% 40%, var(--glow), transparent 68%);
+    border: 1px solid var(--line);
+  }
+  .health-glow strong { font-family: var(--font-display); font-size: 26px; }
+  .bar { height: 8px; border-radius: 99px; background: var(--fill); overflow: hidden; border: 1px solid var(--line); }
+  .bar > span { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--amethyst)); }
+  .search-box { position: relative; }
+  .search-wrap { position: relative; }
+  .search-box input { margin-bottom: 0; }
+  .search-hits {
+    position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 20;
+    background: var(--obsidian); color: #e8eef8; border: 1px solid #232d3f; border-radius: 12px;
+    overflow: hidden; box-shadow: 0 18px 50px rgba(0,0,0,.35); max-height: 280px; overflow-y: auto;
+  }
+  [data-theme="light"] .search-hits { background: #fffaf3; color: var(--ink); border-color: var(--line); }
+  .search-hits button {
+    display: block; width: 100%; text-align: left; border: none; background: transparent;
+    color: inherit; padding: 10px 12px; font-family: inherit; cursor: pointer; font-size: 13px;
+  }
+  .search-hits button:hover { background: rgba(99,102,241,.18); }
+  .ticker-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  .ticker-chip {
+    display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line);
+    background: var(--fill); color: var(--ink); border-radius: 999px; padding: 5px 10px;
+    font-size: 12px; font-weight: 650; cursor: pointer; font-family: inherit;
+  }
+  .ticker-chip:hover { border-color: var(--accent); }
+  .ticker-chip .star { color: var(--gold); }
+  .delta { font-size: 12px; font-weight: 700; margin-top: 4px; }
+  .delta.up { color: var(--green); }
+  .delta.down { color: var(--red); }
+  .delta.flat { color: var(--muted); }
+  .fav-btn {
+    border: 1px solid var(--line); background: var(--fill); color: var(--muted);
+    border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit;
+  }
+  .fav-btn.on { color: var(--gold); border-color: var(--gold); }
+  .bond-table-wrap { overflow-x: auto; margin-top: 8px; }
+  .bond-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .bond-table th, .bond-table td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  .bond-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 700; }
+  .stock-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .chip { font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 99px; }
+  .chip.gold { background: rgba(245,158,11,.16); color: var(--gold); }
+  .chip.jade { background: var(--accent-soft); color: var(--green); }
+  .chip.am { background: rgba(99,102,241,.16); color: var(--amethyst); }
+  .donut-legend { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+  .warn-list { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; }
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+  .timeline { border-left: 2px solid var(--line); margin-left: 8px; padding-left: 16px; }
+  .timeline .item { margin-bottom: 14px; }
+  .timeline .when { font-size: 11px; color: var(--muted); }
+  .sgb-box { border: 1px solid rgba(245,158,11,.4); background: var(--warn-bg); border-radius: 16px; padding: 16px; }
+  .range { height: 6px; background: var(--fill); border-radius: 99px; position: relative; margin: 10px 0 18px; }
+  .range i { position: absolute; top: -4px; width: 14px; height: 14px; border-radius: 50%; background: var(--amethyst); border: 2px solid var(--bg); }
+  .fund-empty { color: var(--muted); padding: 24px 0; }
+  .mf-pills { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 4px; }
+  .mf-pill {
+    border: 1px solid var(--line); background: var(--fill); color: var(--muted);
+    border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 650;
+    cursor: pointer; font-family: inherit;
+  }
+  .mf-pill.active { color: var(--ink); border-color: var(--accent); background: var(--accent-soft); }
+  .mf-sector-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+  .mf-fund-btn {
+    display: block; width: 100%; text-align: left; border: none; background: transparent;
+    color: inherit; padding: 8px 0; cursor: pointer; font-family: inherit;
+    border-bottom: 1px solid var(--line);
+  }
+  .mf-fund-btn:last-child { border-bottom: none; }
+  .mf-fund-btn:hover { color: var(--accent); }
+  #mf-detail-card .metric-row, #idx-fund-detail .metric-row { grid-template-columns: repeat(4, 1fr); }
+
+  @media (max-width: 900px) {
+    .hub-grid, .metric-row { grid-template-columns: 1fr; }
+  }
+
   @media (max-width: 720px) {
     .edition { grid-template-columns: 1fr; }
     .edition-rail { position: static; }
@@ -224,16 +429,42 @@
 <div class="page cover-mode" id="page-wrap">
 
   <header class="topbar">
-    <div class="brand">MarketPulse India</div>
+    <a href="/" class="brand" id="brand-home-btn" aria-label="MarketPulse India home">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="42" height="42" fill="none" aria-hidden="true">
+        <rect width="100" height="100" rx="22" fill="#0B0E14" />
+        <path d="M20 52H32L38 34L48 68L58 22L66 52H80" stroke="#00D084" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M30 30H55" stroke="#00D084" stroke-width="4" stroke-linecap="round" />
+        <path d="M30 38H50" stroke="#00D084" stroke-width="4" stroke-linecap="round" />
+        <circle cx="58" cy="22" r="4" fill="#00D084" />
+      </svg>
+      <span class="brand-word">
+        <span class="brand-name">Market<span>Pulse</span></span>
+        <span class="brand-in">IN</span>
+      </span>
+    </a>
     <div class="topbar-right">
       <span id="edition-date" class="mono" style="font-size:12px;color:var(--muted)">—</span>
       <div class="theme-toggle" role="group" aria-label="Colour theme">
-        <button type="button" id="theme-btn-light" class="active" title="Light theme" aria-pressed="true">Lt</button>
-        <button type="button" id="theme-btn-dark" title="Dark theme" aria-pressed="false">Dk</button>
+        <button type="button" id="theme-btn-light" class="active" title="Light theme" aria-pressed="true" aria-label="Light theme">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        </button>
+        <button type="button" id="theme-btn-dark" title="Dark theme" aria-pressed="false" aria-label="Dark theme">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M21 14.5A8.5 8.5 0 1 1 9.5 3 7 7 0 0 0 21 14.5z"/></svg>
+        </button>
       </div>
       <div class="account-meta hidden" id="account-meta">
-        <span class="who" id="account-who">—</span>
-        <button class="text-btn" id="profile-btn">Account</button>
+        <div class="who-block">
+          <button type="button" class="account-open-btn" id="account-open-btn" aria-label="Open profile">
+            <span class="avatar" id="account-initials">MP</span>
+            <span class="who" id="account-who">—</span>
+          </button>
+          <button type="button" class="icon-btn" id="profile-settings-btn" title="Profile settings" aria-label="Profile settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+          </button>
+        </div>
         <span class="dot-sep">&middot;</span>
         <button class="text-btn" id="signout-btn">Sign out</button>
       </div>
@@ -295,6 +526,10 @@
       <form id="signup-form">
         <div id="signup-step-1">
           <p class="step-note">Step 1 of 2 — how you sign in.</p>
+          <label for="signup-first-name">First name</label>
+          <input type="text" id="signup-first-name" placeholder="First name" autocomplete="given-name">
+          <label for="signup-last-name">Last name</label>
+          <input type="text" id="signup-last-name" placeholder="Last name" autocomplete="family-name">
           <div class="identity-toggle">
             <label><input type="radio" name="signup-identity" value="email" checked> Email</label>
             <label><input type="radio" name="signup-identity" value="mobile"> Mobile number</label>
@@ -351,7 +586,7 @@
     <h2>Confirming your email…</h2>
     <div id="verify-status" class="status" role="status"></div>
     <div id="verify-telegram-prompt" class="hidden">
-      <p class="step-note">Want today’s briefing on Telegram too? Sign in, then connect it from Account.</p>
+      <p class="step-note">Want today’s briefing on Telegram too? Sign in, then connect it from your profile.</p>
       <button class="ghost" id="verify-go-to-signin">Go to sign in</button>
     </div>
   </div>
@@ -390,27 +625,217 @@
   </div>
 
   <div id="view-dashboard" class="hidden">
-    <div class="edition">
-      <aside class="edition-rail">
-        <div class="edition-date mono" id="briefing-run-date"></div>
-        <div class="bias-badge hidden" id="bias-badge"></div>
-        <p class="conn-detail" id="edition-rail-note">Your weekday edition. Same briefing as email, WhatsApp, and Telegram.</p>
-      </aside>
-      <div>
-        <div id="dashboard-status" class="status" role="status"></div>
-        <div id="briefing-available" class="hidden">
-          <div class="edition-article" id="briefing-article"></div>
+    <nav class="hub-nav" aria-label="Investor sections">
+      <button type="button" class="active" data-hub="overview" id="hub-btn-overview">Overview</button>
+      <button type="button" data-hub="briefing" id="hub-btn-briefing">Briefing</button>
+      <button type="button" data-hub="portfolio" id="hub-btn-portfolio">Portfolio</button>
+      <button type="button" data-hub="funds" id="hub-btn-funds">Mutual funds</button>
+      <button type="button" data-hub="passive" id="hub-btn-passive">Index &amp; bonds</button>
+      <button type="button" data-hub="alerts" id="hub-btn-alerts">Alerts</button>
+    </nav>
+
+    <div id="hub-overview">
+      <div class="hub-grid">
+        <article class="glass-card">
+          <div class="kicker-sm">Market valuation zone</div>
+          <h3>Nifty 50 P/E · Cap-to-GDP</h3>
+          <div class="gauge-wrap" id="valuation-gauge"></div>
+          <div class="zone-badge" id="zone-badge">Loading zone…</div>
+          <p class="conn-detail" id="zone-alloc" style="margin-top:10px"></p>
+        </article>
+        <article class="glass-card">
+          <div class="kicker-sm">Portfolio health</div>
+          <div style="display:flex;gap:16px;align-items:center">
+            <div class="health-glow"><strong id="health-score">—</strong></div>
+            <div>
+              <div id="health-label" style="font-weight:700">Sign in health appears after import</div>
+              <div class="conn-detail" id="health-ratio">Equity-to-debt —</div>
+            </div>
+          </div>
+          <ul class="warn-list" id="health-warnings" style="margin-top:12px"></ul>
+        </article>
+      </div>
+      <div class="metric-row" id="index-yield-row">
+        <div class="metric"><div class="lbl">Nifty 50</div><div class="val mono" id="idx-nifty">—</div></div>
+        <div class="metric"><div class="lbl">Nifty Smallcap 250</div><div class="val mono" id="idx-smallcap">—</div></div>
+        <div class="metric"><div class="lbl">Dividend yield</div><div class="val mono" id="idx-div">—</div></div>
+        <div class="metric" style="border-color:rgba(245,158,11,.35)"><div class="lbl">10Y G-Sec</div><div class="val mono" id="idx-gsec" style="color:var(--gold)">—</div></div>
+      </div>
+      <article class="glass-card search-box">
+        <div class="kicker-sm">Stock &amp; asset lookup</div>
+        <h3>NSE / BSE fundamentals</h3>
+        <label for="stock-search">Company or ticker</label>
+        <div class="search-wrap">
+          <input type="text" id="stock-search" placeholder="INFY, TCS, Hindustan Unilever…" autocomplete="off">
+          <div id="stock-search-hits" class="search-hits hidden"></div>
         </div>
-        <div id="briefing-unavailable" class="edition-empty hidden">
-          No edition has been printed yet. The first one is sent by 07:00 AM IST on the next trading day.
+        <div id="ticker-watch" class="ticker-chips"></div>
+        <p class="fine-print">Long-term health metrics only — no candles, order books, or F&amp;O chains. Star a ticker to keep it in Favourites; recent lookups stay listed so you can open the next name.</p>
+      </article>
+      <div id="stock-detail-card" class="hidden"></div>
+    </div>
+
+    <div id="hub-briefing" class="hidden">
+      <div class="edition">
+        <aside class="edition-rail">
+          <div class="edition-date mono" id="briefing-run-date"></div>
+          <div class="bias-badge hidden" id="bias-badge"></div>
+          <p class="conn-detail" id="edition-rail-note">Your weekday edition. Same briefing as email, WhatsApp, and Telegram.</p>
+        </aside>
+        <div>
+          <div id="dashboard-status" class="status" role="status"></div>
+          <div id="briefing-available" class="hidden">
+            <div class="edition-article" id="briefing-article"></div>
+          </div>
+          <div id="briefing-unavailable" class="edition-empty hidden">
+            No edition has been printed yet. The first one is sent by 07:00 AM IST on the next trading day.
+          </div>
         </div>
       </div>
+    </div>
+
+    <div id="hub-portfolio" class="hidden">
+      <article class="glass-card">
+        <div class="kicker-sm">Import</div>
+        <h3>CAS upload or Account Aggregator</h3>
+        <div id="portfolio-status" class="status" role="status"></div>
+        <label for="cas-file">Consolidated Account Statement (CSV / Excel / PDF)</label>
+        <input type="file" id="cas-file" accept=".csv,.tsv,.txt,.xlsx,.xls,.pdf,.json">
+        <button type="button" class="primary" id="cas-upload-btn" style="margin-top:8px">Parse holdings</button>
+        <button type="button" class="ghost" id="aa-sync-btn">Sync via Account Aggregator (demo book)</button>
+        <p class="fine-print">Holdings are encrypted at rest. Educational diagnostics only — not a recommendation to buy or sell.</p>
+      </article>
+      <div id="portfolio-empty" class="fund-empty">Upload a CAS to see allocation, overlap, and quality checks.</div>
+      <div id="portfolio-body" class="hidden">
+        <div class="hub-grid">
+          <article class="glass-card">
+            <div class="kicker-sm">Allocation vs model</div>
+            <h3>Equity · debt sleeves</h3>
+            <div id="alloc-bars"></div>
+            <svg id="alloc-donut" viewBox="0 0 120 120" width="160" height="160" style="margin-top:8px"></svg>
+            <div class="donut-legend" id="sector-legend"></div>
+          </article>
+          <article class="glass-card">
+            <div class="kicker-sm">Diagnostics</div>
+            <h3>Concentration · quality · overlap</h3>
+            <div id="diag-lists"></div>
+          </article>
+        </div>
+        <h3 class="section-label">Actionable suggestions</h3>
+        <div class="card-grid" id="suggestion-cards"></div>
+      </div>
+    </div>
+
+    <div id="hub-funds" class="hidden">
+      <article class="glass-card search-box">
+        <div class="kicker-sm">Scheme lookup</div>
+        <h3>Search a mutual fund</h3>
+        <label for="mf-search">Fund name or scheme code</label>
+        <div class="search-wrap">
+          <input type="text" id="mf-search" placeholder="Parag Parikh, Nippon Small Cap, 122639…" autocomplete="off">
+          <div id="mf-search-hits" class="search-hits hidden"></div>
+        </div>
+        <p class="fine-print">Latest NAVs from AMFI. Type a name, AMC, or scheme code — every matching scheme is listed below (Direct Growth first).</p>
+        <div id="mf-search-status" class="conn-detail" style="margin-top:8px"></div>
+        <div id="mf-search-results"></div>
+      </article>
+      <div id="mf-detail-card" class="hidden"></div>
+      <div id="mf-pills" class="mf-pills"></div>
+      <h3 class="section-label">Top performers by category</h3>
+      <div class="card-grid" id="mf-category-leaders"></div>
+      <h3 class="section-label">Sector leaders (equity)</h3>
+      <div class="mf-sector-grid" id="mf-sector-leaders"></div>
+      <p class="fine-print" id="mf-board-note"></p>
+    </div>
+
+    <div id="hub-passive" class="hidden">
+      <article class="glass-card sgb-box" id="sgb-highlight"></article>
+      <article class="glass-card search-box">
+        <div class="kicker-sm">Index / ETF lookup</div>
+        <h3>Search index funds</h3>
+        <label for="idx-search">Nifty, Sensex, or AMC name</label>
+        <div class="search-wrap">
+          <input type="text" id="idx-search" placeholder="Nifty 50, Sensex, UTI Nifty…" autocomplete="off">
+          <div id="idx-search-hits" class="search-hits hidden"></div>
+        </div>
+        <div id="idx-search-status" class="conn-detail" style="margin-top:8px"></div>
+        <div id="idx-search-results"></div>
+      </article>
+      <div id="idx-fund-detail" class="hidden"></div>
+      <h3 class="section-label">Index sleeves</h3>
+      <div class="card-grid" id="passive-cards"></div>
+      <h3 class="section-label">Secured bonds</h3>
+      <p class="conn-detail">RBI, state government, and AAA/AA+ secured corporate issues used in a long-term debt sleeve. Educational sample — not a live book of every ISIN.</p>
+      <div class="bond-table-wrap">
+        <table class="bond-table">
+          <thead>
+            <tr>
+              <th>Issue</th>
+              <th>Type</th>
+              <th>Coupon</th>
+              <th>Tenure</th>
+              <th>YTM</th>
+              <th>Issued</th>
+              <th>Rating</th>
+            </tr>
+          </thead>
+          <tbody id="bond-rows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="hub-alerts" class="hidden">
+      <article class="glass-card">
+        <div class="kicker-sm">Rebalancing centre</div>
+        <h3>At most 2–3 high-value notes a week</h3>
+        <div id="alerts-list"></div>
+      </article>
     </div>
   </div>
 
   <div id="view-profile" class="hidden">
     <div class="sheet">
-      <h2>Account</h2>
+      <h2>Profile</h2>
+      <div id="profile-status" class="status" role="status"></div>
+      <label for="profile-first-name">First name</label>
+      <div class="field-edit-wrap">
+        <input type="text" id="profile-first-name" class="locked" placeholder="First name" autocomplete="given-name" readonly>
+        <button type="button" class="icon-btn field-edit-btn" data-field="profile-first-name" aria-label="Edit first name" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <label for="profile-last-name">Last name</label>
+      <div class="field-edit-wrap">
+        <input type="text" id="profile-last-name" class="locked" placeholder="Last name" autocomplete="family-name" readonly>
+        <button type="button" class="icon-btn field-edit-btn" data-field="profile-last-name" aria-label="Edit last name" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <label for="profile-email">Email ID</label>
+      <div class="field-edit-wrap">
+        <input type="email" id="profile-email" class="locked" placeholder="you@example.com" autocomplete="email" readonly>
+        <button type="button" class="icon-btn field-edit-btn" data-field="profile-email" aria-label="Edit email" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <p id="profile-email-verify-hint" class="field-verify-hint hidden">Changing email sends a confirmation link to the new address. The account stays unverified until you confirm.</p>
+      <label for="profile-whatsapp">WhatsApp number</label>
+      <div class="field-edit-wrap">
+        <input type="tel" id="profile-whatsapp" class="locked" placeholder="+919876543210" autocomplete="tel" readonly>
+        <button type="button" class="icon-btn field-edit-btn" data-field="profile-whatsapp" aria-label="Edit WhatsApp number" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <p id="profile-whatsapp-verify-hint" class="field-verify-hint hidden">Use international format (e.g. +919876543210). Delivery stays off until WhatsApp is enabled below.</p>
+      <label for="profile-telegram">Telegram ID</label>
+      <div class="field-edit-wrap">
+        <input type="text" id="profile-telegram" class="locked" placeholder="@username or numeric chat id" readonly>
+        <button type="button" class="icon-btn field-edit-btn" data-field="profile-telegram" aria-label="Edit Telegram ID" title="Edit">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        </button>
+      </div>
+      <p id="profile-telegram-verify-hint" class="field-verify-hint hidden">Ownership is confirmed with the official bot link, not by typing an ID. Use Connect Telegram via bot below to verify.</p>
+      <button type="button" class="ghost hidden" id="save-profile-btn">Save profile</button>
 
       <p class="section-label">Delivery</p>
       <div id="settings-status" class="status" role="status"></div>
@@ -421,6 +846,7 @@
         </div>
         <label class="channel-option" data-channel="email" style="padding:8px 10px;margin:0">
           <input type="checkbox" value="email">
+          <span class="switch" aria-hidden="true"></span>
           <span class="badge" id="conn-email-badge">Off</span>
         </label>
       </div>
@@ -431,6 +857,7 @@
         </div>
         <label class="channel-option" data-channel="whatsapp" style="padding:8px 10px;margin:0">
           <input type="checkbox" value="whatsapp">
+          <span class="switch" aria-hidden="true"></span>
           <span class="badge" id="conn-whatsapp-badge">Off</span>
         </label>
       </div>
@@ -441,11 +868,12 @@
         </div>
         <label class="channel-option" data-channel="telegram" style="padding:8px 10px;margin:0">
           <input type="checkbox" value="telegram">
+          <span class="switch" aria-hidden="true"></span>
           <span class="badge" id="conn-telegram-badge">Off</span>
         </label>
       </div>
       <button class="ghost" id="save-channels-btn">Save delivery</button>
-      <button class="ghost" id="dashboard-telegram-link-btn">Connect Telegram</button>
+      <button class="ghost" id="dashboard-telegram-link-btn">Connect Telegram via bot</button>
 
       <p class="section-label">Change password</p>
       <div id="changepw-status" class="status" role="status"></div>
@@ -453,6 +881,10 @@
       <input type="password" id="changepw-current" placeholder="Your current password" autocomplete="current-password">
       <label for="changepw-new">New password</label>
       <input type="password" id="changepw-new" placeholder="At least 12 characters" autocomplete="new-password">
+      <div id="changepw-strength" class="pw-strength hidden" aria-live="polite">
+        <div class="pw-strength-bar"><span></span></div>
+        <p class="pw-strength-label" id="changepw-strength-label"></p>
+      </div>
       <label for="changepw-confirm">Confirm new password</label>
       <input type="password" id="changepw-confirm" placeholder="Same as above" autocomplete="new-password">
       <button type="button" class="ghost" id="changepw-btn">Update password</button>
@@ -485,6 +917,7 @@
         <div id="mfa-backup-codes-display" class="hidden">
           <div class="status visible success">2FA enabled. Save these backup codes somewhere safe — each works once if you lose your phone.</div>
           <div class="backup-codes" id="mfa-backup-codes-list"></div>
+          <button type="button" class="ghost" id="mfa-download-codes-btn">Download 2FA backup codes</button>
           <button type="button" class="ghost" id="mfa-backup-codes-done-btn">I’ve saved my codes</button>
         </div>
       </div>
@@ -498,6 +931,7 @@
         <div id="mfa-regen-codes-display" class="hidden">
           <div class="status visible info">New backup codes generated — your old ones are now invalid.</div>
           <div class="backup-codes" id="mfa-regen-codes-list"></div>
+          <button type="button" class="ghost" id="mfa-regen-download-btn">Download 2FA backup codes</button>
           <button type="button" class="ghost" id="mfa-regen-done-btn">Done</button>
         </div>
         <div id="mfa-disable-section" style="margin-top:8px">
@@ -525,7 +959,10 @@
 
   const API_BASE = window.location.origin + "/api";
   const SESSION_KEY = "marketpulse_session_token";
+  const LAST_ACTIVE_KEY = "marketpulse_last_active";
+  const IDLE_MS = 30 * 60 * 1000;
   const THEME_KEY = "marketpulse_theme";
+  const E = function (id) { return document.getElementById(id); };
   const BIAS_COPY = {
     GAP_UP_STRONG: "Market likely to open higher (>1%)",
     GAP_UP_MILD: "Market may open slightly higher",
@@ -533,6 +970,36 @@
     GAP_DOWN_MILD: "Market may open slightly lower",
     GAP_DOWN_STRONG: "Market likely to open lower (>1%)",
   };
+
+  let sessionToken = localStorage.getItem(SESSION_KEY) || null;
+  let currentSubscriber = null;
+  let pendingMfaChallenge = null;
+  let lastBriefingHtml = null;
+  let lastBriefingText = null;
+  let lastBackupCodes = [];
+
+  function restyleBriefingFrame() {
+    const article = E("briefing-article");
+    if (!article) return;
+    const frame = article.querySelector("iframe");
+    if (!frame) return;
+    try {
+      const doc = frame.contentDocument;
+      if (!doc) return;
+      let tag = doc.getElementById("mp-theme");
+      if (!tag) {
+        tag = doc.createElement("style");
+        tag.id = "mp-theme";
+        (doc.head || doc.documentElement).appendChild(tag);
+      }
+      tag.textContent = briefingThemeCss();
+      const dark = document.documentElement.getAttribute("data-theme") === "dark";
+      if (doc.body) {
+        doc.body.style.background = dark ? "#0B0E14" : "#F3EBE0";
+        doc.body.style.color = dark ? "#E8EEF8" : "#0B0E14";
+      }
+    } catch (err) {}
+  }
 
   function applyTheme(theme, silent) {
     document.documentElement.setAttribute("data-theme", theme);
@@ -544,6 +1011,7 @@
     if (!silent && sessionToken) {
       apiRequest("POST", "/theme", { theme }).catch(function () {});
     }
+    restyleBriefingFrame();
   }
 
   (function initTheme() {
@@ -553,11 +1021,140 @@
   document.getElementById("theme-btn-light").addEventListener("click", function () { applyTheme("light"); });
   document.getElementById("theme-btn-dark").addEventListener("click", function () { applyTheme("dark"); });
 
-  let sessionToken = localStorage.getItem(SESSION_KEY) || null;
-  let currentSubscriber = null;
-  let pendingMfaChallenge = null;
+  function displayName(sub) {
+    if (!sub) return "Signed in";
+    const n = [sub.first_name, sub.last_name].filter(Boolean).join(" ").trim();
+    return n || sub.email || sub.mobile_number || "Signed in";
+  }
 
-  const E = function (id) { return document.getElementById(id); };
+  function displayInitials(sub) {
+    if (!sub) return "MP";
+    const f = (sub.first_name || "").trim();
+    const l = (sub.last_name || "").trim();
+    if (f && l) return (f.charAt(0) + l.charAt(0)).toUpperCase();
+    if (f) return f.slice(0, 2).toUpperCase();
+    const src = (sub.email || sub.mobile_number || "MP").replace(/^\+/, "");
+    return src.slice(0, 2).toUpperCase();
+  }
+
+  function refreshHeaderIdentity() {
+    E("account-who").textContent = displayName(currentSubscriber);
+    E("account-initials").textContent = displayInitials(currentSubscriber);
+  }
+
+  const PROFILE_FIELDS = [
+    { id: "profile-first-name", key: "first_name", hint: null },
+    { id: "profile-last-name", key: "last_name", hint: null },
+    { id: "profile-email", key: "email", hint: "profile-email-verify-hint" },
+    { id: "profile-whatsapp", key: "whatsapp_number", hint: "profile-whatsapp-verify-hint" },
+    { id: "profile-telegram", key: "telegram_chat_id", hint: "profile-telegram-verify-hint" },
+  ];
+
+  function profileFieldValue(id) {
+    return (E(id).value || "").trim();
+  }
+
+  function storedProfileValue(key) {
+    if (!currentSubscriber) return "";
+    return (currentSubscriber[key] || "").trim();
+  }
+
+  function isProfileDirty() {
+    return PROFILE_FIELDS.some(function (f) {
+      return profileFieldValue(f.id) !== storedProfileValue(f.key);
+    });
+  }
+
+  function syncSaveProfileVisibility() {
+    E("save-profile-btn").classList.toggle("hidden", !isProfileDirty());
+  }
+
+  function lockProfileField(id, locked) {
+    const input = E(id);
+    input.readOnly = locked;
+    input.classList.toggle("locked", locked);
+    const btn = document.querySelector('.field-edit-btn[data-field="' + id + '"]');
+    if (btn) btn.setAttribute("aria-pressed", String(!locked));
+    const meta = PROFILE_FIELDS.find(function (f) { return f.id === id; });
+    if (meta && meta.hint) E(meta.hint).classList.toggle("hidden", locked);
+  }
+
+  function lockAllProfileFields() {
+    PROFILE_FIELDS.forEach(function (f) { lockProfileField(f.id, true); });
+  }
+
+  function scorePassword(pw) {
+    if (!pw) return { score: -1, label: "" };
+    if (pw.length < 12) return { score: 0, label: "Too short — use at least 12 characters" };
+    let score = 1;
+    const lower = /[a-z]/.test(pw);
+    const upper = /[A-Z]/.test(pw);
+    const digit = /\d/.test(pw);
+    const symbol = /[^A-Za-z0-9]/.test(pw);
+    const kinds = [lower, upper, digit, symbol].filter(Boolean).length;
+    if (kinds >= 2) score = 2;
+    if (kinds >= 3 && pw.length >= 12) score = 3;
+    if (kinds >= 3 && pw.length >= 16) score = 4;
+    if (/(.)\1{3,}/.test(pw) || /1234|abcd|password|qwerty/i.test(pw)) score = Math.min(score, 1);
+    const labels = ["Too short", "Weak", "Fair", "Strong", "Excellent"];
+    return { score: score, label: labels[score] };
+  }
+
+  function renderPasswordStrength(inputId, meterId, labelId) {
+    const pw = E(inputId).value;
+    const meter = E(meterId);
+    const result = scorePassword(pw);
+    if (result.score < 0) {
+      meter.classList.add("hidden");
+      return;
+    }
+    meter.classList.remove("hidden");
+    meter.setAttribute("data-score", String(result.score));
+    E(labelId).textContent = result.label;
+  }
+
+  function goHome() {
+    if (sessionToken && currentSubscriber) enterDashboard();
+    else showLandingState();
+  }
+
+  function openProfile() {
+    refreshMfaSection();
+    refreshChannelCheckboxes();
+    lockAllProfileFields();
+    syncSaveProfileVisibility();
+    clearStatus(E("changepw-status"));
+    clearStatus(E("profile-status"));
+    E("changepw-current").value = "";
+    E("changepw-new").value = "";
+    E("changepw-confirm").value = "";
+    E("changepw-strength").classList.add("hidden");
+    showView("view-profile");
+  }
+
+  function briefingThemeCss() {
+    const dark = document.documentElement.getAttribute("data-theme") === "dark";
+    const bg = dark ? "#0B0E14" : "#F3EBE0";
+    const ink = dark ? "#E8EEF8" : "#0B0E14";
+    const muted = dark ? "#9AA6BA" : "#5C5348";
+    const line = dark ? "#232D3F" : "#D9CFC0";
+    return "html,body{background:" + bg + " !important;color:" + ink + " !important;}" +
+      "body,p,td,th,li,div,span,h1,h2,h3,h4,table{color:" + ink + " !important;}" +
+      "a{color:" + ink + " !important;} td,th,tr{border-color:" + line + " !important;}" +
+      ".muted,{color:" + muted + " !important;}";
+  }
+
+  function downloadBackupCodes(codes) {
+    const lines = (codes || []).join("\n");
+    const blob = new Blob(["MarketPulse India 2FA backup codes\nEach code works once.\n\n" + lines + "\n"], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "marketpulse-2fa-backup-codes.txt";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const VIEWS = ["view-cover","view-auth","view-verify","view-reset-password","view-telegram-link","view-manage","view-dashboard","view-profile"];
 
   function showView(id) {
@@ -584,6 +1181,9 @@
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
     const data = await resp.json().catch(function () { return {}; });
+    if (resp.status === 401 && sessionToken && path !== "/logout") {
+      expireSession("Signed out after 30 minutes of inactivity. Please sign in again.");
+    }
     return { ok: resp.ok && data.ok !== false, status: resp.status, data: data };
   }
 
@@ -592,8 +1192,47 @@
 
   function setSession(token) {
     sessionToken = token;
-    if (token) localStorage.setItem(SESSION_KEY, token);
-    else localStorage.removeItem(SESSION_KEY);
+    if (token) {
+      localStorage.setItem(SESSION_KEY, token);
+      markActivity();
+    } else {
+      localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(LAST_ACTIVE_KEY);
+    }
+  }
+
+  function markActivity() {
+    if (!sessionToken) return;
+    localStorage.setItem(LAST_ACTIVE_KEY, String(Date.now()));
+  }
+
+  function expireSession(message) {
+    if (!sessionToken && !currentSubscriber) return;
+    sessionToken = null;
+    currentSubscriber = null;
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(LAST_ACTIVE_KEY);
+    showLandingState();
+    if (message) {
+      showView("view-auth");
+      const tabIn = E("tab-signin");
+      const tabUp = E("tab-signup");
+      if (tabIn && tabUp) {
+        tabIn.classList.add("active");
+        tabUp.classList.remove("active");
+        E("panel-signin").classList.remove("hidden");
+        E("panel-signup").classList.add("hidden");
+      }
+      setStatus(E("signin-status"), message, "info");
+    }
+  }
+
+  function checkIdleTimeout() {
+    if (!sessionToken) return;
+    const last = Number(localStorage.getItem(LAST_ACTIVE_KEY) || 0);
+    if (last && Date.now() - last > IDLE_MS) {
+      expireSession("Signed out after 30 minutes of inactivity. Please sign in again.");
+    }
   }
 
   function drawQR(canvas, uri) {
@@ -709,6 +1348,8 @@
       mobile_number: useMobile ? rawMobile : (rawWhatsApp || undefined),
       channels: channels,
       whatsapp_number: channels.includes("whatsapp") ? rawWhatsApp : undefined,
+      first_name: E("signup-first-name").value.trim() || undefined,
+      last_name: E("signup-last-name").value.trim() || undefined,
     });
 
     btn.disabled = false; btn.textContent = "Create account";
@@ -741,7 +1382,7 @@
     const btn = E("signin-submit");
     btn.disabled = true; btn.textContent = "Signing in…";
 
-    const { ok, data } = await POST("/login", {
+    const { ok, status, data } = await POST("/login", {
       login_id: E("signin-id").value.trim(),
       password: E("signin-password").value,
     });
@@ -762,7 +1403,11 @@
       E("signin-form").reset();
       enterDashboard();
     } else {
-      setStatus(E("signin-status"), data.error || "Incorrect email/mobile number or password.", "error");
+      setStatus(
+        E("signin-status"),
+        data.error || (status >= 500 ? "Server error while signing in. Check that the API can reach Supabase." : "Incorrect email/mobile number or password."),
+        "error"
+      );
     }
   });
 
@@ -912,6 +1557,8 @@
   }
 
   function setBriefingBody(html, text) {
+    lastBriefingHtml = html || null;
+    lastBriefingText = text || null;
     const el = E("briefing-article");
     el.replaceChildren();
     if (html) {
@@ -922,10 +1569,16 @@
         frame.style.width = "100%";
         frame.style.minHeight = "640px";
         frame.style.border = "none";
-        frame.srcdoc = html;
+        frame.style.background = "transparent";
+        const css = "<style id=\"mp-theme\">" + briefingThemeCss() + "</style>";
+        frame.srcdoc = /<head>/i.test(html) ? html.replace(/<head>/i, "<head>" + css) : css + html;
+        frame.addEventListener("load", restyleBriefingFrame);
         el.appendChild(frame);
       } else {
-        el.innerHTML = html;
+        const wrap = document.createElement("div");
+        wrap.className = "briefing-html";
+        wrap.innerHTML = html;
+        el.appendChild(wrap);
       }
     } else {
       const p = document.createElement("p");
@@ -982,6 +1635,13 @@
     setConnBadge("conn-email-badge", active.has("email"));
     setConnBadge("conn-whatsapp-badge", active.has("whatsapp"));
     setConnBadge("conn-telegram-badge", active.has("telegram"));
+    E("profile-first-name").value = currentSubscriber.first_name || "";
+    E("profile-last-name").value = currentSubscriber.last_name || "";
+    E("profile-email").value = currentSubscriber.email || "";
+    E("profile-whatsapp").value = currentSubscriber.whatsapp_number || "";
+    E("profile-telegram").value = currentSubscriber.telegram_chat_id || "";
+    lockAllProfileFields();
+    syncSaveProfileVisibility();
   }
 
   E("save-channels-btn").addEventListener("click", async function () {
@@ -991,6 +1651,37 @@
     const { ok, data } = await POST("/channels", { channels: channels });
     if (ok) { currentSubscriber.channels = data.channels; refreshChannelCheckboxes(); setStatus(E("settings-status"), "Saved.", "success"); }
     else { setStatus(E("settings-status"), data.error || "Could not save channels.", "error"); }
+  });
+
+  E("save-profile-btn").addEventListener("click", async function () {
+    clearStatus(E("profile-status"));
+    const btn = E("save-profile-btn");
+    btn.disabled = true; btn.textContent = "Saving…";
+    const emailBefore = storedProfileValue("email");
+    const { ok, data } = await POST("/profile", {
+      first_name: E("profile-first-name").value.trim(),
+      last_name: E("profile-last-name").value.trim(),
+      email: E("profile-email").value.trim(),
+      whatsapp_number: E("profile-whatsapp").value.trim(),
+      telegram_chat_id: E("profile-telegram").value.trim(),
+    });
+    btn.disabled = false; btn.textContent = "Save profile";
+    if (ok && data.subscriber) {
+      currentSubscriber = data.subscriber;
+      refreshHeaderIdentity();
+      refreshChannelCheckboxes();
+      lockAllProfileFields();
+      syncSaveProfileVisibility();
+      var msg = data.warning || "Profile saved.";
+      var kind = data.warning ? "info" : "success";
+      if (!data.warning && emailBefore !== (currentSubscriber.email || "").trim() && currentSubscriber.email) {
+        msg = "Profile saved. Confirm the new email from the link we sent.";
+        kind = "info";
+      }
+      setStatus(E("profile-status"), msg, kind);
+    } else {
+      setStatus(E("profile-status"), data.error || "Could not save profile.", "error");
+    }
   });
 
   E("changepw-btn").addEventListener("click", async function () {
@@ -1007,6 +1698,7 @@
     if (ok) {
       setStatus(E("changepw-status"), "Password updated.", "success");
       E("changepw-current").value = ""; E("changepw-new").value = ""; E("changepw-confirm").value = "";
+      E("changepw-strength").classList.add("hidden");
     } else {
       setStatus(E("changepw-status"), data.error || "Password change failed.", "error");
     }
@@ -1022,6 +1714,613 @@
     E("mfa-regen-codes-display").classList.add("hidden");
     E("mfa-disable-confirm").classList.add("hidden");
   }
+
+  const HUBS = ["overview", "briefing", "portfolio", "funds", "passive", "alerts"];
+  let searchTimer = null;
+  let mfSearchTimer = null;
+  let mfSearchSeq = 0;
+  let mfCatFilter = "all";
+  let mfBoard = null;
+  let idxSearchTimer = null;
+  let idxSearchSeq = 0;
+  let searchSeq = 0;
+  let tickerWatch = { recents: [], favorites: [] };
+
+  function showHub(name) {
+    HUBS.forEach(function (h) {
+      const pane = E("hub-" + h);
+      if (pane) pane.classList.toggle("hidden", h !== name);
+      const btn = E("hub-btn-" + h);
+      if (btn) btn.classList.toggle("active", h === name);
+    });
+    if (name === "briefing") loadBriefing();
+    if (name === "portfolio") loadPortfolioHub();
+    if (name === "funds") loadFundsHub();
+    if (name === "passive") loadPassiveHub();
+    if (name === "alerts") loadAlertsHub();
+    if (name === "overview") loadInvestorOverview();
+  }
+
+  document.querySelectorAll(".hub-nav button").forEach(function (btn) {
+    btn.addEventListener("click", function () { showHub(btn.getAttribute("data-hub")); });
+  });
+
+  function zoneToAngle(zone) {
+    if (zone === "undervalued") return 28;
+    if (zone === "overvalued") return 152;
+    return 90;
+  }
+
+  function renderGauge(zone, pe, capGdp) {
+    const el = E("valuation-gauge");
+    const t = zoneToAngle(zone);
+    const rad = (Math.PI * t) / 180;
+    const x = 160 + 110 * Math.cos(Math.PI - rad);
+    const y = 150 - 110 * Math.sin(Math.PI - rad);
+    el.innerHTML = '<svg viewBox="0 0 320 170" aria-hidden="true">' +
+      '<path d="M30 150 A130 130 0 0 1 290 150" fill="none" stroke="#3d2a12" stroke-width="18" stroke-linecap="round"/>' +
+      '<path d="M30 150 A130 130 0 0 1 160 20" fill="none" stroke="#10b981" stroke-width="18" stroke-linecap="round"/>' +
+      '<path d="M160 20 A130 130 0 0 1 230 38" fill="none" stroke="#6366f1" stroke-width="18"/>' +
+      '<path d="M230 38 A130 130 0 0 1 290 150" fill="none" stroke="#f59e0b" stroke-width="18" stroke-linecap="round"/>' +
+      '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9" fill="#00d084" stroke="#0b0e14" stroke-width="3"/>' +
+      '<text x="160" y="118" text-anchor="middle" fill="currentColor" font-size="22" font-family="Plus Jakarta Sans" font-weight="700">' + (pe || "—") + '</text>' +
+      '<text x="160" y="138" text-anchor="middle" fill="currentColor" font-size="11" opacity=".7">Nifty P/E · cap/GDP ' + (capGdp || "—") + '</text>' +
+      "</svg>";
+  }
+
+  function fmtNum(n, d) {
+    if (n === null || n === undefined || n === "") return "—";
+    return Number(n).toLocaleString("en-IN", { maximumFractionDigits: d || 2 });
+  }
+
+  function fmtSignedPct(n, digits) {
+    if (n === null || n === undefined || n === "") return "—";
+    const num = Number(n);
+    const d = digits == null ? 1 : digits;
+    const sign = num > 0 ? "+" : "";
+    return sign + num.toFixed(d) + "%";
+  }
+
+  function deltaClass(direction) {
+    if (direction === "up") return "delta up";
+    if (direction === "down") return "delta down";
+    return "delta flat";
+  }
+
+  async function loadInvestorOverview() {
+    const zoneRes = await GET("/v1/investor/valuation-zone");
+    if (zoneRes.ok) {
+      const z = zoneRes.data;
+      renderGauge(z.zone, z.nifty_pe, z.market_cap_to_gdp);
+      E("zone-badge").textContent = z.zone_badge || z.zone;
+      const a = z.recommended_allocation || {};
+      E("zone-alloc").textContent = "Model mix " + (a.equity_pct || "—") + "% equity / " + (a.debt_pct || "—") + "% secured debt.";
+      E("idx-nifty").textContent = fmtNum(z.nifty50_level, 0);
+      E("idx-smallcap").textContent = fmtNum(z.smallcap250_level, 0);
+      E("idx-div").textContent = fmtNum(z.dividend_yield, 2) + "%";
+      E("idx-gsec").textContent = fmtNum(z.gsec_10y_yield, 2) + "%";
+    }
+    const an = await GET("/v1/portfolio/analysis");
+    if (an.ok && !an.data.empty) {
+      const rs = an.data.analysis.risk_score || {};
+      E("health-score").textContent = rs.score != null ? rs.score : "—";
+      E("health-label").textContent = rs.label || "Health";
+      E("health-ratio").textContent = "Equity-to-debt " + (an.data.analysis.equity_to_debt_ratio || "—");
+      const warns = (an.data.analysis.concentration_warnings || []).concat(an.data.analysis.quality_flags || []);
+      E("health-warnings").innerHTML = warns.slice(0, 3).map(function (w) {
+        return "<li>" + (w.message || "") + "</li>";
+      }).join("") || "<li>No diversification flags.</li>";
+    } else {
+      E("health-score").textContent = "—";
+      E("health-label").textContent = "Import a CAS to score the book";
+      E("health-ratio").textContent = "Equity-to-debt —";
+      E("health-warnings").innerHTML = "";
+    }
+    refreshTickerWatch();
+  }
+
+  async function loadPortfolioHub() {
+    const { ok, data } = await GET("/v1/portfolio/analysis");
+    if (!ok || data.empty) {
+      E("portfolio-empty").classList.remove("hidden");
+      E("portfolio-body").classList.add("hidden");
+      return;
+    }
+    E("portfolio-empty").classList.add("hidden");
+    E("portfolio-body").classList.remove("hidden");
+    const a = data.analysis;
+    const eq = a.equity_pct || 0, db = a.debt_pct || 0;
+    const me = (a.ideal_allocation || {}).equity_pct || 60;
+    const md = (a.ideal_allocation || {}).debt_pct || 40;
+    E("alloc-bars").innerHTML =
+      "<p class='conn-detail'>You " + eq.toFixed(0) + "% equity vs model " + me + "%</p>" +
+      "<div class='bar'><span style='width:" + Math.min(eq, 100) + "%'></span></div>" +
+      "<p class='conn-detail' style='margin-top:10px'>You " + db.toFixed(0) + "% debt vs model " + md + "%</p>" +
+      "<div class='bar'><span style='width:" + Math.min(db, 100) + "%;background:linear-gradient(90deg,var(--gold),var(--amethyst))'></span></div>";
+    const sectors = a.sector_breakdown || [];
+    const colors = ["#10b981", "#6366f1", "#f59e0b", "#22d3ee", "#f472b6", "#a3e635", "#fb7185"];
+    let dash = "", off = 0;
+    sectors.slice(0, 7).forEach(function (s, i) {
+      const len = (s.pct / 100) * 251.2;
+      dash += "<circle cx='60' cy='60' r='40' fill='none' stroke='" + colors[i % colors.length] +
+        "' stroke-width='16' stroke-dasharray='" + len + " " + (251.2 - len) + "' stroke-dashoffset='" + (-off) + "' transform='rotate(-90 60 60)'/>";
+      off += len;
+    });
+    E("alloc-donut").innerHTML = dash;
+    E("sector-legend").innerHTML = sectors.map(function (s, i) {
+      return "<div><span style='color:" + colors[i % colors.length] + "'>●</span> " + s.sector +
+        " " + s.pct.toFixed(1) + "% <span class='conn-detail'>model " + (s.benchmark_pct || 0) + "%</span></div>";
+    }).join("");
+    const conc = (a.concentration_warnings || []).map(function (w) { return "<li>" + w.message + "</li>"; }).join("");
+    const qual = (a.quality_flags || []).map(function (w) { return "<li>" + w.message + "</li>"; }).join("");
+    const ov = a.overlap || {};
+    E("diag-lists").innerHTML =
+      "<p class='kicker-sm'>Over-concentration</p><ul class='warn-list'>" + (conc || "<li>No single-stock / sector breach.</li>") + "</ul>" +
+      "<p class='kicker-sm'>Quality &amp; debt audit</p><ul class='warn-list'>" + (qual || "<li>No ROCE / leverage / pledge flags.</li>") + "</ul>" +
+      "<p class='kicker-sm'>Fund overlap</p><p class='conn-detail'>" + (ov.message || "") + " (" + (ov.overlap_pct || 0) + "%)</p>";
+    E("suggestion-cards").innerHTML = (a.suggestions || []).map(function (s) {
+      return "<article class='glass-card'><div class='chip jade'>" + (s.code || "") + "</div><h3>" + s.title +
+        "</h3><p class='conn-detail'>" + s.body + "</p></article>";
+    }).join("");
+  }
+
+  function fmtRet(n) {
+    if (n === null || n === undefined || n === "") return "—";
+    const num = Number(n);
+    const cls = num > 0 ? "delta up" : (num < 0 ? "delta down" : "delta flat");
+    return "<span class='" + cls + "'>" + fmtSignedPct(num, 1) + "</span>";
+  }
+
+  function catLabel(id) {
+    const map = { equity: "Equity", debt: "Debt", hybrid: "Hybrid", solution: "Solution oriented", other: "Other" };
+    return map[id] || id || "—";
+  }
+
+  function renderFundsBoard() {
+    const data = mfBoard || {};
+    const cats = data.categories || [];
+    E("mf-pills").innerHTML = ["all"].concat(cats.map(function (c) { return c.id; })).map(function (id) {
+      const row = cats.filter(function (c) { return c.id === id; })[0];
+      const label = id === "all" ? "All" : (row ? row.label : catLabel(id));
+      const count = row ? " · " + row.count : "";
+      const active = mfCatFilter === id ? " active" : "";
+      return "<button type='button' class='mf-pill" + active + "' data-cat='" + id + "'>" + label + count + "</button>";
+    }).join("");
+    E("mf-pills").querySelectorAll(".mf-pill").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        mfCatFilter = btn.getAttribute("data-cat") || "all";
+        renderFundsBoard();
+      });
+    });
+    const byCat = data.top_by_category || {};
+    const catIds = mfCatFilter === "all" ? ["equity", "debt", "hybrid", "solution", "other"] : [mfCatFilter];
+    E("mf-category-leaders").innerHTML = catIds.map(function (id) {
+      const rows = byCat[id] || [];
+      if (!rows.length) return "";
+      const body = rows.map(function (f) {
+        return "<button type='button' class='mf-fund-btn' data-code='" + f.scheme_code + "'><strong>" +
+          (f.scheme_name || "") + "</strong><div class='conn-detail'>" + (f.sector || "") +
+          " · 1Y " + (f.return_1y == null ? "—" : fmtSignedPct(f.return_1y, 1)) + "</div></button>";
+      }).join("");
+      return "<article class='glass-card'><div class='kicker-sm'>" + catLabel(id) + "</div><h3>1-year leaders</h3>" + body + "</article>";
+    }).join("") || "<p class='conn-detail'>No category leaders yet. The AMFI list may still be loading — wait a moment and reopen this tab.</p>";
+    const sectors = data.top_by_sector || {};
+    const sectorNames = Object.keys(sectors).filter(function (name) {
+      if (mfCatFilter !== "all" && mfCatFilter !== "equity") return false;
+      return (sectors[name] || []).length;
+    });
+    E("mf-sector-leaders").innerHTML = sectorNames.map(function (name) {
+      const rows = sectors[name] || [];
+      const body = rows.map(function (f) {
+        return "<button type='button' class='mf-fund-btn' data-code='" + f.scheme_code + "'><strong>" +
+          (f.scheme_name || "") + "</strong><div class='conn-detail'>1Y " +
+          (f.return_1y == null ? "—" : fmtSignedPct(f.return_1y, 1)) +
+          " · NAV ₹" + fmtNum(f.nav, 2) + "</div></button>";
+      }).join("");
+      return "<article class='glass-card'><div class='kicker-sm'>Equity sector</div><h3>" + name + "</h3>" + body + "</article>";
+    }).join("") || (mfCatFilter === "all" || mfCatFilter === "equity"
+      ? "<p class='conn-detail'>Sector leaders appear after the AMFI scheme list loads.</p>"
+      : "<p class='conn-detail'>Sector leaders are shown on Equity (and All).</p>");
+    E("mf-board-note").textContent = data.note || "";
+    document.querySelectorAll("#mf-category-leaders [data-code], #mf-sector-leaders [data-code]").forEach(function (btn) {
+      btn.addEventListener("click", function () { pickFund(btn.getAttribute("data-code"), "mf-detail-card"); });
+    });
+  }
+
+  async function loadFundsHub() {
+    E("mf-category-leaders").innerHTML = "<p class='conn-detail'>Loading AMFI scheme list…</p>";
+    E("mf-sector-leaders").innerHTML = "";
+    const { ok, data } = await GET("/v1/mutual-funds");
+    if (ok) {
+      mfBoard = data;
+      renderFundsBoard();
+    } else {
+      E("mf-category-leaders").innerHTML = "<p class='conn-detail'>" + (data.error || "Could not load fund rankings. Sign in and try again.") + "</p>";
+    }
+  }
+
+  function renderFundDetail(f, cardId) {
+    const card = E(cardId);
+    card.classList.remove("hidden");
+    card.innerHTML =
+      "<article class='glass-card'><div class='stock-head'><div><div class='kicker-sm'>" +
+      catLabel(f.category) + " · " + (f.sector || "") + "</div><h3>" + (f.scheme_name || "") +
+      "</h3><p class='conn-detail'>" + (f.fund_house || "") + " · code " + (f.scheme_code || "") +
+      "</p></div><span class='chip jade'>" + (f.scheme_type || f.plan || "Open ended") + "</span></div>" +
+      "<div class='metric-row' style='margin-top:12px'>" +
+      "<div class='metric'><div class='lbl'>NAV</div><div class='val'>₹" + fmtNum(f.nav, 2) + "</div><div class='conn-detail'>" + (f.nav_date || "") + "</div></div>" +
+      "<div class='metric'><div class='lbl'>1 month</div><div class='val'>" + fmtRet(f.return_1m) + "</div></div>" +
+      "<div class='metric'><div class='lbl'>1 year</div><div class='val'>" + fmtRet(f.return_1y) + "</div></div>" +
+      "<div class='metric'><div class='lbl'>3 year</div><div class='val'>" + fmtRet(f.return_3y) + "</div></div>" +
+      "</div><p class='fine-print'>" + (f.scheme_category || "") + "</p></article>";
+    card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  function fundResultRows(rows, emptyMsg) {
+    if (!rows.length) return "<p class='conn-detail'>" + emptyMsg + "</p>";
+    return "<div class='bond-table-wrap'><table class='bond-table'><thead><tr><th>Scheme</th><th>Group</th><th>NAV</th></tr></thead><tbody>" +
+      rows.map(function (r) {
+        return "<tr><td><button type='button' class='mf-fund-btn' data-code='" + r.scheme_code + "'><strong>" +
+          (r.scheme_name || "") + "</strong><div class='conn-detail'>Code " + r.scheme_code +
+          (r.fund_house ? " · " + r.fund_house : "") + "</div></button></td><td>" +
+          catLabel(r.category) + "<div class='conn-detail'>" + (r.sector || "") + "</div></td><td class='mono'>₹" +
+          fmtNum(r.nav, 2) + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+  }
+
+  async function pickFund(code, cardId) {
+    if (!code) return;
+    const target = cardId || "mf-detail-card";
+    E("mf-search-hits").classList.add("hidden");
+    if (E("idx-search-hits")) E("idx-search-hits").classList.add("hidden");
+    const { ok, data } = await GET("/v1/mutual-funds/" + encodeURIComponent(code));
+    if (!ok || !data.fund) {
+      const card = E(target);
+      card.classList.remove("hidden");
+      card.innerHTML = "<article class='glass-card'><p class='conn-detail'>No scheme matched that code.</p></article>";
+      return;
+    }
+    renderFundDetail(data.fund, target);
+  }
+
+  async function runFundSearch(q) {
+    const seq = ++mfSearchSeq;
+    const { ok, data } = await GET("/v1/stocks/search?universe=funds&q=" + encodeURIComponent(q));
+    if (seq !== mfSearchSeq) return;
+    const box = E("mf-search-hits");
+    const list = E("mf-search-results");
+    const status = E("mf-search-status");
+    const rows = (ok && data.results) ? data.results : [];
+    status.textContent = ok
+      ? (rows.length ? rows.length + " scheme" + (rows.length === 1 ? "" : "s") + " matched" : "No schemes matched \"" + q + "\"")
+      : (data.error || "Search failed. Sign in and try again.");
+    if (!rows.length) {
+      box.classList.add("hidden");
+      box.innerHTML = "";
+      list.innerHTML = "";
+      return;
+    }
+    box.classList.remove("hidden");
+    box.innerHTML = rows.slice(0, 8).map(function (r) {
+      return "<button type='button' data-code='" + r.scheme_code + "'><strong>" + (r.scheme_name || "") +
+        "</strong><div class='conn-detail'>" + catLabel(r.category) + " · " + (r.sector || "") +
+        " · ₹" + fmtNum(r.nav, 2) + "</div></button>";
+    }).join("");
+    list.innerHTML = fundResultRows(rows, "");
+    function bind(el) {
+      el.querySelectorAll("button[data-code]").forEach(function (btn) {
+        btn.addEventListener("click", function () { pickFund(btn.getAttribute("data-code"), "mf-detail-card"); });
+      });
+    }
+    bind(box);
+    bind(list);
+  }
+
+  async function runIndexFundSearch(q) {
+    const seq = ++idxSearchSeq;
+    const { ok, data } = await GET("/v1/stocks/search?universe=funds&index_only=1&q=" + encodeURIComponent(q));
+    if (seq !== idxSearchSeq) return;
+    const box = E("idx-search-hits");
+    const list = E("idx-search-results");
+    const status = E("idx-search-status");
+    const rows = (ok && data.results) ? data.results : [];
+    status.textContent = ok
+      ? (rows.length ? rows.length + " index / ETF scheme" + (rows.length === 1 ? "" : "s") + " matched" : "No index funds matched \"" + q + "\"")
+      : (data.error || "Search failed. Sign in and try again.");
+    if (!rows.length) {
+      box.classList.add("hidden");
+      list.innerHTML = "";
+      return;
+    }
+    box.classList.remove("hidden");
+    box.innerHTML = rows.slice(0, 8).map(function (r) {
+      return "<button type='button' data-code='" + r.scheme_code + "'><strong>" + (r.scheme_name || "") +
+        "</strong><div class='conn-detail'>" + (r.sector || "") + " · ₹" + fmtNum(r.nav, 2) + "</div></button>";
+    }).join("");
+    list.innerHTML = fundResultRows(rows, "");
+    function bind(el) {
+      el.querySelectorAll("button[data-code]").forEach(function (btn) {
+        btn.addEventListener("click", function () { pickFund(btn.getAttribute("data-code"), "idx-fund-detail"); });
+      });
+    }
+    bind(box);
+    bind(list);
+  }
+
+  async function loadPassiveHub() {
+    const { ok, data } = await GET("/v1/fixed-income/secured");
+    if (!ok) return;
+    const hi = data.sgb_discount_highlight;
+    E("sgb-highlight").innerHTML = hi
+      ? "<div class='kicker-sm'>SGB secondary-market discount</div><h3>" + hi.series + " trades " +
+        Number(hi.discount_pct).toFixed(2) + "% below IBJA spot</h3><p class='conn-detail'>Market ₹" +
+        fmtNum(hi.market_price, 0) + " vs spot ₹" + fmtNum(hi.gold_spot_inr, 0) + ". Prefer discounted series over physical gold.</p>"
+      : "<h3>No SGB series is at a discount vs spot right now.</h3>";
+    E("passive-cards").innerHTML = (data.instruments || []).map(function (it) {
+      const ytm = it.ytm == null ? "—" : Number(it.ytm).toFixed(2) + "%";
+      const er = it.expense_ratio == null ? "—" : Number(it.expense_ratio).toFixed(2) + "%";
+      const chip = (it.safety_badge || "").toLowerCase().indexOf("sovereign") >= 0 ? "gold" : "am";
+      return "<article class='glass-card'><span class='chip " + chip + "'>" + (it.safety_badge || "") +
+        "</span><h3>" + it.name + "</h3><p class='conn-detail'>" + it.category +
+        "</p><p>YTM <strong>" + ytm + "</strong> · ER <strong>" + er + "</strong></p>" +
+        "<p class='fine-print'>" + (it.tax_rules || "") + "</p><p class='conn-detail'>" + (it.notes || "") + "</p></article>";
+    }).join("");
+    const bonds = data.secured_bonds || [];
+    E("bond-rows").innerHTML = bonds.map(function (b) {
+      return "<tr><td><strong>" + (b.name || "") + "</strong><div class='conn-detail'>" + (b.notes || "") +
+        "</div></td><td>" + (b.issuer_type || "") + "</td><td>" +
+        (b.coupon_pct == null ? "—" : Number(b.coupon_pct).toFixed(2) + "%") + "</td><td>" +
+        (b.tenure_years == null ? "—" : b.tenure_years + "y") + "</td><td>" +
+        (b.ytm == null ? "—" : Number(b.ytm).toFixed(2) + "%") + "</td><td class='mono'>" +
+        (b.issued_on || "—") + "</td><td>" + (b.rating || "—") + "</td></tr>";
+    }).join("") || "<tr><td colspan='7'>No secured-bond sample loaded.</td></tr>";
+  }
+
+  async function loadAlertsHub() {
+    await GET("/v1/portfolio/analysis");
+    const { ok, data } = await GET("/v1/investor/notifications");
+    const notes = (ok && data.notifications) ? data.notifications : [];
+    if (!notes.length) {
+      E("alerts-list").innerHTML = "<p class='conn-detail'>No drift or filing notes this week. We cap these at 2–3 so the inbox stays quiet.</p>";
+      return;
+    }
+    E("alerts-list").innerHTML = notes.map(function (n) {
+      return "<div class='conn-row'><div><div class='conn-name'>" + (n.title || "") +
+        "</div><div class='conn-detail'>" + (n.body || "") + "</div></div><span class='chip am'>" + (n.kind || "") + "</span></div>";
+    }).join("");
+  }
+
+  async function refreshTickerWatch() {
+    const { ok, data } = await GET("/v1/investor/tickers");
+    if (ok) {
+      tickerWatch.recents = data.recents || [];
+      tickerWatch.favorites = data.favorites || [];
+    }
+    renderTickerWatch();
+  }
+
+  function renderTickerWatch() {
+    const box = E("ticker-watch");
+    if (!box) return;
+    const favIds = {};
+    (tickerWatch.favorites || []).forEach(function (t) { favIds[t.symbol] = true; });
+    const seen = {};
+    const chips = [];
+    function addChip(t, starred) {
+      if (!t || !t.symbol || seen[t.symbol]) return;
+      seen[t.symbol] = true;
+      chips.push(
+        "<button type='button' class='ticker-chip' data-symbol='" + t.symbol + "'>" +
+        (starred ? "<span class='star' aria-hidden='true'>★</span>" : "") +
+        "<span class='mono'>" + (t.nse_symbol || t.symbol) + "</span></button>"
+      );
+    }
+    (tickerWatch.favorites || []).forEach(function (t) { addChip(t, true); });
+    (tickerWatch.recents || []).forEach(function (t) { addChip(t, !!favIds[t.symbol]); });
+    box.innerHTML = chips.join("") || "<span class='conn-detail'>Look up a ticker, then star it to pin it here.</span>";
+    box.querySelectorAll("button[data-symbol]").forEach(function (b) {
+      b.addEventListener("click", function () { pickStock(b.getAttribute("data-symbol")); });
+    });
+  }
+
+  function wireHitButtons(box) {
+    box.querySelectorAll("button[data-symbol]").forEach(function (b) {
+      b.addEventListener("mousedown", function (ev) { ev.preventDefault(); });
+      b.addEventListener("click", function () { pickStock(b.getAttribute("data-symbol")); });
+    });
+  }
+
+  async function runStockSearch(q) {
+    const seq = ++searchSeq;
+    const box = E("stock-search-hits");
+    const { ok, data } = await GET("/v1/stocks/search?q=" + encodeURIComponent(q));
+    if (seq !== searchSeq) return;
+    if (!ok) { box.classList.add("hidden"); return; }
+    const rows = data.results || [];
+    if (!rows.length) {
+      box.innerHTML = "<button type='button' disabled>No matching NSE/BSE name or ticker</button>";
+      box.classList.remove("hidden");
+      return;
+    }
+    box.innerHTML = rows.map(function (r) {
+      return "<button type='button' data-symbol='" + r.symbol + "'>" + r.company_name +
+        " <span class='mono'>· " + r.nse_symbol + "</span></button>";
+    }).join("");
+    box.classList.remove("hidden");
+    wireHitButtons(box);
+  }
+
+  function pickStock(symbol) {
+    E("stock-search").value = "";
+    E("stock-search-hits").classList.add("hidden");
+    renderStockDetail(symbol);
+  }
+
+  async function renderStockDetail(symbol) {
+    const { ok, data } = await GET("/v1/stocks/" + encodeURIComponent(symbol));
+    if (!ok) return;
+    const s = data.stock;
+    const w52 = s.week52 || {};
+    const lo = Number(w52.low || s.week52_low || 0);
+    const hi = Number(w52.high || s.week52_high || 0);
+    const px = Number(w52.price || s.current_price || 0);
+    const pct = w52.range_pct != null ? Number(w52.range_pct) : (hi > lo ? ((px - lo) / (hi - lo)) * 100 : 50);
+    const peDelta = s.valuation_vs_median;
+    const peLine = (s.pe || "—") + " / " + (s.pe_5yr_median || "—");
+    let metricHtml = "<div class='metric'><div class='lbl'>P/E vs 5-yr median</div><div class='val'>" + peLine +
+      "</div><div class='" + deltaClass(peDelta > 0 ? "down" : peDelta < 0 ? "up" : "flat") + "'>" +
+      (peDelta == null ? "—" : fmtSignedPct(peDelta, 2) + " vs median") + "</div></div>";
+    (s.metric_deltas || []).forEach(function (m) {
+      const unit = m.unit || "";
+      const shown = m.value == null ? "—" : (m.key === "fcf_crore" ? fmtNum(m.value, 0) : m.value + unit);
+      metricHtml += "<div class='metric'><div class='lbl'>" + m.label + "</div><div class='val'>" + shown +
+        "</div><div class='" + deltaClass(m.direction) + "'>" + fmtSignedPct(m.delta_pct) +
+        " vs " + (s.sector || "sector") + " median " +
+        (m.sector_median == null ? "—" : (m.key === "fcf_crore" ? fmtNum(m.sector_median, 0) : m.sector_median + unit)) +
+        "</div></div>";
+    });
+    const filings = (s.filings || []).map(function (f) {
+      return "<div class='item'><div class='when'>" + (f.filed_at || "") + " · " + (f.source || "NSE") +
+        "</div><strong>" + (f.headline || "") + "</strong><p class='conn-detail'>3–5 year takeaway: " +
+        (f.summary_3_5yr || "") + "</p></div>";
+    }).join("") || "<p class='conn-detail'>No recent exchange notes in the educational feed.</p>";
+    const favClass = s.is_favorite ? "fav-btn on" : "fav-btn";
+    const favLabel = s.is_favorite ? "★ Favourite" : "☆ Mark favourite";
+    E("stock-detail-card").classList.remove("hidden");
+    E("stock-detail-card").innerHTML =
+      "<article class='glass-card'><div class='stock-head'><div><div class='kicker-sm'>" + (s.sector || "") +
+      " · " + (s.market_cap_category || "") + "</div><h3>" + s.company_name + "</h3></div>" +
+      "<button type='button' class='" + favClass + "' id='ticker-fav-btn' data-symbol='" + s.symbol +
+      "' data-on='" + (s.is_favorite ? "1" : "0") + "'>" + favLabel + "</button></div>" +
+      "<p class='mono'>₹" + fmtNum(px, 2) + " · " + s.nse_symbol + " · BSE " + s.bse_code + "</p>" +
+      "<p class='" + deltaClass(w52.direction) + "'>52-week ₹" + fmtNum(lo, 0) + " – ₹" + fmtNum(hi, 0) +
+      " · " + fmtSignedPct(w52.from_low_pct) + " from low · " + fmtSignedPct(w52.from_high_pct) + " from high</p>" +
+      "<div class='range'><i style='left:" + Math.max(0, Math.min(pct, 100)) + "%'></i></div>" +
+      "<div class='metric-row'>" + metricHtml + "</div>" +
+      "<div class='section-label'>Official announcements</div><div class='timeline'>" + filings + "</div></article>";
+    E("stock-search-hits").classList.add("hidden");
+    const favBtn = E("ticker-fav-btn");
+    if (favBtn) {
+      favBtn.addEventListener("click", async function () {
+        const on = favBtn.getAttribute("data-on") !== "1";
+        const res = await POST("/v1/investor/tickers", { symbol: s.symbol, is_favorite: on });
+        if (res.ok) {
+          tickerWatch.recents = res.data.recents || [];
+          tickerWatch.favorites = res.data.favorites || [];
+          renderTickerWatch();
+          favBtn.setAttribute("data-on", on ? "1" : "0");
+          favBtn.className = on ? "fav-btn on" : "fav-btn";
+          favBtn.textContent = on ? "★ Favourite" : "☆ Mark favourite";
+        }
+      });
+    }
+    refreshTickerWatch();
+  }
+
+  E("stock-search").addEventListener("input", function () {
+    const q = E("stock-search").value.trim();
+    clearTimeout(searchTimer);
+    if (q.length < 1) { E("stock-search-hits").classList.add("hidden"); return; }
+    searchTimer = setTimeout(function () { runStockSearch(q); }, 160);
+  });
+
+  E("stock-search").addEventListener("focus", function () {
+    const q = E("stock-search").value.trim();
+    if (q.length >= 1) runStockSearch(q);
+  });
+
+  E("stock-search").addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter") return;
+    ev.preventDefault();
+    const first = E("stock-search-hits").querySelector("button[data-symbol]");
+    if (first) pickStock(first.getAttribute("data-symbol"));
+  });
+
+  E("mf-search").addEventListener("input", function () {
+    const q = E("mf-search").value.trim();
+    clearTimeout(mfSearchTimer);
+    if (q.length < 1) {
+      E("mf-search-hits").classList.add("hidden");
+      E("mf-search-results").innerHTML = "";
+      E("mf-search-status").textContent = "";
+      return;
+    }
+    mfSearchTimer = setTimeout(function () { runFundSearch(q); }, 160);
+  });
+
+  E("mf-search").addEventListener("focus", function () {
+    const q = E("mf-search").value.trim();
+    if (q.length >= 1) runFundSearch(q);
+  });
+
+  E("mf-search").addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter") return;
+    ev.preventDefault();
+    const first = E("mf-search-hits").querySelector("button[data-code]") ||
+      E("mf-search-results").querySelector("button[data-code]");
+    if (first) pickFund(first.getAttribute("data-code"), "mf-detail-card");
+  });
+
+  E("idx-search").addEventListener("input", function () {
+    const q = E("idx-search").value.trim();
+    clearTimeout(idxSearchTimer);
+    if (q.length < 1) {
+      E("idx-search-hits").classList.add("hidden");
+      E("idx-search-results").innerHTML = "";
+      E("idx-search-status").textContent = "";
+      return;
+    }
+    idxSearchTimer = setTimeout(function () { runIndexFundSearch(q); }, 160);
+  });
+
+  E("idx-search").addEventListener("focus", function () {
+    const q = E("idx-search").value.trim();
+    if (q.length >= 1) runIndexFundSearch(q);
+  });
+
+  E("idx-search").addEventListener("keydown", function (ev) {
+    if (ev.key !== "Enter") return;
+    ev.preventDefault();
+    const first = E("idx-search-hits").querySelector("button[data-code]") ||
+      E("idx-search-results").querySelector("button[data-code]");
+    if (first) pickFund(first.getAttribute("data-code"), "idx-fund-detail");
+  });
+
+  async function postPortfolio(form) {
+    const headers = {};
+    if (sessionToken) headers["Authorization"] = "Bearer " + sessionToken;
+    const resp = await fetch(API_BASE + "/v1/portfolio/upload", { method: "POST", headers: headers, body: form });
+    return resp.json().catch(function () { return {}; });
+  }
+
+  E("cas-upload-btn").addEventListener("click", async function () {
+    clearStatus(E("portfolio-status"));
+    const file = E("cas-file").files[0];
+    if (!file) { setStatus(E("portfolio-status"), "Choose a CAS file first.", "error"); return; }
+    const form = new FormData();
+    form.append("file", file);
+    const data = await postPortfolio(form);
+    if (data.ok) {
+      setStatus(E("portfolio-status"), "Parsed " + data.holdings_count + " holdings from " + (data.filename || "upload") + ".", "success");
+      loadPortfolioHub();
+      loadInvestorOverview();
+    } else {
+      setStatus(E("portfolio-status"), data.error || "Could not parse that file.", "error");
+    }
+  });
+
+  E("aa-sync-btn").addEventListener("click", async function () {
+    const form = new FormData();
+    form.append("broker_token", "account-aggregator");
+    const data = await postPortfolio(form);
+    if (data.ok) {
+      setStatus(E("portfolio-status"), "Account Aggregator demo book imported (" + data.holdings_count + " lines).", "success");
+      loadPortfolioHub();
+      loadInvestorOverview();
+    } else {
+      setStatus(E("portfolio-status"), data.error || "Aggregator sync failed.", "error");
+    }
+  });
 
   E("mfa-enroll-btn").addEventListener("click", async function () {
     const { ok, data } = await POST("/mfa/enroll/start", {});
@@ -1048,11 +2347,15 @@
       E("mfa-enroll-step1").classList.add("hidden");
       const list = E("mfa-backup-codes-list");
       list.innerHTML = data.backup_codes.map(function (c) { return '<div class="backup-code">' + c + "</div>"; }).join("");
+      lastBackupCodes = data.backup_codes;
       E("mfa-backup-codes-display").classList.remove("hidden");
     } else {
       setStatus(E("mfa-status"), data.reason || "Incorrect code. Please try again.", "error");
     }
   });
+
+  E("mfa-download-codes-btn").addEventListener("click", function () { downloadBackupCodes(lastBackupCodes); });
+  E("mfa-regen-download-btn").addEventListener("click", function () { downloadBackupCodes(lastBackupCodes); });
 
   E("mfa-backup-codes-done-btn").addEventListener("click", async function () {
     E("mfa-backup-codes-display").classList.add("hidden");
@@ -1067,6 +2370,7 @@
     if (ok) {
       const list = E("mfa-regen-codes-list");
       list.innerHTML = data.backup_codes.map(function (c) { return '<div class="backup-code">' + c + "</div>"; }).join("");
+      lastBackupCodes = data.backup_codes;
       E("mfa-regen-codes-display").classList.remove("hidden");
     } else {
       setStatus(E("mfa-status"), data.error || "Could not regenerate backup codes.", "error");
@@ -1108,20 +2412,45 @@
 
   function enterDashboard() {
     E("account-meta").classList.remove("hidden");
-    E("account-who").textContent = currentSubscriber.email || currentSubscriber.mobile_number || "Signed in";
+    refreshHeaderIdentity();
     E("page-wrap").classList.remove("cover-mode");
     E("page-wrap").classList.add("dashboard");
     showView("view-dashboard");
     refreshChannelCheckboxes();
+    showHub("overview");
     loadBriefing();
   }
 
-  E("profile-btn").addEventListener("click", function () {
-    refreshMfaSection();
-    refreshChannelCheckboxes();
-    clearStatus(E("changepw-status"));
-    E("changepw-current").value = ""; E("changepw-new").value = ""; E("changepw-confirm").value = "";
-    showView("view-profile");
+  E("account-open-btn").addEventListener("click", openProfile);
+  E("profile-settings-btn").addEventListener("click", openProfile);
+  E("brand-home-btn").addEventListener("click", function (ev) {
+    ev.preventDefault();
+    goHome();
+  });
+
+  document.querySelectorAll(".field-edit-btn").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      const id = btn.getAttribute("data-field");
+      const unlocking = E(id).readOnly;
+      if (unlocking) {
+        lockProfileField(id, false);
+        E(id).focus();
+        E(id).select();
+      } else {
+        const meta = PROFILE_FIELDS.find(function (f) { return f.id === id; });
+        if (meta) E(id).value = storedProfileValue(meta.key);
+        lockProfileField(id, true);
+        syncSaveProfileVisibility();
+      }
+    });
+  });
+
+  PROFILE_FIELDS.forEach(function (f) {
+    E(f.id).addEventListener("input", syncSaveProfileVisibility);
+  });
+
+  E("changepw-new").addEventListener("input", function () {
+    renderPasswordStrength("changepw-new", "changepw-strength", "changepw-strength-label");
   });
 
   E("profile-back-btn").addEventListener("click", function () { showView("view-dashboard"); });
@@ -1153,7 +2482,11 @@
     const now = new Date();
     const nowMin = (now.getUTCHours() * 60 + now.getUTCMinutes() + now.getUTCSeconds() / 60 + IST_OFFSET_MINUTES) % (24 * 60);
     try {
-      E("edition-date").textContent = new Intl.DateTimeFormat("en-IN", { day: "2-digit", month: "short", timeZone: "Asia/Kolkata" }).format(now) + " · IST";
+      E("edition-date").textContent = new Intl.DateTimeFormat("en-IN", {
+        weekday: "short", day: "2-digit", month: "short", year: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        hour12: false, timeZone: "Asia/Kolkata"
+      }).format(now) + " IST";
     } catch (e) {}
     let sUntil = SEND_MINUTES * 60 - nowMin * 60;
     if (sUntil <= 0) sUntil += 86400;
@@ -1165,6 +2498,13 @@
 
   updateCountdown();
   setInterval(updateCountdown, 1000);
+  setInterval(checkIdleTimeout, 30000);
+  ["click", "keydown", "mousemove", "scroll", "touchstart"].forEach(function (evt) {
+    document.addEventListener(evt, function () { markActivity(); }, { passive: true });
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible") checkIdleTimeout();
+  });
 
   (async function init() {
     if (await handlePasswordReset()) return;

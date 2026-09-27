@@ -58,6 +58,28 @@ class TestSessionRepo(unittest.TestCase):
         resolved = session_repo.get_subscriber_id_for_token(token, client=self.client)
         self.assertIsNone(resolved)
 
+    def test_idle_window_is_about_thirty_minutes(self):
+        token = session_repo.create_session("sub-idle", client=self.client)
+        row = self.client.select(session_repo.TABLE, params={"token": f"eq.{token}"})[0]
+        expiry = datetime.fromisoformat(row["expires_at"].replace("Z", "+00:00"))
+        remaining = (expiry - datetime.now(timezone.utc)).total_seconds()
+        self.assertGreater(remaining, 20 * 60)
+        self.assertLess(remaining, 35 * 60)
+
+    def test_activity_slides_idle_expiry(self):
+        token = session_repo.create_session("sub-slide", client=self.client)
+        stale = (datetime.now(timezone.utc) + timedelta(minutes=5)).isoformat()
+        self.client.update(
+            session_repo.TABLE, params={"token": f"eq.{token}"}, patch={"expires_at": stale}
+        )
+        self.assertEqual(
+            session_repo.get_subscriber_id_for_token(token, client=self.client), "sub-slide"
+        )
+        row = self.client.select(session_repo.TABLE, params={"token": f"eq.{token}"})[0]
+        expiry = datetime.fromisoformat(row["expires_at"].replace("Z", "+00:00"))
+        remaining = (expiry - datetime.now(timezone.utc)).total_seconds()
+        self.assertGreater(remaining, 20 * 60)
+
     def test_revoke_all_sessions_for_subscriber(self):
         token1 = session_repo.create_session("sub-5", client=self.client)
         token2 = session_repo.create_session("sub-5", client=self.client)

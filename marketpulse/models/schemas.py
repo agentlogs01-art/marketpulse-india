@@ -289,6 +289,8 @@ class Subscriber:
     mfa_backup_codes: list = field(default_factory=list)
     mfa_enrolled_at: Optional[str] = None
     theme_preference: str = "light"
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     created_at: Optional[str] = None
     verified_at: Optional[str] = None
     last_login_at: Optional[str] = None
@@ -319,6 +321,8 @@ class Subscriber:
             "mfa_enabled": self.mfa_enabled,
             "mfa_enrolled_at": self.mfa_enrolled_at,
             "theme_preference": self.theme_preference,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
             "created_at": self.created_at,
             "verified_at": self.verified_at,
             "last_login_at": self.last_login_at,
@@ -342,6 +346,8 @@ class Subscriber:
             mfa_backup_codes=row.get("mfa_backup_codes") or [],
             mfa_enrolled_at=row.get("mfa_enrolled_at"),
             theme_preference=row.get("theme_preference", "light"),
+            first_name=row.get("first_name"),
+            last_name=row.get("last_name"),
             created_at=row.get("created_at"),
             verified_at=row.get("verified_at"),
             last_login_at=row.get("last_login_at"),

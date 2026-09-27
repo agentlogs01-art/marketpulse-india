@@ -32,6 +32,7 @@ Endpoints implemented here:
   - mfa_disable(session_token, password)                POST /api/mfa/disable
   - mfa_regenerate_backup_codes(session_token)          POST /api/mfa/backup-codes/regenerate
   - update_theme_preference(session_token, theme)       POST /api/theme
+  - update_profile(session_token, ...)                  POST /api/profile
  
 Account model: signing up always requires a password (this is what makes
 "sign in and view the briefing on the website" possible at all) and at
@@ -160,6 +161,32 @@ def _validate_channels(channels: Optional[list]) -> list:
         raise ValidationError("Select at least one delivery channel.")
     return channels
 
+def _validate_person_name(value: Optional[str], label: str) -> Optional[str]:
+    if value is None:
+        return None
+    cleaned = " ".join(str(value).split())
+    if not cleaned:
+        return None
+    if len(cleaned) > 80:
+        raise ValidationError(f"{label} is too long.")
+    if not re.match(r"^[A-Za-z][A-Za-z .'-]*$", cleaned):
+        raise ValidationError(f"{label} can only include letters, spaces, apostrophes, and hyphens.")
+    return cleaned
+
+
+def _validate_telegram_chat_id(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    cleaned = str(value).strip()
+    if not cleaned:
+        return None
+    if re.match(r"^-?\d{5,20}$", cleaned):
+        return cleaned
+    if re.match(r"^@[A-Za-z][A-Za-z0-9_]{4,31}$", cleaned):
+        return cleaned
+    raise ValidationError("Telegram ID must be a numeric chat id from the bot, or a @username.")
+
+
 def _validate_whatsapp_number(number: Optional[str], channels: list) -> Optional[str]:
     if DeliveryChannel.WHATSAPP.value not in channels:
         return None
@@ -181,7 +208,7 @@ def _require_session(session_token: Optional[str]):
 
     subscriber_id = get_subscriber_id_for_token(session_token or "")
     if not subscriber_id:
-        raise AuthError("Please sign in to continue.")
+        raise AuthError("Please sign in to continue. Your session may have expired after 30 minutes of inactivity.")
 
     subscriber = get_subscriber_by_id(subscriber_id)
     if subscriber is None:
@@ -199,6 +226,8 @@ def signup(
     mobile_number: Optional[str] = None,
     channels: Optional[list] = None,
     whatsapp_number: Optional[str] = None,
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
 ) -> dict:
     """
     Public signup endpoint. Requires a password and at least one of
@@ -230,6 +259,8 @@ def signup(
     clean_password = _validate_password(password)
     clean_channels = _validate_channels(channels)
     clean_whatsapp = _validate_whatsapp_number(whatsapp_number, clean_channels)
+    clean_first = _validate_person_name(first_name, "First name")
+    clean_last = _validate_person_name(last_name, "Last name")
 	
     # --- MANUAL DE-DUPLICATION CHECK ---
     if clean_email:
@@ -275,6 +306,8 @@ def signup(
             mobile_number=clean_mobile,
             channels=clean_channels,
             whatsapp_number=clean_whatsapp,
+            first_name=clean_first,
+            last_name=clean_last,
         )
     except Exception as exc:
         # Convert the entire error object to a lowercase string to catch it anywhere
@@ -560,6 +593,104 @@ def update_channels(session_token: str, channels: list) -> dict:
     clean_channels = _validate_channels(channels)
     set_channels_by_id(subscriber.id, clean_channels)
     return {"ok": True, "channels": clean_channels}
+
+
+def update_profile(
+    session_token: str,
+    first_name: Optional[str] = None,
+    last_name: Optional[str] = None,
+    email: Optional[str] = None,
+    whatsapp_number: Optional[str] = None,
+    telegram_chat_id: Optional[str] = None,
+) -> dict:
+    """
+    Additive account-profile update. Existing channel toggles still go
+    through update_channels(); this only edits identity / delivery IDs.
+    """
+    from marketpulse.email_system.transactional import TransactionalEmailError, send_verification_email
+    from marketpulse.persistence.subscriber_repo import (
+        create_email_verification,
+        get_subscriber_by_email,
+        get_subscriber_by_id,
+        update_subscriber_profile,
+    )
+    from marketpulse.persistence.supabase_client import get_client
+
+    subscriber = _require_session(session_token)
+    patch = {}
+    warning = None
+
+    if first_name is not None:
+        patch["first_name"] = _validate_person_name(first_name, "First name")
+    if last_name is not None:
+        patch["last_name"] = _validate_person_name(last_name, "Last name")
+
+    if email is not None:
+        clean_email = _validate_optional_email(email)
+        if clean_email != subscriber.email:
+            if not clean_email and not subscriber.mobile_number:
+                raise ValidationError("Keep an email or a mobile number on the account.")
+            other = get_subscriber_by_email(clean_email) if clean_email else None
+            if other and other.id != subscriber.id:
+                raise ValidationError("That email is already linked to another account.")
+            patch["email"] = clean_email
+            if clean_email:
+                patch["verified_at"] = None
+
+    if whatsapp_number is not None:
+        raw = (whatsapp_number or "").strip()
+        if not raw:
+            patch["whatsapp_number"] = None
+        else:
+            if not E164_PHONE_RE.match(raw):
+                raise ValidationError(
+                    "WhatsApp number must be in international format, e.g. +919876543210."
+                )
+            client = get_client()
+            clash = client.select("subscribers", params={"whatsapp_number": f"eq.{raw}"})
+            if clash and clash[0].get("id") != subscriber.id:
+                raise ValidationError("That WhatsApp number is already linked to another account.")
+            patch["whatsapp_number"] = raw
+
+    if telegram_chat_id is not None:
+        clean_tg = _validate_telegram_chat_id(telegram_chat_id)
+        if clean_tg:
+            client = get_client()
+            clash = client.select("subscribers", params={"telegram_chat_id": f"eq.{clean_tg}"})
+            if clash and clash[0].get("id") != subscriber.id:
+                raise ValidationError("That Telegram ID is already linked to another account.")
+        patch["telegram_chat_id"] = clean_tg
+
+    if not patch:
+        return {"ok": True, "subscriber": subscriber.to_public_dict()}
+
+    try:
+        update_subscriber_profile(subscriber.id, patch)
+    except Exception as exc:
+        # Older databases may not have first_name/last_name yet.
+        dropped = dict(patch)
+        dropped.pop("first_name", None)
+        dropped.pop("last_name", None)
+        if dropped == patch:
+            raise ValidationError(f"Could not save profile: {exc}") from exc
+        if dropped:
+            update_subscriber_profile(subscriber.id, dropped)
+        warning = "Name fields need the additive first_name/last_name columns on subscribers."
+
+    if patch.get("email") and patch.get("email") != subscriber.email and patch.get("email"):
+        try:
+            token = create_email_verification(subscriber.id)
+            verify_url = f"{_base_url()}/verify?token={token}"
+            send_verification_email(patch["email"], verify_url)
+        except TransactionalEmailError as exc:
+            warning = f"Email updated but the confirmation message could not be sent: {exc}"
+
+    refreshed = get_subscriber_by_id(subscriber.id) or subscriber
+    result = {"ok": True, "subscriber": refreshed.to_public_dict()}
+    if warning:
+        result["warning"] = warning
+    return result
+
 
 # ---------------------------------------------------------------------------
 # Password change (authenticated) & password reset (unauthenticated)
