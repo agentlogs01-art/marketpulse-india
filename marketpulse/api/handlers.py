@@ -535,6 +535,7 @@ def get_latest_briefing(session_token: str) -> dict:
     _require_session(session_token)  # raises AuthError if not signed in
 
     from marketpulse.persistence.run_log_repo import get_latest_run
+    from marketpulse.email_system.render import supplement_snapshot_html
 
     run = get_latest_run()
     if run is None:
@@ -545,7 +546,7 @@ def get_latest_briefing(session_token: str) -> dict:
         "available": True,
         "run_date": run.get("run_date_ist"),
         "bias_label": run.get("bias_label"),
-        "html": run.get("briefing_html"),
+        "html": supplement_snapshot_html(run.get("briefing_html")),
         "text": run.get("briefing_text"),
         "suppressed": run.get("suppressed", False),
     }

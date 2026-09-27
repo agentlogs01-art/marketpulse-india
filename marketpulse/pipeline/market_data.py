@@ -275,9 +275,13 @@ INSTRUMENT_SOURCES = [
     {"name": "Nasdaq (US)", "unit": "index pts", "yahoo_symbol": "^IXIC", "stooq_symbol": "^ndq"},
     {"name": "Nikkei 225 (Japan)", "unit": "index pts", "yahoo_symbol": "^N225", "stooq_symbol": "^nkx"},
     {"name": "Hang Seng (Hong Kong)", "unit": "index pts", "yahoo_symbol": "^HSI", "stooq_symbol": "^hsi"},
+    {"name": "Nifty 50", "unit": "index pts", "yahoo_symbol": "^NSEI", "stooq_symbol": "^nsei"},
+    {"name": "BSE Sensex", "unit": "index pts", "yahoo_symbol": "^BSESN", "stooq_symbol": "^bsesn"},
     {"name": "Brent Crude Oil", "unit": "USD/barrel", "yahoo_symbol": "BZ=F", "stooq_symbol": "brn.f"},
     {"name": "Gold", "unit": "USD/oz", "yahoo_symbol": "GC=F", "stooq_symbol": "gc.f"},
     {"name": "USD/INR", "unit": "INR", "yahoo_symbol": "INR=X", "stooq_symbol": "usdind"},
+    {"name": "EUR/INR", "unit": "INR", "yahoo_symbol": "EURINR=X", "stooq_symbol": "eurinr"},
+    {"name": "GBP/INR", "unit": "INR", "yahoo_symbol": "GBPINR=X", "stooq_symbol": "gbpinr"},
     {"name": "US 10-Year Treasury Yield", "unit": "%", "yahoo_symbol": "^TNX", "stooq_symbol": "10usy.b"},
     {"name": "Dollar Index (DXY)", "unit": "index pts", "yahoo_symbol": "DX-Y.NYB", "stooq_symbol": "dx.f"},
 ]

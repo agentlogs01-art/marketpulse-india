@@ -65,23 +65,60 @@ def render_bias_badge(reconciliation: ReconciliationResult) -> str:
     )
 
 
+def _snapshot_change_tone(pct_change: float) -> tuple[str, str]:
+    """Green up, red down, orange when the printed change is 0.00%."""
+    shown = round(float(pct_change), 2)
+    if shown > 0:
+        return "mp-chg-up", "#0B6E2D"
+    if shown < 0:
+        return "mp-chg-down", "#C0392B"
+    return "mp-chg-flat", "#E07B00"
+
+
+_TONE_ARROW = {
+    "mp-chg-up": "\u2B06\uFE0E",
+    "mp-chg-down": "\u2B07\uFE0E",
+    "mp-chg-flat": "\u27A1\uFE0E",
+}
+
+_DIRECTION_TONE = {
+    Direction.POSITIVE: ("mp-chg-up", "#0B6E2D"),
+    Direction.NEGATIVE: ("mp-chg-down", "#C0392B"),
+    Direction.NEUTRAL: ("mp-chg-flat", "#E07B00"),
+}
+
+
+def _tone_arrow(tone: str, color: str) -> str:
+    """Text arrow so email and the dashboard can paint it with the change color."""
+    glyph = _TONE_ARROW[tone]
+    return (
+        f'<span class="mp-arrow {tone}" style="color:{color};font-variant-emoji:text;">'
+        f"{glyph}</span>"
+    )
+
+
+def snapshot_row_html(snapshot) -> str:
+    """One snapshot row. Name, value, and change all use the trend color."""
+    delayed_badge = (
+        ' <span style="color:#E07B00;font-size:12px;">\u26A0\uFE0F Data Delayed</span>'
+        if snapshot.is_delayed else ""
+    )
+    tone, color = _snapshot_change_tone(snapshot.pct_change)
+    arrow = _tone_arrow(tone, color)
+    cell = f'class="{tone}" style="padding:8px;color:{color};"'
+    return (
+        f'<tr class="{tone}" style="border-bottom:1px solid #eee;">'
+        f'<td {cell}>{snapshot.name}</td>'
+        f'<td class="{tone}" style="padding:8px;text-align:right;color:{color};">'
+        f'{snapshot.value:,.2f} {snapshot.unit}</td>'
+        f'<td class="{tone}" style="padding:8px;text-align:right;color:{color};">'
+        f'{arrow} {snapshot.pct_change:+.2f}%{delayed_badge}</td>'
+        '</tr>'
+    )
+
+
 def render_market_snapshot_table(snapshots: list) -> str:
-    rows = []
-    for s in snapshots:
-        arrow = "\u2B06\uFE0F" if s.pct_change > 0 else ("\u2B07\uFE0F" if s.pct_change < 0 else "\u27A1\uFE0F")
-        delayed_badge = (
-            ' <span style="color:#E07B00;font-size:12px;">\u26A0\uFE0F Data Delayed</span>'
-            if s.is_delayed else ""
-        )
-        color = "#0B6E2D" if s.pct_change >= 0 else "#C0392B"
-        rows.append(
-            '<tr style="border-bottom:1px solid #eee;">'
-            f'<td style="padding:8px;">{s.name}</td>'
-            f'<td style="padding:8px;text-align:right;">{s.value:,.2f} {s.unit}</td>'
-            f'<td style="padding:8px;text-align:right;color:{color};">'
-            f'{arrow} {s.pct_change:+.2f}%{delayed_badge}</td>'
-            '</tr>'
-        )
+    rows = [snapshot_row_html(s) for s in snapshots]
     return (
         '<table style="width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:14px;">'
         '<thead><tr style="background-color:#f5f5f5;">'
@@ -89,6 +126,49 @@ def render_market_snapshot_table(snapshots: list) -> str:
         '<th style="padding:8px;text-align:right;">Value</th>'
         '<th style="padding:8px;text-align:right;">Change</th>'
         '</tr></thead><tbody>' + "".join(rows) + '</tbody></table>'
+    )
+
+
+def supplement_snapshot_html(html: str) -> str:
+    """Add any snapshot instruments missing from a previously rendered briefing."""
+    if not html or "</tbody>" not in html:
+        return html
+    from concurrent.futures import ThreadPoolExecutor
+
+    from marketpulse.pipeline.market_data import INSTRUMENT_SOURCES, fetch_instrument_snapshot
+
+    missing = [spec for spec in INSTRUMENT_SOURCES if f">{spec['name']}<" not in html]
+    if not missing:
+        return html
+    with ThreadPoolExecutor(max_workers=len(missing)) as pool:
+        snaps = list(pool.map(fetch_instrument_snapshot, missing))
+    names = [spec["name"] for spec in INSTRUMENT_SOURCES]
+    for snap in snaps:
+        if not snap.value:
+            continue
+        row = snapshot_row_html(snap)
+        html = _insert_snapshot_row(html, snap.name, row, names)
+    return html
+
+
+def _insert_snapshot_row(html: str, name: str, row: str, names: list) -> str:
+    idx = names.index(name) if name in names else len(names)
+    for prev in reversed(names[:idx]):
+        pos = html.find(f">{prev}<")
+        if pos == -1:
+            continue
+        end = html.find("</tr>", pos)
+        if end == -1:
+            continue
+        end += len("</tr>")
+        return html[:end] + row + html[end:]
+    return html.replace("</tbody>", row + "</tbody>", 1)
+
+
+def _gift_change_html(pct_change: float) -> str:
+    tone, color = _snapshot_change_tone(pct_change)
+    return (
+        f'(<span class="{tone}" style="color:{color};">{pct_change:+.2f}%</span>'
     )
 
 
@@ -104,7 +184,8 @@ def render_gift_nifty_callout(gift_nifty: GiftNiftySnapshot) -> str:
         '<strong>GIFT Nifty</strong> (a futures contract that previews how Indian markets '
         'will open, traded at GIFT City, India from 06:30 AM IST): '
         f'<strong>{gift_nifty.last_traded_price:,.2f}</strong> '
-        f'({gift_nifty.pct_change_vs_prev_close:+.2f}% vs yesterday\'s Nifty 50 close of '
+        + _gift_change_html(gift_nifty.pct_change_vs_prev_close)
+        + ' vs yesterday\'s Nifty 50 close of '
         f'{gift_nifty.prev_nifty_close:,.2f}) \u2014 pointing {direction_word}.{estimate_note}'
         '</div>'
     )
@@ -126,7 +207,8 @@ def render_sector_scorecards(scorecards: dict) -> str:
         )
     cards = []
     for scorecard in scorecards.values():
-        arrow = DIRECTION_ARROW[scorecard.direction]
+        tone, color = _DIRECTION_TONE[scorecard.direction]
+        arrow = _tone_arrow(tone, color)
         impact_color = IMPACT_LEVEL_COLOR[scorecard.impact_level]
         mixed_note = (
             ' <span style="font-size:12px;color:#E07B00;">(Mixed signals today)</span>'

@@ -178,6 +178,48 @@ class MarketUniverse:
 universe = MarketUniverse()
 
 
+def dividend_yield_percent(info: Dict[str, Any], price: Optional[float] = None) -> Optional[float]:
+    """Annual dividend yield in percent, to two decimal places.
+
+    Yahoo's ``dividendYield`` is already a percent (1.77 means 1.77%).
+    Multiplying it by 100 shifts the decimal and turns 1.77 into 177.
+    ``trailingAnnualDividendYield`` is still a fraction (0.0177). When the
+    annual cash dividend and the price are both present, yield is
+    dividend / price so a 0.49% payout stays 0.49.
+    """
+    rate = info.get("dividendRate")
+    px = price if price not in (None, 0, 0.0) else info.get("currentPrice") or info.get("regularMarketPrice")
+    try:
+        if rate not in (None, 0, 0.0) and px not in (None, 0, 0.0):
+            return round(float(rate) / float(px) * 100, 2)
+    except (TypeError, ValueError, ZeroDivisionError):
+        pass
+
+    raw = info.get("dividendYield")
+    trailing = info.get("trailingAnnualDividendYield")
+    if raw is None:
+        try:
+            if trailing not in (None, 0, 0.0):
+                return round(float(trailing) * 100, 2)
+        except (TypeError, ValueError):
+            return None
+        return None
+    try:
+        value = float(raw)
+    except (TypeError, ValueError):
+        return None
+    try:
+        trailing_value = float(trailing) if trailing not in (None, 0, 0.0) else None
+    except (TypeError, ValueError):
+        trailing_value = None
+    # Same number on both fields means an older ratio feed (0.0177, not 1.77%).
+    if trailing_value is not None and abs(trailing_value - value) < 0.002:
+        value *= 100
+    elif 0 < value < 0.25:
+        value *= 100
+    return round(value, 2)
+
+
 def fetch_live_stock_data(meta: Dict[str, Any]) -> Dict[str, Any]:
     stock_data = dict(meta)
     yahoo = meta.get("yahoo_symbol") or f"{meta.get('symbol')}.NS"
@@ -226,8 +268,9 @@ def fetch_live_stock_data(meta: Dict[str, Any]) -> Dict[str, Any]:
                 extra["roce"] = round(float(info["returnOnAssets"]) * 100, 2)
             if info.get("debtToEquity") is not None:
                 extra["debt_to_equity"] = round(float(info["debtToEquity"]) / 100, 2)
-            if info.get("dividendYield") is not None:
-                extra["dividend_yield"] = round(float(info["dividendYield"]) * 100, 2)
+            dy = dividend_yield_percent(info, extra.get("current_price") or stock_data.get("current_price"))
+            if dy is not None:
+                extra["dividend_yield"] = dy
             px = info.get("currentPrice") or info.get("regularMarketPrice")
             if px is not None:
                 extra["current_price"] = px
@@ -543,8 +586,9 @@ def get_default_valuation() -> Dict[str, Any]:
         info = yf.Ticker("^NSEI").info or {}
         nifty_level = info.get("currentPrice") or info.get("regularMarketPrice") or nifty_level
         pe = info.get("trailingPE") or pe
-        if info.get("dividendYield") is not None:
-            yield_val = round(float(info["dividendYield"]) * 100, 2)
+        dy = dividend_yield_percent(info, nifty_level)
+        if dy is not None:
+            yield_val = dy
     except Exception:
         pass
     return {
