@@ -14,6 +14,28 @@ from marketpulse.investor.valuation import classify_zone
 from marketpulse.tests.test_api_handlers import ApiHandlersTestCase
 
 
+class TestDividendYield(unittest.TestCase):
+    def test_percent_field_is_not_scaled_again(self):
+        from marketpulse.investor.catalog import dividend_yield_percent
+
+        # HDFC Bank: Yahoo dividendYield 1.77 is already 1.77%, not 0.0177.
+        self.assertEqual(
+            dividend_yield_percent({"dividendRate": 13.0, "currentPrice": 735.6, "dividendYield": 1.77}),
+            1.77,
+        )
+        # Reliance: 0.49% must stay 0.49, not 49.
+        self.assertEqual(
+            dividend_yield_percent({"dividendRate": 6.0, "currentPrice": 1226.0, "dividendYield": 0.49}),
+            0.49,
+        )
+
+    def test_legacy_ratio_is_scaled(self):
+        from marketpulse.investor.catalog import dividend_yield_percent
+
+        self.assertEqual(dividend_yield_percent({"dividendYield": 0.0177}), 1.77)
+        self.assertEqual(dividend_yield_percent({"trailingAnnualDividendYield": 0.017835}), 1.78)
+
+
 class TestValuationZone(unittest.TestCase):
     def test_fair_mid_range(self):
         self.assertEqual(classify_zone(21.5, 1.05), "fair")

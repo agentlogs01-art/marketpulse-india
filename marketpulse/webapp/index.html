@@ -37,26 +37,26 @@
   }
   [data-theme="dark"] {
     --bg: #0b0e14;
-    --surface: rgba(22, 27, 38, 0.78);
-    --ink: #e8eef8;
-    --muted: #9aa6ba;
-    --line: #232d3f;
-    --fill: #121722;
-    --accent: #00d084;
-    --accent-soft: rgba(0, 208, 132, 0.12);
-    --green: #10b981;
-    --green-bg: rgba(16, 185, 129, 0.14);
-    --red: #f07167;
-    --red-bg: rgba(240, 113, 103, 0.12);
-    --warn: #f59e0b;
-    --warn-bg: rgba(245, 158, 11, 0.12);
-    --ink-hover: #243044;
-    --ink-disabled: #4b5568;
-    --amethyst: #818cf8;
-    --gold: #fbbf24;
+    --surface: rgba(22, 27, 38, 0.92);
+    --ink: #f8fafc;
+    --muted: #e2e8f0;
+    --line: #475569;
+    --fill: #1e293b;
+    --accent: #4ade80;
+    --accent-soft: rgba(74, 222, 128, 0.16);
+    --green: #4ade80;
+    --green-bg: rgba(74, 222, 128, 0.16);
+    --red: #fca5a5;
+    --red-bg: rgba(252, 165, 165, 0.14);
+    --warn: #fde68a;
+    --warn-bg: rgba(253, 230, 138, 0.14);
+    --ink-hover: #ffffff;
+    --ink-disabled: #cbd5e1;
+    --amethyst: #c4b5fd;
+    --gold: #fde68a;
     --obsidian: #0b0e14;
-    --glass: rgba(22, 27, 38, 0.72);
-    --glow: rgba(0, 208, 132, 0.22);
+    --glass: rgba(15, 23, 42, 0.92);
+    --glow: rgba(74, 222, 128, 0.18);
     color-scheme: dark;
   }
   [data-theme="light"] { color-scheme: light; }
@@ -180,9 +180,52 @@
     overflow: auto; color: var(--ink);
   }
   .edition-article, .edition-article iframe { color-scheme: inherit; }
-  .briefing-html { color: var(--ink); padding: 12px 16px; }
-  .briefing-html, .briefing-html p, .briefing-html td, .briefing-html li, .briefing-html h1, .briefing-html h2, .briefing-html h3 {
-    color: var(--ink);
+  .briefing-html { color: var(--ink); padding: 12px 16px; background: transparent; }
+  .briefing-html, .briefing-html * {
+    color: var(--ink) !important;
+  }
+  .briefing-html .mp-chg-up,
+  .briefing-html [style*="text-align:right;color:#0B6E2D"],
+  .briefing-html [style*="text-align:right;color:#0b6e2d"] {
+    color: var(--green) !important;
+  }
+  .briefing-html .mp-chg-down,
+  .briefing-html [style*="text-align:right;color:#C0392B"],
+  .briefing-html [style*="text-align:right;color:#c0392b"] {
+    color: var(--red) !important;
+  }
+  .briefing-html .mp-chg-flat,
+  .briefing-html [style*="text-align:right;color:#E07B00"],
+  .briefing-html [style*="text-align:right;color:#e07b00"] {
+    color: var(--warn) !important;
+  }
+  .briefing-html tr.mp-chg-up,
+  .briefing-html tr.mp-chg-up * {
+    color: var(--green) !important;
+  }
+  .briefing-html tr.mp-chg-down,
+  .briefing-html tr.mp-chg-down * {
+    color: var(--red) !important;
+  }
+  .briefing-html tr.mp-chg-flat,
+  .briefing-html tr.mp-chg-flat * {
+    color: var(--warn) !important;
+  }
+  .briefing-html .mp-arrow {
+    display: inline-block;
+    width: 1.2em;
+    text-align: center;
+    font-style: normal;
+    font-variant-emoji: text;
+  }
+  [data-theme="dark"] .briefing-html [style*="background-color:#F"],
+  [data-theme="dark"] .briefing-html [style*="background-color:#f"],
+  [data-theme="dark"] .briefing-html [style*="background:#F"],
+  [data-theme="dark"] .briefing-html [style*="background:#f"],
+  [data-theme="dark"] .briefing-html [style*="background-color:#fff"],
+  [data-theme="dark"] .briefing-html tr[style*="background"],
+  [data-theme="dark"] .briefing-html th[style*="background"] {
+    background-color: var(--fill) !important;
   }
 
   .cover-hero { padding: 24px 0 8px; }
@@ -235,8 +278,16 @@
     width: 100%; padding: 13px; border: none; border-radius: 7px; background: var(--ink);
     color: var(--bg); font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;
   }
-  button.primary:hover { background: var(--ink-hover); }
-  button.primary:disabled { background: var(--ink-disabled); cursor: default; }
+  button.primary:hover { background: var(--ink-hover); color: var(--bg); }
+  button.primary:disabled { background: var(--ink-disabled); color: var(--bg); cursor: default; }
+  [data-theme="dark"] button.primary:hover { background: #ffffff; color: #0b0e14; }
+  [data-theme="dark"] button.primary:disabled { background: #64748b; color: #f8fafc; }
+  [data-theme="dark"] input,
+  [data-theme="dark"] textarea {
+    color: var(--ink);
+    background: #111827;
+    caret-color: var(--ink);
+  }
   button.primary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   button.ghost {
     width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 7px;
@@ -997,10 +1048,11 @@
         (doc.head || doc.documentElement).appendChild(tag);
       }
       tag.textContent = briefingThemeCss();
+      paintSnapshotRows(doc);
       const dark = document.documentElement.getAttribute("data-theme") === "dark";
       if (doc.body) {
         doc.body.style.background = dark ? "#0B0E14" : "#F3EBE0";
-        doc.body.style.color = dark ? "#E8EEF8" : "#0B0E14";
+        doc.body.style.color = dark ? "#F8FAFC" : "#0B0E14";
       }
     } catch (err) {}
   }
@@ -1139,13 +1191,26 @@
   function briefingThemeCss() {
     const dark = document.documentElement.getAttribute("data-theme") === "dark";
     const bg = dark ? "#0B0E14" : "#F3EBE0";
-    const ink = dark ? "#E8EEF8" : "#0B0E14";
-    const muted = dark ? "#9AA6BA" : "#5C5348";
-    const line = dark ? "#232D3F" : "#D9CFC0";
+    const ink = dark ? "#F8FAFC" : "#0B0E14";
+    const fill = dark ? "#1E293B" : "#EBE1D3";
+    const line = dark ? "#475569" : "#D9CFC0";
+    const up = dark ? "#4ADE80" : "#0F9F6E";
+    const down = dark ? "#FCA5A5" : "#C2413B";
+    const flat = dark ? "#FDE68A" : "#B45309";
     return "html,body{background:" + bg + " !important;color:" + ink + " !important;}" +
-      "body,p,td,th,li,div,span,h1,h2,h3,h4,table{color:" + ink + " !important;}" +
-      "a{color:" + ink + " !important;} td,th,tr{border-color:" + line + " !important;}" +
-      ".muted,{color:" + muted + " !important;}";
+      "body,p,td,th,li,div,span,h1,h2,h3,h4,strong,em,table{color:" + ink + " !important;}" +
+      "a{color:" + ink + " !important;}" +
+      "td,th,tr,hr{border-color:" + line + " !important;}" +
+      ".mp-chg-up,td[style*=\"text-align:right;color:#0B6E2D\"],td[style*=\"text-align:right;color:#0b6e2d\"]{color:" + up + " !important;}" +
+      ".mp-chg-down,td[style*=\"text-align:right;color:#C0392B\"],td[style*=\"text-align:right;color:#c0392b\"]{color:" + down + " !important;}" +
+      ".mp-chg-flat,td[style*=\"text-align:right;color:#E07B00\"],td[style*=\"text-align:right;color:#e07b00\"]{color:" + flat + " !important;}" +
+      ".mp-arrow{font-variant-emoji:text;display:inline-block;width:1.2em;text-align:center;}" +
+      "tr.mp-chg-up,tr.mp-chg-up td,tr.mp-chg-up span{color:" + up + " !important;}" +
+      "tr.mp-chg-down,tr.mp-chg-down td,tr.mp-chg-down span{color:" + down + " !important;}" +
+      "tr.mp-chg-flat,tr.mp-chg-flat td,tr.mp-chg-flat span{color:" + flat + " !important;}" +
+      (dark
+        ? "div[style*=\"background-color:#F\"],div[style*=\"background-color:#f\"],tr[style*=\"background\"],th[style*=\"background\"]{background-color:" + fill + " !important;}"
+        : "");
   }
 
   function downloadBackupCodes(codes) {
@@ -1560,12 +1625,47 @@
     return "flat";
   }
 
+  function paintSnapshotRows(root) {
+    if (!root || !root.querySelectorAll) return;
+    root.querySelectorAll("tr").forEach(function (tr) {
+      if (tr.querySelector("th")) return;
+      var cells = tr.querySelectorAll("td");
+      if (cells.length < 3) return;
+      var change = cells[cells.length - 1];
+      var tone = "";
+      ["mp-chg-up", "mp-chg-down", "mp-chg-flat"].forEach(function (name) {
+        if (!tone && (change.classList.contains(name) || tr.classList.contains(name))) tone = name;
+      });
+      if (!tone) {
+        var match = (change.textContent || "").match(/([+-]?\d+\.\d+)\s*%/);
+        if (!match) return;
+        var n = Number(match[1]);
+        tone = n > 0 ? "mp-chg-up" : (n < 0 ? "mp-chg-down" : "mp-chg-flat");
+      }
+      tr.classList.add(tone);
+      Array.prototype.forEach.call(cells, function (td) { td.classList.add(tone); });
+    });
+  }
+
+  function paintBriefingArrows(html) {
+    return String(html)
+      .replace(/\u2B06\uFE0F/g, '<span class="mp-arrow mp-chg-up">\u2B06\uFE0E</span>')
+      .replace(/\u2B07\uFE0F/g, '<span class="mp-arrow mp-chg-down">\u2B07\uFE0E</span>')
+      .replace(/\u27A1\uFE0F/g, '<span class="mp-arrow mp-chg-flat">\u27A1\uFE0E</span>')
+      .replace(/\(([+-]?\d+\.\d+)%/g, function (_match, num) {
+        var n = Number(num);
+        var tone = n > 0 ? "mp-chg-up" : (n < 0 ? "mp-chg-down" : "mp-chg-flat");
+        return '(<span class="' + tone + '">' + num + "%</span>";
+      });
+  }
+
   function setBriefingBody(html, text) {
     lastBriefingHtml = html || null;
     lastBriefingText = text || null;
     const el = E("briefing-article");
     el.replaceChildren();
     if (html) {
+      html = paintBriefingArrows(html);
       if (/<html[\s>]/i.test(html)) {
         const frame = document.createElement("iframe");
         frame.title = "MarketPulse India daily briefing";
@@ -1582,6 +1682,7 @@
         const wrap = document.createElement("div");
         wrap.className = "briefing-html";
         wrap.innerHTML = html;
+        paintSnapshotRows(wrap);
         el.appendChild(wrap);
       }
     } else {
@@ -1772,6 +1873,11 @@
       "</svg>";
   }
 
+  function fmtFixed(n, d) {
+    if (n === null || n === undefined || n === "") return "—";
+    return Number(n).toLocaleString("en-IN", { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+
   function fmtNum(n, d) {
     if (n === null || n === undefined || n === "") return "—";
     return Number(n).toLocaleString("en-IN", { maximumFractionDigits: d || 2 });
@@ -1801,7 +1907,7 @@
       E("zone-alloc").textContent = "Model mix " + (a.equity_pct || "—") + "% equity / " + (a.debt_pct || "—") + "% secured debt.";
       E("idx-nifty").textContent = fmtNum(z.nifty50_level, 0);
       E("idx-smallcap").textContent = fmtNum(z.smallcap250_level, 0);
-      E("idx-div").textContent = fmtNum(z.dividend_yield, 2) + "%";
+      E("idx-div").textContent = fmtFixed(z.dividend_yield, 2) + "%";
       E("idx-gsec").textContent = fmtNum(z.gsec_10y_yield, 2) + "%";
     }
     const an = await GET("/v1/portfolio/analysis");
@@ -2176,11 +2282,12 @@
       (peDelta == null ? "—" : fmtSignedPct(peDelta, 2) + " vs median") + "</div></div>";
     (s.metric_deltas || []).forEach(function (m) {
       const unit = m.unit || "";
-      const shown = m.value == null ? "—" : (m.key === "fcf_crore" ? fmtNum(m.value, 0) : m.value + unit);
+      const asPct = m.key === "dividend_yield";
+      const shown = m.value == null ? "—" : (m.key === "fcf_crore" ? fmtNum(m.value, 0) : (asPct ? fmtFixed(m.value, 2) + unit : m.value + unit));
       metricHtml += "<div class='metric'><div class='lbl'>" + m.label + "</div><div class='val'>" + shown +
         "</div><div class='" + deltaClass(m.direction) + "'>" + fmtSignedPct(m.delta_pct) +
         " vs " + (s.sector || "sector") + " median " +
-        (m.sector_median == null ? "—" : (m.key === "fcf_crore" ? fmtNum(m.sector_median, 0) : m.sector_median + unit)) +
+        (m.sector_median == null ? "—" : (m.key === "fcf_crore" ? fmtNum(m.sector_median, 0) : (m.key === "dividend_yield" ? fmtFixed(m.sector_median, 2) + unit : m.sector_median + unit))) +
         "</div></div>";
     });
     const filings = (s.filings || []).map(function (f) {
